@@ -8,12 +8,12 @@
 \input{include/packages}
 
 %TODO Set the main variables
-\newcommand{\vikszerzoVezeteknev}{Gipsz}
-\newcommand{\vikszerzoKeresztnev}{Jakab}
+\newcommand{\vikszerzoVezeteknev}{Váradi}
+\newcommand{\vikszerzoKeresztnev}{Richárd Tamás}
 
 \newcommand{\vikkonzulensAMegszolitas}{dr.~}
-\newcommand{\vikkonzulensAVezeteknev}{Konzulens}
-\newcommand{\vikkonzulensAKeresztnev}{Egy}
+\newcommand{\vikkonzulensAVezeteknev}{Rétvári}
+\newcommand{\vikkonzulensAKeresztnev}{Gábor Ferenc}
 
 \newcommand{\vikkonzulensBMegszolitas}{}
 \newcommand{\vikkonzulensBVezeteknev}{Konzulens}
@@ -23,8 +23,8 @@
 \newcommand{\vikkonzulensCVezeteknev}{}
 \newcommand{\vikkonzulensCKeresztnev}{}
 
-\newcommand{\vikcim}{Elektronikus terelők} % Cím
-\newcommand{\viktanszek}{\bmemit} % Tanszék
+\newcommand{\vikcim}{Média adatsík tervezése, fejlesztése és tesztelése felhő hálózati környezetben} % Cím
+\newcommand{\viktanszek}{Távközlési és Médiainformatikai Tanszék} % Tanszék
 \newcommand{\vikdoktipus}{\bsc} % Dokumentum típusa (\bsc vagy \msc)
 \newcommand{\vikmunkatipusat}{szakdolgozatot} % a "hallgató nyilatkozat" részhez: szakdolgozatot vagy diplomatervet
 
@@ -36,7 +36,7 @@
 % Beállítások magyar nyelvű dolgozathoz
 %\input{include/thesis-hu}
 % Settings for English documents
-\input{include/thesis-en}
+\input{include/thesis-hu}
 
 \input{include/preamble}
 
@@ -46,11 +46,6 @@
 \begin{document}
 
 \pagenumbering{gobble}
-
-%TODO These includes define guidelines -- remove these
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\include{include/guideline}
-\include{include/project}
 
 \selectthesislanguage
 
@@ -77,15 +72,17 @@
 \pagenumbering{arabic}
 
 %TODO import your own content
+%\include{content/guides/introduction}
+%\include{content/guides/latex-tools}
+%\include{content/guides/thesis-format}
+%\include{content/guides/template-usage}
 \include{content/introduction}
-\include{content/latex-tools}
-\include{content/thesis-format}
-\include{content/template-usage}
+\include{content/tools}
 
 
 % Acknowledgements
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\include{content/acknowledgement}
+\include{content/guides/acknowledgement}
 
 
 % List of Figures, Tables
@@ -102,7 +99,7 @@
 
 % Appendix
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\include{content/appendices}
+\include{content/guides/appendices}
 
 %\label{page:last}
 \end{document}

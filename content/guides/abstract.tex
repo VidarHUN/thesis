@@ -8,8 +8,11 @@
 %----------------------------------------------------------------------------
 \chapter*{Kivonat}\addcontentsline{toc}{chapter}{Kivonat}
 
-Jelen dokumentum egy diplomaterv sablon, amely formai keretet ad a BME Villamosmérnöki és Informatikai Karán végző hallgatók által elkészítendő szakdolgozatnak és diplomatervnek. A sablon használata opcionális. Ez a sablon \LaTeX~alapú, a \emph{TeXLive} \TeX-implementációval és a PDF-\LaTeX~fordítóval működőképes.
+A technika jelenlegi állása szerint nincs olyan szolgáltatás, amely képes lenne a hagyományos telekommunikációs alkalmazásokat skálázható, mikroszolgáltatás alapú környezetbe implementálni. Pedig ezek az elosztott rendszerek rendelkeznek minden olyan adottsággal, ami szükséges ahhoz, hogy megbízhatóan és jó minőségben lehessen hangot átjuttatni rajta. Mindemellett dinamikusan lehet skálázni a feldolgozó egységek számát és az üzemeltetéssel kapcsolatos feladatok is jelentősen csökkenthetőek.
 
+Ami eddig problémát jelentett ezeknél a mikroszolgáltatás alapú rendszereknél, az egy megfelelő proxy hiánya volt. Ugyanis ezeket a rendszereket manapság különböző webalkalmazások megvalósítására használják leginkább, szóval nem igen volt fontos, hogy képesek legyenek a ma meglévő proxy-k a telekommunikációs alkalmazásokhoz szükséges protokollok szerint irányítani a forgalmat. Viszont az l7mp szolgáltatás háló segítségével megvalósítható egy olyan rendszer, ami a bejövő hívások alapján képes dinamikusan konfigurálni az l7mp-t és ezáltal a bejövő forgalmat a megfelelő rtpengine-hez irányítani. De ehhez kell egy kontroller, ami képes bejövő kontroll üzenetek alapján a szükséges beállításokat automatikusan elvégezni l7mp és az rtpengine oldalon is.
+
+A dolgozatomban igyekszem bemutatni egy általam írt kontrollert, aminek segítségével megvalósítható a fent említett rendszer és elemezhetőek a hívás minőségével kapcsolatos adatok.
 
 \vfill
 \selectenglish
@@ -20,8 +23,11 @@ Jelen dokumentum egy diplomaterv sablon, amely formai keretet ad a BME Villamosm
 %----------------------------------------------------------------------------
 \chapter*{Abstract}\addcontentsline{toc}{chapter}{Abstract}
 
-This document is a \LaTeX-based skeleton for BSc/MSc~theses of students at the Electrical Engineering and Informatics Faculty, Budapest University of Technology and Economics. The usage of this skeleton is optional. It has been tested with the \emph{TeXLive} \TeX~implementation, and it requires the PDF-\LaTeX~compiler.
+According to the current state of the technology, no service can implement traditional telecommunications applications in a scalable, microservice-based environment. Yet these distributed systems have all the features needed to deliver reliable and high-quality sound. However, the number of processing units could be dynamically scaled and operational tasks could be significantly reduced.
 
+The problem with these microservice-based systems so far has been the lack of a proper proxy. This is because the implementation of these systems is mostly web applications, so today's proxies don't have to be able to use the protocols required for telecommunications applications in terms of traffic control. However, the l7mp service mesh can be used to implement such a system, which can dynamically configure l7mp, based on incoming calls and thereby direct incoming traffic to the appropriate rtpengine. But this requires a controller that can automatically make the necessary settings based on incoming control messages on both the l7mp and rtpengine sides.
+
+In my dissertation, I try to present a controller written by me, which can be used to implement the above-mentioned system and the data that can be analyzed, and the quality of the call.
 
 \vfill
 \selectthesislanguage

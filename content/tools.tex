@@ -2,6 +2,53 @@
 \chapter{Használt eszközök bemutatása}
 %---------------------------------------------------------------------------- 
 
+\section{Kubernetes}
+
+A Kubernetes egy nyílt forráskódú konténer kezelő platform, amivel automatizálni
+lehet a legtöbb feladatot, ami a fejlesztés, karbantartás vagy skálázással 
+kapcsolatos. Így bizonyos feladatokra kisebb hangsúlyt kell fektetni, de 
+komplexebb lesz az alkalmazás felépítése. 
+
+Kubernetes fürtöt létrehozhatunk lokálisan a saját szerveren is vagy felhőben,
+ami lehet publikus, privát vagy hibrid hozzáférésű. Viszont azt figyelembe 
+kell venni, hogy egy Kubernetes fürtöt nem egyszerű kiépíteni lokálisan, 
+szóval ha nem szükséges, akkor lehet használni felhőszolgáltatók Kubernetes 
+motorjai, mint az Amazon AKS, Linode LKE vagy a Google GKE szolgáltatása.
+Ilyenkor egy teljes fürtöt, ami az általunk beállított paramétereket használja.
+
+\subsection{Fontos Kubernetes elemek}
+
+Ahhoz, hogy jobban meglehessen érteni, mi hogyan működik a Kubernetes világban,
+ezért az alábbi fogalmakat fontos ismerni:
+
+\begin{itemize}
+	\item \textbf{Vezérlősík (Controle Plane)}: Folyamatok gyűjteménye melyek 
+	kontrollálják a Kubernetes csomópontokat.
+	\item \textbf{Csomópont (Node)}: A vezérlősík által kiadott feladatokat 
+	végrehajtó szerverek.
+	\item \textbf{Kapszula (Pod)}: Több konténer gyűjteménye, melyek egyetlen
+	csomóponton futnak és egy IP címem és más dolgokon osztoznak.
+	\item \textbf{Replikációs vezérlő (Replication Controller)}: Kontrollálja,
+	hogy egy kapszulából hány azonos fusson a fürtön.  Ezek a másolatok majdnem 
+	mindenben azonosak egymással.
+	\item \textbf{Szolgáltatás (Service)}: A hozzárendelt kapszulák, vagyis 
+	végpontok között képes a forgalmat elosztani. Emellett címkék alapján 
+	képes automatikusan új végpontokat regisztrálni vagy törölni.
+	\item \textbf{Telepítő (Deployment)}: Deklaratívan frissíti a kapszulákat 
+	és a replikációs vezérlőt. Így, ha valamilyen indok miatt egy kapszulában
+	lévő konténer hibát generál, akkor újraindítja vagy esetlegesen törli a 
+	kapszulát és egy teljesen újat indít. 
+	\item \textbf{Egyéni erőforrás definíció (Custom Resource Definition)}:
+	A Kubernetes API (Application Programming Interface) kiterjesztésére 
+	lehet használni.
+	\item \textbf{Operátor (Operator)}: Egy alkalmazás specifikus kontroller, 
+	ami kibővíti a Kubernetes API funkcionalitását. 
+	\item \textbf{Kubelet}: Csomópontokon futó szolgáltatás, ami a konténer 
+	leírások alapján biztosítja, hogy a definiált konténerek fussanak.
+	\item \textbf{kubectl}: Parancssoros eszköz, amivel a Kubernetes-t lehet 
+	konfigurálni.
+\end{itemize}
+
 \section{L7mp}
 
 Az L7mp egy több protokollt támogató szolgálatatás haló es porxy, amellyel 
@@ -12,7 +59,16 @@ legtöbb Kubernetes erőforrás használni fogja a proxy részét is.
 
 A szakdolgozat szempontjából még érdemes megemlíteni, hogy ez egy még nagyon 
 erősen fejlesztés alatt álló projekt, szóval a vele megvalósított megoldások 
-nem biztos, hogy tudják garantálni a megbízhatóságot. 
+nem biztos, hogy tudják garantálni a megbízhatóságot. \\
+
+Beszerzése ennek a szoftvernek rendkívül egyszerű. Ha csak a proxy-ra van 
+szükség, akkor ugyan úgy telepíthető, mint bármelyik NPM (Node Package Manager)
+csomag vagy használható Docker konténerként is, aminek a képfájlja elérhető 
+ezzel a címkével: \textbf{l7mp/l7mp}. 
+
+De a szolgáltatás háló használatához már muszáj Helm-t használni, amivel 
+teljes Kubernetes architektúrákat lehet könnyedén megvalósítani. Ennek a 
+menete megtalálható az L7mp oldalán is. 
 
 \subsection{L7mp, mint proxy}
 
@@ -67,7 +123,7 @@ keresztül információkat tudunk szerezni az éppen futó proxy-ról vagy új
 elemeket lehet egyszerűen létrehozni. 
 
 Új elemek hozzáadásához csak a proxy címére kell egy POST HTTP (HyperText Transfer 
-Protocol)hívást indítani, aminek keretében a konfigurációt YAML (YAML Ain't Markup 
+Protocol) hívást indítani, aminek keretében a konfigurációt YAML (YAML Ain't Markup 
 Language) vagy JSON (JavaScript Object Notation) formátumban tudjuk átadni.
 Erre alább lehet látni egy nagyon egyszerű példát, ahol az L7mp a következő címen 
 figyel: http://localhost:1234. 
@@ -97,3 +153,46 @@ bejövő forgalmat UDP-n továbbít a 127.0.0.1:3000-s címre. De ettől sokkal 
 mindent is belehet állítani könnyedén. 
 
 \subsection{L7mp, mint szolgáltatás háló}
+
+Szolgáltatás háló alatt igazából egy olyan operátora kell gondolni, ami a Kubernetes
+API-n (Application Programming Interface) keresztül képes L7mp proxy-k halmazát 
+kezelni. Ezáltal könnyen tudjuk az L7mp-t, mint ingress gateway használni és 
+mint sidecar az alkalmazás kapszulákban.
+
+Ez az operátor három CRD-t használnak a L7mp proxy-k programozására, amik a következők:
+\textbf{VirtualService}, \textbf{Target}, \textbf{Rule}. Ezek sorban a következő proxy 
+elemeknek felelnek meg: \textbf{Listener}, \textbf{Cluster}, \textbf{Rule}. \\ 
+
+Egy \textbf{VirtualService} az absztrakt megvalósítási egy szerver oldali foglalatnak címnek. 
+Ezenfelül egy VirtualService mögött mindig áll egy Kubernetes szolgáltatás, ami 
+szolgáltatja a végpontok címét vagy címkéit az elérhetőség miatt.
+
+VirtualService részei: 
+
+\begin{itemize}
+	\item Egy szelektor, ami kiválasztja a definiált kapszulákat címkék alapján.
+	\item Egy Listener, ami kezeli a beérkező forgalmat. 
+	\item (Opcionális) Egy szabálylista, ami tartalmazhat újraírást, érték ellenőrzést
+	és meghatározza a célt. 
+	\item (Opcionális) További beállítások.  
+\end{itemize}
+
+A kliens oldali foglalatot mindig a \textbf{Target} valósítja meg, de beállíthatóak még a 
+következő tulajdonságok is: terhelés elosztás, lokális cím lefoglalása, illetve 
+meghatározhatnak még végpontot is, amihez a kliensnek csatlakoznia kellene. Ez 
+lehet egy másik Target, konkrét cím vagy egy Listener is. Ezenfelül még meglehet 
+határozni a bejövő és kimenő forgalom útját is. Így különböző útvonalakat lehet 
+könnyen megvalósítani. 
+
+Ha egy Target egyedi névvel rendelkezik, akkor más L7mp erőforrás könnyen 
+felhasználhatja a névére való hivatkozással. Ez mind a három CRD-re igaz, de ha
+nem határozunk meg egy konkrét nevet, akkor a rendszer automatikusan generál 
+egyet minden erőforrásnak. 
+
+%--------------
+% PLACE OF RULE
+%--------------
+
+\section{rtpengine}
+
+ 

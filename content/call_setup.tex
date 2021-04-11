@@ -1,0 +1,198 @@
+%---------------------------------------------------------------------------- 
+\chapter{Hívásfelépítés Kubernetes nélkül}
+%---------------------------------------------------------------------------- 
+
+Ahhoz, hogy a valóshoz hasonló infrastruktúrát tudjak teremteni VirtualBox-t
+használtam, amivel virtuális gépeket lehet létrehozni, amik között különböző 
+hálózati kapcsolatokat lehet kialakítani. Esetemben a Bridged adapter volt a 
+legkézenfekvőbb, mert az így létrehozott virtuális gépek látszanak minden 
+eszköznek a lokális hálózaton. Így képes voltam hívást kezdeményezni a 
+hálózatban található két eszköz között. 
+
+A híváshoz szükséges telepíteni valamilyen softphone alkalmazást mind a hívó
+feleknek, amikbe be kell jelentkezni egy már meglévő SIP fiókkal. Erre a célra
+tökéletesen megfelelt a Linphone, ami ingyenes és nagyon egyszerű konfigurálni. 
+
+A rendszer kiépítéséhez elsőnek szükségem volt egy SIP szerverre, amire a 
+Kamailio-t választottam, mivel az rtpengine-t alapvetően ehhez ajánlják. 
+Majd létrehoztam egy második szervert, amin az rtpengine futott. 
+
+\section{rtpengine}
+
+Az rtpengine egy RTP (Real-time Transport Protocol) és UDP proxy, amivel könnyen lehet
+a forgalmat irányítani illetve transzkódolni. A Kamailio SIP proxy-hoz lett tervezve, de
+könnyen lehet más rendszerekkel is használni.
+
+Főbb funkció közé tartoznak az alábbiak, amiken kívül még nagyon sok mással is rendelkezi: 
+
+\begin{itemize}
+	\item Tud IPv4 és IPv6 címeket kezelni és közöttük média forgalmat továbbítani. 
+	\item Állítható port tartomány. 
+	\item Több interfész használata. 
+	\item Kernel szintű csomagtovábbítás a kisebb késleltetés és processzor használat miatt.
+	\item HTTP, HTTPS és WebSocket interfész támogatottság.
+	\item Médiafolyamok felvétele. 
+	\item Híváshoz szükséges statisztikák számítása.
+	\item Transzkódolás és újracsomagolás.
+\end{itemize}
+
+\subsection{Kernel és felhasználói tér}
+
+Az rtpengine alapvetően a felhasználói térben működik így ilyenkor mindent ott csinál, ami
+magasabb késeltetést és processzor használatot igényel. Az oka ennek, hogy mikor egy csomag
+érkezik a hálózati interfészre az áthalad a kernelen a fájlleíróig. Ha odajutott egy 
+csomag, akkor a hozzá kapcsolódó folyamatot értesíti, ami ebben az esetben az rtpengine, hogy
+van mit leolvasni onnét. Ennek során a csomag átkerül a kernelből a felhasználóit térbe és 
+ez egy nagyon drága művelet. Ha feldolgozásra került a csomag, akkor ugyanezen az útvonalon
+fog kimenni. Ez azért nagy probléma, mert az RTP protokoll UDP-t használ és így rengeteg 
+kis csomag érkezik folyamatosan, ami nagy terhelést jelent a szerver számára. 
+
+Ezzel szemben, ha használjuk a megfelelő modult, akkor a beérkező csomagok nem kerülnek át a 
+felhasználói térbe így kevesebb erőforrás kerül felhasználásra. Ezt úgy éri el az rtpengine,
+hogy egy hívás kiépítése során \textbf{iptables} szabályokat hoz létre, amikben definiálja, hogy
+adott portra érkező forgalom hova legyen továbbítva. 
+
+Az \textbf{iptables} egy olyan eszköz, amivel a linux kernelben lehet létrehozni 
+táblákat szabályokkal, amik IP szinten képesek szűrni a forgalmat. 
+
+%A választás azért erre a proxy-ra esett, mert folyamatos támogatottsága van, sok helyen 
+%használják illetve sok olyan funkcióval rendelkezik, ami a projekt szempontjából fontos.
+
+%Ilyen és legszükségesebb funkciója a Redis támogatottsága, amivel egyes hívásokhoz 
+%lehet minden szükséges adatot elmenteni és ezen adatok alapján más rtpengine példányok 
+%tudják frissíteni a hívásaikat. Így, ha egy az egyik szerver megáll és nem tudja tovább
+%kezelni a hívásokat, akkor egy terhelés elosztó áttudja irányítani az összes hívást 
+%más szerverekhez, amik ezáltal rendelkeznek a híváshoz szükséges információkkal. 
+%
+%A Redis támogatottság már létezett, viszont csak akkor, ha az rtpengine konfigurálásánál
+%pontosan ismerjük az összes többi rtpengine címét. Alapesetben ezek az információk 
+%rendelkezésre állnak, viszont Kubernetes környezetben ezek mind változékonyak. Sosem 
+%tudjuk pontosan megjósolni, hogy egy kapszula, ami egy rtpengine szervert futtat milyen
+%címmel fog létrejönni. 
+%
+%Ezt a problémát orvosolta részben Oded Arbell, aki egy Pull Request keretein belül 
+%benyújtott egy nulla tudású Redis skálázhatóság funkciót. Mint a neve is utal rá 
+%ezzel a megoldással úgy lehet az infrastruktúrába új rtpengine szervereket felvenni, 
+%hogy nem kell ismerni a többi résztvevő szerver címét. De ez még mindig csak részben 
+%oldotta meg a problémát ugyanis ha van két rtpengine szerverünk, akkor az egyikhez 
+%beérkező hívásnál csak azon a szerveren fognak kinyílni a megfelelő portok, amire a 
+%hívás beérkezett. Így, ha ez a szerver leáll, akkor a másik nem tudja kezelni a forgalmat,
+%mert nincs nyitva egyik szükséges portja sem. 
+%
+%Megoldásképpen egy kicsit bele kellett nyúlnom ebbe a kódba és beállítani, hogy frissítésnél
+%nyisson ki minden olyan portot, ami a hívás információi között szerepel. Így elértem 
+%egy olyan fajta redundanciát, amivel a fentebb leírt váltás jól működik. \\
+%
+%Amit még érdemes megemlíteni, hogy az rtpengine képes kettő különböző módban működni.
+%Tud simán a felhasználói névtérben futni, amikor a transzkódolást és az adatok 
+%továbbítását is ott végzi el és tudja a kernel névteret is használni, amikor a 
+%továbbítást a kernel névtérben végzi. Így processzor erőforrást lehet spórolni, mert
+%nem kell a szervernek azt a drága műveletet minden csomagnál elvégeznie, hogy 
+%a kernel névtérből felhasználóiba teszi át a csomagokat. 
+
+\subsection{Transzkódolás}
+
+Transzkódolás alatt azt a folyamatot értjük, amikor egy adott formátumú videó- vagy 
+hanganyag egy másik formátumba való átalakítása történik. Ezt jelenleg az rtpengine 
+csak hanggal tudja megvalósítani. 
+
+Alapvetően elérhető ez a funkció, de ki is kapcsolható teljesen. Ugyanakkor az, hogy 
+elérhető az rtpengine nem avatkozik bele a hívott felek közötti kodek megegyezésbe, 
+így ha nincs közös kodek-je a két félnek, akkor a hívás sikertelen lesz.
+
+A transzkódlást az ng vezérlőprotokoll \textit{transcoding} vagy \textit{ptime} beállításával
+lehet az rtpengine tudtára adni. Így, ha a két félnek nincs közös kodekje, de az rtpengine
+mind a kettő számára képes egy olyat nyújtani, amit elfogad, akkor a hívás sikeresen kiépül.
+
+Ha aktív transzkódolás van, akkor az SDP-ből kikerül minden olyan kodek, amit nem támogatnak
+a kliensek. Emellett ezt nem lehet kernel szinten továbbítani, ezért mindenképpen a 
+felhasználói térben lesznek ezek a csomagok feldolgozva. \\
+
+Ezek a formátumok vannak támogatva: G.711 (a-Law és µ-Law), G.722, G.723.1, G.729, Speex, 
+GSM, iLBC, Opus, AMR (keskeny és széles sávú)
+
+\subsection{ng vezérlőprotokoll}
+
+Ahhoz, hogy bizonyos funkciók engedélyezve legyenek az rtpengine-ben kifejlesztettek 
+egy vezérlési protokollt, amibe a SIP proxy beágyazva áttudja adni az SDP törzset 
+azt rtpengine-nek, majd az ezt a törzset módosítva küldi vissza. 
+
+Ez a vezérlőprotokoll bencode formátumban küldi ki el az üzeneteket. Ez nagyon hasonló
+felépítéssel rendelkezik, mint a JSON, viszont sokkal egyszerűbb és gyorsabb a kódolása 
+és dekódolása. Ami hátránya a JSON-l szemben, hogy kevésbé olvasható. Fontos 
+megjegyezni, hogy ilyen üzenetek képes fogadni az rtpengine ezeken a protokollokon: 
+UDP, TCP, HTTP, HTTPS, WebSocket, WebSocket Secure. 
+
+Minden ilyen üzenet két részből áll. Egy sütiből, ami ebben az esetben azonosítóként
+funkciónál és egy bencode szótárból, ami legalább egy parancsot tartalmaz az 
+alábbiak közül. A felsorolás nem teljes, csak a téma szempontjából fontosokat 
+emeltem ki.
+
+\begin{itemize}
+	\item \textbf{ping}: Ellenőrizhető, hogy az rtpengine elérhető-e. Egyetlen helyes 
+	válasz van rá, az pedig a \textbf{pong}.
+	\item \textbf{offer}: A hívó fél adatit rögzíti.
+	\item \textbf{answer}: A hívott fél adatit rögzíti. 
+	\item \textbf{delete}: Egy adott azonosítóval rendelkező hívást lehet törölni.
+	\item \textbf{query}: Egy hívás részleteit lehet lekérdezni. 
+	\item \textbf{statistics}: Egy adott azonosítóval rendelkező hívásról lehet statisztikát
+	lekérdezni. 
+\end{itemize} 
+
+\subsection{Beállítás}
+
+Elsőnek az rtpengine-t kell beállítani, amihez a következő konfigurációt 
+használom: 
+
+\begin{lstlisting}
+	[rtpengine]
+	interface=192.168.1.106
+	foreground=true
+	log-stderr=true
+	listen-ng=192.168.1.106:22222
+	port-min=23000
+	port-max=32768
+	log-level=7
+\end{lstlisting}
+
+Ezzel a következő dolgokat állítom be: 
+
+\begin{itemize}
+	\item \textbf{interface}: Megadja az RTP helyi hálózati interfészét. Legalább
+	egyet meg kell adni, de több is megadható.
+	\item \textbf{listen-ng}: A vezérlő üzeneteket ezen a címen várja. 
+	\item \text{port-min és port-max}: Az UDP média forgalom számára lefoglalható
+	portok tartománya. 
+	\item \textbf{Többi}: Naplózás szempontjából érdekesek csak. 
+\end{itemize}
+
+\section{Kamailio}
+
+A Kamailio egy SIP Signaling Server nyílt forráskódú megvalósítása. Amit nagy rendszerek
+skálázhatóságára terveztek, de használható cégek és egyének számára is.
+
+A használatához általában szükség van valamilyen Kamailio által támogatott adatbázishoz,
+de elméletileg lehet adatbázis nélkül is használni, de akkor elvesztünk bizonyos funkciókat. 
+Ezért az ajánlott adatbázist használtam hozzá, ami egy lokálisan futó mysql szerver. Ebbe 
+az adatbázisba olyan táblákat tárol, mint regisztrált felhasználók és aktív hívások, de 
+ezen felül még sok mást is. 
+
+Ezenkívül az általam használt beállításokat a \textit{kamailio.cfg} fájlban lehet megadni,
+ami három részből áll. 
+
+Az első a \textbf{globális paraméterek}, ahol leginkább környezeti változókat lehet 
+definiálni, amikkel lehet kontrollálni, hogy a konfiguráció mely része fusson le illetve
+értékeket is lehet hozzájuk rendelni. 
+
+Aztán jönnek a \textbf{modul beállítások}, ahol az alapértelmezett modulokhoz tudunk plusz
+modulokat betölteni és beállítani. Ez azért egy fontos rész, mert a Kamailio alapvetően 
+nem rtpengine-re van beállítva, hanem annak az előző verziójához, ami az rtpproxy. 
+Az rtpproxy-t nem kell telepíteni, mert ez kamailio csomagjai közt szerepel. 
+
+Végül van az irányítási blokk, ahol különböző SIP üzenetekre lehet megmondani, hogy mi
+történjen velük, ha beérkeznek a hálózati interfészre. Itt betudjuk állítani azt, hogy
+az \textbf{INVITE} üzenetek esetén az ng vezérlőprotokollon keresztül állítsa be a hívást
+az rtpengine szerveren.
+
+\section{Kommunikáció}
+

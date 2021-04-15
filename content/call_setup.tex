@@ -161,7 +161,7 @@ Ezzel a következő dolgokat állítom be:
 	\item \textbf{interface}: Megadja az RTP helyi hálózati interfészét. Legalább
 	egyet meg kell adni, de több is megadható.
 	\item \textbf{listen-ng}: A vezérlő üzeneteket ezen a címen várja. 
-	\item \text{port-min és port-max}: Az UDP média forgalom számára lefoglalható
+	\item \textbf{port-min és port-max}: Az UDP média forgalom számára lefoglalható
 	portok tartománya. 
 	\item \textbf{Többi}: Naplózás szempontjából érdekesek csak. 
 \end{itemize}
@@ -196,3 +196,27 @@ az rtpengine szerveren.
 
 \section{Kommunikáció}
 
+Ahhoz, hogy ezt a hálózatot létrehozzam Virtualbox-t használtam, amivel tetszőleges 
+virtuális gépeket lehet elindítani. Így létrehoztam négy Ubuntu 20.04 Linux szervert, amik
+Bridge adaptert használva képesek egymással kommunikálni közvetlenül. 
+
+A Kamailio és az rtpengine-n kívül használtam még 2 Linphone klienst is, amikkel a hívást
+generálom. Ezeknek azért kellett kettő különböző virtuális gép, mert egy rendszeren 
+csak egy kliens indítható el.
+
+Fontos még megjegyezni, hogy a Linphone segítségével belehet állítani, hogy ne használjon
+semmilyen hangkártyát, hanem egy wav (RIFF WAVE) fájlt játsszon le, mikor a hívás kiépült.
+
+Az alábbi ábra segítségével fogom ismertetni egy teljes hívás részeit:
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=0.9\textwidth, keepaspectratio]{figures/basic_call_flow.png}
+	\caption{Kubernetes nélküli hívásfelépítés}
+	\label{fig:HVSpaces}
+\end{figure}
+
+
+%---------------
+%TALK ABOUT SIP
+%---------------

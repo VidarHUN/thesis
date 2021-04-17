@@ -216,7 +216,59 @@ Az alábbi ábra segítségével fogom ismertetni egy teljes hívás részeit:
 	\label{fig:HVSpaces}
 \end{figure}
 
+Az ábrán látható egy teljes hívás folyamata a regisztrációtól egészen a hívás bontásáig.
+Négy részre bontottam a hívást annak érdekében, hogy könnyebb legyen a megértése.
 
-%---------------
-%TALK ABOUT SIP
-%---------------
+Az első rész a regisztráció amelynek során a felhasználók csatlakoznak a SIP szerverhez.
+Ilyenkor a kliens SIP REGISTER üzenetet küld a szervernek, amikkel hozzáadni, törölni és
+lekérdezni lehet a felhasználó adait szerverről. Ha létezik a felhasználónak fiókja 
+a szerveren, viszont még nem jelentkeztek be az adott eszközről akkor az első alkalommal 
+egy 401 Unauthorized üzenettel tér vissza, ami felszólítja a klienst, hogy adja meg a 
+hitelesítéshez szükséges felhasználói azonosítót és jelszót, amit egy újabb SIP REGISTER
+üzenetben fog újraküldeni titkosítva. Ha minden megfelelt, akkor 200 OK üzenetet kap 
+vissza a kliens, ami jelzi, hogy minden rendben és tud hívásokat kezdeményezni. Az ábrán
+szereplő folyamat nem tartalmazza a 401-s üzenetet, mert már többször használva volt a 
+kliens azon a virtuális gépen. Mint látszik a leírtakból és az ábrán is nagyon hasonlóan
+működik a SIP protokoll, ami megkönnyíti a megértését azoknak, akik járatosak a HTTP-ben. 
+
+A következő rész pedig már a konkrét hívás kezdeményezése és felépítése. A hívást az 
+\textbf{A} felhasználó kezdeményezi \textbf{B} irányába egy INVITE üzenettel, ami tartalmaz
+egy SDP üzenetet is. Ez az SDP egy olyan protokoll, amivel a híváshoz kapcsolódó információkat
+lehet továbbítani, mint például a támogatott média formátumok listája illetve a hívott fél
+elérhetőségei. Mivel ebben az esetben \textbf{B} felhasználó címe létezik a szerveren így
+a szerver 100 trying üzenettel jelzi \textbf{A}-nak, hogy elkezdte a hívást felépíteni. Erre
+azért van szükség, hogy a kliens ne próbálkozzon újra a hívás felépítésével.
+
+A szerver ilyenkor küld egy \textbf{offer} üzenetet az rtpengine felé, aminek legalább 
+tartalmaznia kell az \textbf{A} által küldött SDP üzenetet, hívásazonosítót és a SIP üzenet
+From mezőjét, ami az \textbf{A} azonosítója. Erre az rtpengine egy módosított SDP üzenetet küld
+vissza a szervernek, amiben módosítja a cél címet és portot a sajátjára. Így minden RTP
+üzenet elsőnek az rtpengine-hez fog elmenni és majd onnét megy tovább \textbf{B}-nek.
+
+Ha ez is sikeresen megtörtént, a szerver átveszi a hívás kezdeményező szerepét a \textbf{B}-vel
+szemben. Szóval küld egy INVITE üzenetet neki, amiben szerepel \textbf{A} azonosítója, de
+a csatlakozást leíró mező az rtpengine címe lesz. A trying üzenet ebben az esetben is 
+ugyan azt jelenti, mint mikor az \textbf{A} kezdeményezett. De itt már szerepel a 
+\textbf{180 ringing}, amivel lehet jelzi, hogy feldolgozásra került az INVITE. Majd ugyan ez 
+az üzenetet megkapja \textbf{A} is. 
+
+Ha \textbf{B} elfogadta a hívást, akkor \textbf{200 OK}-l jelez a szervernek, amiből a
+SIP szerver tudja, hogy answer-t kell küldenie az rtpengine felé, amivel a hívás teljesen
+ki fog épülni az rtpengine-ben is. Az answer igazából ugyanazt a funkciót valósítja meg,
+mint az offer. Mivel az rtpengine kapott offer-t és answer-t is, így a hívást kiépítheti
+és az előzőleg lefoglalt négy porton képes fogadni a forgalmat, amit feldolgozva 
+tovább küld. Azért foglal le négy port, mert felenként kell egy páros számú port az 
+RTP forgalomnak és egy páratlan számú az RTCP-nek. Végül pedig egy SIP ACK üzenettel van
+értesítve mind a két fél arról, hogy a hívás sikeresen kiépült és elkezdhetnek 
+beszélni. 
+
+Mivel már létezik a hívás így már lehet küldeni a forgalmat az rtpengine adott 
+portjaira. Ahol a legegyszerűbb esetben annyi történik, hogy az \textbf{A}-hoz rendelt
+RTP porton kapott csomagokat kiküldi a \textbf{B}-hez a hozzárendelt portról. Ugyanez
+történik RTCP esetében is. 
+
+Mikor vége a hívásnak, akkor megkezdődik a hívás lebontása egy BYE SIP üzenettel. Aminek
+hatására a SIP szerver egy delete üzenetet ad ki az rtpengine felé, ami tartalmazza a hívás
+azonosítóját. Ekkor törlődik minden a híváshoz kapcsolódó információ és a számukra kinyitott
+portok is lezárnak. De a rtpengine válaszában szerepelnek a hívásról információk, amik alapján
+könnyen lehet statisztikákat készíteni például a hívások átlagos hosszáról vagy minőségéről.

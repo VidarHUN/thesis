@@ -6,8 +6,8 @@
 
 A Kubernetes egy nyílt forráskódú konténer kezelő platform, amivel automatizálni
 lehet a legtöbb feladatot, ami a fejlesztés, karbantartás vagy skálázással 
-kapcsolatos. Így bizonyos feladatokra kisebb hangsúlyt kell fektetni, de 
-komplexebb lesz az alkalmazás felépítése. 
+kapcsolatos. A Google fejlesztette eredetileg, de jelenleg a Cloud Native
+Computing Foundation - CNCF vette át a karbantartását. 
 
 Kubernetes fürtöt létrehozhatunk lokálisan a saját szerveren is vagy felhőben,
 ami lehet publikus, privát vagy hibrid hozzáférésű. Viszont azt figyelembe 
@@ -15,6 +15,36 @@ kell venni, hogy egy Kubernetes fürtöt nem egyszerű kiépíteni lokálisan,
 szóval ha nem szükséges, akkor lehet használni felhőszolgáltatók Kubernetes 
 motorjai, mint az Amazon AKS, Linode LKE vagy a Google GKE szolgáltatása.
 Ilyenkor egy teljes fürtöt, ami az általunk beállított paramétereket használja.
+
+\subsection{Felépítése}
+
+Egy Kubernetes fürt kettő részből áll egy vezérlő- és egy adatsíkból, ahol a 
+vezérlősíkban szereplő mester csomópontok tudják vezérleni az adatsíkban 
+lévő dolgozó csomópontokat és a fejlesztők vagy üzemeltetők a mester által
+hirdetett API-n keresztül képesek parancsokat kiadni. Míg a dolgozó 
+csomópontokon futó alkalmazáshoz a felhasználók csak az általuk hirdetett 
+Kube-Proxy segítségével tudnak hozzáférni. 
+
+A kapcsolat mester és dolgozó között az API szerver és a Kubelet kommunikációján
+alapul. Ha a fejlesztő szeretne egy új alkalmazást telepíteni a fürtön, akkor
+szól az API szervernek, ami majd kiadja a megfelelő parancsokat a Kubelet-nek 
+és majd az fogja a konténereket létrehozni. Amiről az API szervert értesítve 
+tudja meg a fejlesztő, hogy amit csinált az létrejött. \\
+
+A következőkben az alábbi ábra alapján részletesen kifejtem a Kubernetes 
+részeit. 
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=1\textwidth, keepaspectratio]{figures/k8s_architecture.png}
+	\caption{Kubernetes fürt felépítése}
+	\label{fig:HVSpaces}
+\end{figure}
+
+\subsubsection{Vezérlősík}
+
+
+\subsubsection{Adatsík}
 
 \subsection{Fontos Kubernetes elemek}
 

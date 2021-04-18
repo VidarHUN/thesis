@@ -18,6 +18,13 @@ Ilyenkor egy teljes fürtöt, ami az általunk beállított paramétereket haszn
 
 \subsection{Felépítése}
 
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=1\textwidth, keepaspectratio]{figures/k8s_architecture.png}
+	\caption{Kubernetes fürt felépítése}
+	\label{fig:HVSpaces}
+\end{figure}
+
 Egy Kubernetes fürt kettő részből áll egy vezérlő- és egy adatsíkból, ahol a 
 vezérlősíkban szereplő mester csomópontok tudják vezérleni az adatsíkban 
 lévő dolgozó csomópontokat és a fejlesztők vagy üzemeltetők a mester által
@@ -29,76 +36,152 @@ A kapcsolat mester és dolgozó között az API szerver és a Kubelet kommuniká
 alapul. Ha a fejlesztő szeretne egy új alkalmazást telepíteni a fürtön, akkor
 szól az API szervernek, ami majd kiadja a megfelelő parancsokat a Kubelet-nek 
 és majd az fogja a konténereket létrehozni. Amiről az API szervert értesítve 
-tudja meg a fejlesztő, hogy amit csinált az létrejött. \\
-
-A következőkben az alábbi ábra alapján részletesen kifejtem a Kubernetes 
-részeit. 
-
-\begin{figure}[!ht]
-	\centering
-	\includegraphics[width=1\textwidth, keepaspectratio]{figures/k8s_architecture.png}
-	\caption{Kubernetes fürt felépítése}
-	\label{fig:HVSpaces}
-\end{figure}
+tudja meg a fejlesztő, hogy amit csinált az létrejött.
 
 \subsubsection{Vezérlősík}
 
+A mester csomópont mindig a fő vezérlő egysége a fürtnek, mivel kezeli a 
+munkafolyamatokat és irányítja a kommunikációt fürtön belül. A 2.1-s ábrán
+látható vezérlősík tartalmazhat  több mester csomópontot is a felsorolt 
+komponensekkel, amivel lehet biztosítani a fejlesztők számára a folytonos 
+elérést. A mester csomópont részei: 
+
+\begin{itemize}
+	\item \textbf{etcd}: Egy állandó kulcs-érték alapú adatbázis, ami tárolja 
+	a fürt konfigurációs beállításait és a fürt állapotát. Fontos az a rész, 
+	hogy ez egy állandó adatbázis, mivel ez a csomóponton fut és nem egy 
+	kapszulában.   
+	\item \textbf{API szerver}: Egy REST API szerver, ami hozzáférést biztosít
+	a fürthöz a fürtön belül és azon kívül is. Egyszerű HTTP üzenetekbe ágyazott
+	JSON konfigurációkkal lehet beállítani, hogy mit csináljon a fürtben. De 
+	a dolgozó csomópontok is ezen keresztül küldenek frissítést az etcd-be. 
+	\item \textbf{Ütemező}: Ez a komponens dönti el, hogy egy új kapszula melyik
+	dolgozó csomóponton legyen létrehozva aszerint, hogy van-e megfelelő erőforrás
+	az adott csomópontot megvalósító szerveren.
+	\item \textbf{Kontroller menedzser}: Egy olyan állandóan futó folyamat ellenőri,
+	hogy a kapszulákból bizonyos esetekben újrainduljanak vagy hogy egy ismétlődő 
+	munkafolyamot időnénként lefusson helyesen. Ezt az API szerverrel kommunikálva
+	képes megvalósítani. 
+\end{itemize}
+
+Mint ahogy az ábrán is látszik a fejlesztő vagy üzemeltető alapvetően a \textbf{kubectl}
+nevezetű eszközzel képesek kommunikálni az API szerverrel. Ez az eszköz lényegében
+megvalósítja a teljese HTTP kommunikációt az API szerverrel szóval sokkal könnyebben 
+lehet vele lekérdezni információkat vagy új erőforrásokat létrehozni. 
 
 \subsubsection{Adatsík}
 
-\subsection{Fontos Kubernetes elemek}
+Az adatsíkon futnak az úgynevezett dolgozók, amik igazából különálló szerverek,
+amik rendelkeznek a 2.1-s ábrán szereplő komponensekkel és képesek futtatni 
+valamilyen konténer kezelő alakalmázást, mint például a Docker. Ami régebben az 
+alapértelmezett konténer kezelője volt a Kubernetes-nek, de 2021-ben már nem 
+követeli meg és bármilyen másik konténer kezelőt is be lehet állítani alapértelmezettnek.
 
-Ahhoz, hogy jobban meglehessen érteni, mi hogyan működik a Kubernetes világban,
-ezért az alábbi fogalmakat fontos ismerni:
+A fontosabb elemei az adatsíknak:
 
 \begin{itemize}
-	\item \textbf{Vezérlősík (Controle Plane)}: Folyamatok gyűjteménye melyek 
-	kontrollálják a Kubernetes csomópontokat.
-	\item \textbf{Csomópont (Node)}: A vezérlősík által kiadott feladatokat 
-	végrehajtó szerverek.
-	\item \textbf{Kapszula (Pod)}: Több konténer gyűjteménye, melyek egyetlen
-	csomóponton futnak és egy IP címem és más dolgokon osztoznak.
-	\item \textbf{Replikációs vezérlő (Replication Controller)}: Kontrollálja,
-	hogy egy kapszulából hány azonos fusson a fürtön.  Ezek a másolatok majdnem 
-	mindenben azonosak egymással.
-	\item \textbf{Szolgáltatás (Service)}: A hozzárendelt kapszulák, vagyis 
-	végpontok között képes a forgalmat elosztani. Emellett címkék alapján 
-	képes automatikusan új végpontokat regisztrálni vagy törölni.
-	\item \textbf{Telepítő (Deployment)}: Deklaratívan frissíti a kapszulákat 
-	és a replikációs vezérlőt. Így, ha valamilyen indok miatt egy kapszulában
-	lévő konténer hibát generál, akkor újraindítja vagy esetlegesen törli a 
-	kapszulát és egy teljesen újat indít. 
-	\item \textbf{Egyéni erőforrás definíció (Custom Resource Definition)}:
-	A Kubernetes API (Application Programming Interface) kiterjesztésére 
-	lehet használni.
-	\item \textbf{Operátor (Operator)}: Egy alkalmazás specifikus kontroller, 
-	ami kibővíti a Kubernetes API funkcionalitását. 
-	\item \textbf{Kubelet}: Csomópontokon futó szolgáltatás, ami a konténer 
-	leírások alapján biztosítja, hogy a definiált konténerek fussanak.
-	\item \textbf{kubectl}: Parancssoros eszköz, amivel a Kubernetes-t lehet 
-	konfigurálni.
+	\item \textbf{Kubelet}: Felelős az egyes csomópontok futási állapotáért biztosítva, 
+	hogy a csomóponton lévő összes konténer egészséges legyen. Gondoskodik az alkalmazás
+	konténereinek indításáról, leállításáról és karbantartásáról, amelyek kapszulákba 
+	vannak rendezve a vezérlősík utasítása szerint
+	\item \textbf{Kube-Proxy}: Egy proxy és terheléselosztó megvalósítása, ami biztosítja
+	a szolgáltatás elérhetőségét más hálózatok számára. Így a feladat az, hogy a beérkező
+	forgalmat a megfelelő konténerekhez irányítsa a bejövő kérelem IP címe és 
+	portja alapján. 
+	\item \textbf{Kapszulák}: A legkisebb menedzselhető egységek amiket lehet telepíteni
+	Kubernetes alatt. Egy kapszula több konténernek a csoportja, amik osztoznak a tárolási
+	és hálózati erőforrásokon és specifikálja, hogy a konténerek hogyan fussanak. 
+	\item \textbf{CNI}: A hálózati interfészeit lehet konfigurálni a konténereknek.
+\end{itemize}
+
+\subsection{Erőforrások}
+
+A fentebb leírt architektúra csak az alapjai a Kubernetesnek, viszont ezen kívül
+még rengeteg olyan erőforrással is rendelkezik, amik lehetővé teszik a konténerek
+menedzselésének egy új szintjét.
+
+A következőkben leírom, hogy a projekt szempontjából mely erőforrások lesznek még
+lényegesebbek. 
+
+\begin{itemize}
+	\item \textbf{Replikációs vezérlő}: Biztosítja, hogy egy meghatározott számú 
+	kapszula replika fusson egyszerre, amivel biztosítja az alkalmazás magas szintű
+	elérhetőségét. Ami azt eredményezi, ha túl sok kapszula fut, de nem kellene nekik,
+	akkor törli azokat vagy, ha túl kevés, akkor újakat hoz létre. Mindazonáltal, 
+	ha egy kapszula maga vagy az egyik konténere hibát eredményez, akkor újraindítja
+	a benne lévő konténer vagy a teljes kapszulát. 
+	\item \textbf{Telepítő (Deployment}): Leírja egy elvárt állapotot, ami alapján a
+	replikációs vezérlő tudja, hogy milyen specifikáció szerint kell az új kapszulákat
+	létrehozni vagy a kapszulák számát. 
+	\item \textbf{DaemonSet}: Biztosítja, hogy az összes vagy néhány csomópont 
+	futtassa egy meghatározott kapszula másolatát. Így, ha egy új dolgozó csomópont 
+	csatlakozik a fürthöz, akkor ez a kapszula automatikusan megjelenik rajta. Tipikusan
+	valamilyen tárolási vagy monitorozási feladatot ellátó kapszulát szokás ilyen
+	módon létrehozni, de a későbbiekben látni fogjuk, hogy az l7mp ugyan ezzel a 
+	módszerrel hozza létre a bejárati pontokat a csomópontokon.
+	\item \textbf{DNS}: Tárolja a fürtben szereplő minden kapszula és szolgáltatás
+	IP címét illetve a hozzájuk kapcsolódó tartomány nevüket is.  
+	\item \textbf{Szolgáltatás}: Egy absztrakt módja az alkalmazást futtató kapszulák
+	kiexponálásának a hálózaton keresztül. Mivel a kapszulák halandóak így nem mindig
+	ugyanazon a címen lesznek elérhetőek a rajtuk futtatott alkalmazások. A megoldás
+	erre, ha egy címke alapján hozzárendeljük őket egy szolgáltatáshoz, ami mindig 
+	elérhető lesz ugyanazon a címen és képes elosztani a forgalmat több kapszula között.
+	A forgalomirányítást a szolgáltatások a Kubernetes DNS szolgáltatása miatt tudják 
+	megvalósítani.  
+	\item \textbf{Bejárat (Ingress gateway)}: Egy olyan API objektum, ami kezeli a 
+	külső hozzáférést különböző szolgáltatásokhoz a fürtön belül. Így a bejövő forgalmat
+	könnyen lehet szűrni illetve típusától tartalmától függően más és más szolgáltatásokhoz
+	lehet irányítani. 
+	\item \textbf{Egyéni erőforrás definíció (Custorm Resource Definition)}: A 
+	Kubernetes API egy olyan kiterjesztése melynek során új fajta erőforrás definíciókat
+	lehet definiálni. 
+	\item \textbf{Pótkocsi (Sidecar)}: Mivel egy kapszula több konténert is tartalmazhat
+	és ezek a konténerek megosztják a hálózatukat így létre lehet hozni egy olyan konténert
+	ami csak a hálózati forgalom kezelésével foglalkozik. Így könnyen lehet szűrni, hogy
+	milyen forgalom juthat csak el az alkalmazást futtató konténerhez. 
+	\item \textbf{RBAC (Role-based access controll)}: Ha több fejlesztő vagy üzemeltető
+	fér hozzá az API szerverhez, akkor egyénenként meglehet mondani, hogy kinek milyen 
+	művelet végrehajtására van joga. Így például korlátozható, hogy ki képes új
+	erőforrásokat létrehozni. De ez nem csak igazi felhasználókra vonatkozik, hanem
+	kapszulákra is. Ezáltal lehet olyan kapszulákat létrehozni, amik képesek a fürtön
+	belül kommunikálni az API szerverrel és erőforrásokat kezelni.  
+	\item \textbf{Operátor}: Olyan bővítések, amikkel egyéni erőforrások menedzselése
+	valósítható meg. De emellett különböző eseményeknél lehet bizonyos folyamatokat 
+	elindítani. Példának okáért, ha egy kapszula létrejön, akkor beállíthatjuk, hogy
+	rendelkezzen mindig egy adott címkével.
+	\item \textbf{Szolgáltatás háló (Service Mesh)}: Meghatározza, hogy a fürt 
+	különböző részei hogyan kommunikáljanak egymással. Ezt általában a pótkocsikkal és 
+	egy operátorral valósítják meg. A pótkocsik fognak rendelkezni azokkal a beállításokkal,
+	hogy milyen a mellettük futó konténer milyen forgalmat fogadhat és az operátor 
+	fog arról gondoskodni, hogy a résztvevő kapszulák pótkocsijai mindig a megfelelő
+	beállításokkal jöjjenek létre.
 \end{itemize}
 
 \section{L7mp}
 
-Az L7mp egy több protokollt támogató szolgálatatás haló es porxy, amellyel 
-könnyen lehet a legtöbb szállítás és alkalmazás réteg béli protokollt továbbítani
-illetve fordítani. Esetünkben a szolgáltatás háló funkcionalitása lesz a 
-fontosabb, de ettől függetlenül kitérek a proxy részére is, mert minden a 
-legtöbb Kubernetes erőforrás használni fogja a proxy részét is. 
+Az l7mp egy kísérleti alkalmazásréteg és több protokollt támogató szolgáltatás- 
+proxy és háló keretrendszer. A hangsúly a több protokoll támogatásán van, amely
+lehetővé teszi, hogy sok szállítási és alkalmazásréteg béli protokollt 
+natívan támogasson és ne csak a szokásos TCP/HTTP protokollokat. Lehetővé teszik 
+emellett még a protokollok közötti konvertálást is így könnyen lehet alkalmazási
+rétegű protokollokat konvertálni szállításiba és vissza is.
 
-A szakdolgozat szempontjából még érdemes megemlíteni, hogy ez egy még nagyon 
-erősen fejlesztés alatt álló projekt, szóval a vele megvalósított megoldások 
-nem biztos, hogy tudják garantálni a megbízhatóságot. \\
+Az l7mp, mint a Kubernetes áll egy vezérlő- és adatsíkból. Ahol az adatsíkot 
+az l7mp proxy valósítja meg. Míg a vezérlőt egy operátor, ami képes kezelni 
+az l7mp proxy példányokat. 
 
-Beszerzése ennek a szoftvernek rendkívül egyszerű. Ha csak a proxy-ra van 
-szükség, akkor ugyan úgy telepíthető, mint bármelyik NPM (Node Package Manager)
-csomag vagy használható Docker konténerként is, aminek a képfájlja elérhető 
-ezzel a címkével: \textbf{l7mp/l7mp}. 
+Ha egy másik szoftverhez kellene hasonlítanom az l7mp-t akkor az az Istio 
+lenne, ami egy népszerű szolgáltatás háló az Envoy-l kombinálva. Azért 
+hasonlítanám leginkább ehhez, mert az l7mp proxy nagyon hasonlóan működik az
+Envoy-hoz képest. Szóval, aki ezeket a rendszereket jobban ismeri az 
+könnyen eligazodik az l7mp keretrendszeren is.\\
 
-De a szolgáltatás háló használatához már muszáj Helm-t használni, amivel 
-teljes Kubernetes architektúrákat lehet könnyedén megvalósítani. Ennek a 
-menete megtalálható az L7mp oldalán is. 
+Szeretném megemlíteni, hogy Dr. Rétvári Gábor Ferenc vezetésével a nyári
+gyakorlati időm alatt és jelenlegi munkámként ennek a szoftvernek a tesztelésével 
+illetve fejlesztésével foglalkozom, így viszonylag közel áll hozzám a használata.
+Ez azért fontos a szakdolgozat szempontjából, mert jelenleg csak a felhasználói névtérben
+képes működni, ami okozhat teljesítménybeli problémákat, amik a későbbiekben 
+esetlegesen javítva lesznek és akkor már jobb eredményeket lehet generálni. 
 
 \subsection{L7mp, mint proxy}
 

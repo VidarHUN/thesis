@@ -185,61 +185,118 @@ esetlegesen javítva lesznek és akkor már jobb eredményeket lehet generálni.
 
 \subsection{L7mp, mint proxy}
 
-Működésében, nagyon hasonló az Envoy-hoz, ami egy a lyft által készített és 
-nagyon sok helyen használt proxy. Azzal a különbséggel, hogy az L7mp inkább 
-az alsóbb rétegbeli protokollokat támogatja, ezért a szállítási réteg legtöbb 
-protokollja támogatva van és lehet bizonyos értékeik alapján irányítani a 
-proxy-n áthaladó forgalmat. Példának okáért lehet olyat csinálni, hogy egy
-Unix Domain Socket (UDS) foglalaton figyeli a forgalmat, majd azt WebSocket-re
-átfordítva küldi tovább. 
+Egy olyan programozható proxy, ami nagyon hasonlóan működik, mint az Envoy, ami 
+egy széleskörűen használt leginkább alkalmazási réteget támogató proxy. A különbség
+az l7mp és az Envoy között, hogy az l7mp a szállítási réteg protokolljait 
+támogatja jobban. Emellett tetszőleges számú végpontot tud egymással összekötni, 
+amik között könnyen lehet egyik protokollból a másikba váltani. 
 
-Ezzel szemben nagyon sok olyan tulajdonsággal nem rendelkezik, ami megtalálható
-az Envoy-ban. Ilyennek tudható be, hogy az alkalmazás réteg protokolljai nincsenek 
-teljesen támogatva vagy nem rendelkeznek olyan szintű implementációval. Ami 
-még egy nagyobb hátránya, hogy nem tud olyan gyors lenni az L7mp, mint az Envoy.
-Ennek a legnagyobb oka, hogy az L7mp Node.js keretrendszerben íródott, ami a 
-JavaScript miatt sokkal lassabb, mint a C++ nyelven íródott Envoy.
+A proxy egy magas szintű keretrendszerben íródott, ezért nagyon egyszerűen 
+lehet új funkciókkal bővíteni. Ez a keretrendszer a Node.js, ami egy JavaScript
+futtató környezet a Google Chrome V8-s JavaScript motorjára építve. Ez szerencsés 
+választás a már említett egyszerű bővíthetőség miatt, de  amiatt is, hogy
+könnyen lehet vele aszinkron módon programozni. Így nincsenek blokkoló műveletek,
+amiket külön szálon kellene futtatni. De behozza azt a hátrányt is, hogy a 
+JavaScript miatt lassabb az l7mp, mint az Envoy, ami C++-ban van írva. 
+
+A lassúság kiküszöbölésére jelenleg vannak munkálatok, amik elsősorban azt 
+célozzák meg hogy a csomagok feldolgozása nem a felhasználói névtérben kerüljenek
+végrehajtásra, hanem kernel szinten. Így a csomagoknak nem kell fájlleírókon 
+keresztül eljutnia az l7mp-hez, hanem az l7mp konfigurálása folyamán lehetne
+olyan iptables szabályokat létrehozni, amik megoldják a csomagok továbbítását
+anélkül, hogy írni vagy olvasni kellene a fajleírókat. Az iptables egy olyan 
+kernel szintű program, amely lehetővé teszi a csomagok feldolgozását és továbbítását
+a kernelben. \\
+
+Az l7mp, mint önálló proxy használható szimplán Node-l, mivel elérhető az NPM
+csomagkezelőben és emellett Docker képfájllal is rendelkezik. 
 
 \subsubsection{Felépítése}
 
-Mint már említve volt az L7mp rendkívül hasonlít az Envoy-ra és ez nincs másképp 
-a felépítésben is. Szóval ennek a proxy-nak a használatához a következő 
-építőköveket kell jobban ismerni: \textbf{Session}, \textbf{Listeners}, \textbf{Clusters}, \textbf{Endpoints}, \textbf{Rules}, \textbf{Routes}.\\
+Mivel az l7mp tervezése során az Envoy volt a minta, így főbb elemei között szerepelnek
+ugyanolyan vagy hasonló elemek. A legfontosabb építőkockái az l7mp-nek 
+felsorolásra és kifejtésre kerülnek alább: 
 
-A Session (munkamenet) mindig akkor jön létre, amikor valamelyik Listener 
-bejövő forgalmat kap. Erre azért van szükség, hogy a láncban meghatározott 
-elemeknek mindig a megfelelő függvénye hívódjon meg és a hibák megfelelően 
-legyenek kezelve. 
+\begin{itemize}
+	\item \textbf{Munkamenet (Session)}: Munkameneteket nem lehet manuálisan létrehozni,
+	mivel ezek akkor generálódnak, amikor egy figyelő forgalmat kap és azt 
+	továbbítja valamerre. Egy munkamenet információkat tartalmaz a csomagok típusáról,
+	forrás címéről és céljáról. Emellett a munkamenet objektum felelős azért is, hogy a
+	a benne lévő objektumok tudják, hogy a hozzájuk beérkező csomagokat fel kell dolgozniuk. 
+	\item \textbf{Figyelő (Listener)}: Definiálni lehet vele egy cím és port párost, hogy
+	adott protokollal rendelkező csomagokra figyeljen és dolgozza fel őket. A feldolgozás
+	alatt azt a folyamatot kell érteni, hogy meghatározza mely fürthöz kerüljön a csomag,
+	szűri hogy a bejövő csomagok fejlécében szerepel-e valamilyen meghatározott érték és 
+	ezeket a fejléc mezőket módosítani is lehet. Ez különösen hasznos funkció, akkor 
+	amikor JSONSocket vagy WebSocket forgalmat kell kezelni. 
+	\item \textbf{Fürt (Cluster)}: A végpontok egy gyűjteménye, ami képes forgalmat elosztani
+	közöttük. Az elosztás történhet nagyon egyszerűen, amikor mindig egy lista élén álló
+	végpont kapja a forgalmat, de történhet HashRing módszerrel is. Amikor egy kulcs szerint
+	történik a végpont kiválasztása. Ez egy hasznos funkció, mivel így fix kulcs mellett,
+	minden csomag ugyanahhoz végponthoz fog kerülni. 
+	\item \textbf{Végpont (Endpoint)}: A csomag végállomása, ami lehet a már a csomagokat
+	feldolgozó alkalmazás vagy egy másik figyelő is. Így egész komplex folyamatokat 
+	lehet kiépíteni, ha szükség van rá. 
+	\item \textbf{Szabály (Rule)}: Szabályokat a figyelőkben lehet létrehozni, amikkel
+	belehet állítani, hogy mi legyen a célja a beérkező csomagoknak vagy meglehet vele azt
+	is határozni, hogy a fejléc mely paraméterét mire módosítsa. 
+	\item \textbf{Útvonal (Route)}: Meghatározza a célt, ami általában egy fürt. Az 
+	útvonalak mindig a szabályokon belül vannak, hiszen a szabályok határozzák meg a célt.
+	De ezen felül még be lehet azt is állítani, hogy a bejövő csomagok milyen útvonalon 
+	jussanak el a fürtig és milyen vissza. Így a bejövő és kimenő forgalmat teljesen 
+	más útvonalon lehet irányítani.
+\end{itemize}
 
-A Listener vagy magyarul figyelő úgy működik, mint egy szerver, ami bizonyos 
-szempontok alapján figyelik a hozzájuk beérkező forgalmat és azt továbbítják
-egy adott címre. Ezek a címek a Cluster-ek (fürtök) szoktak lenni, amiknek a 
-működése közel azonos a Listener-ével, mivel ezek is a rajtuk beérkező forgalmat
-adják tovább, azzal a kivétellel, hogy ezek nem láthatóak a proxy-n kívülről.
-
-Végük a forgalom utolsó állomása az Endpoint vagyis végpont, ami már egy konkrét
-cím, ahol figyel az általunk beállított alkalmazás. Fontos megjegyezni, hogy 
-ezek az útvonalak kétirányúak, szóval a proxy képes kimenő forgalmat is ugyanúgy 
-kezelni, mint a bejövőt. 
-
-Amik a fentebb említett elemeket összeköti az a Rule (szabály) és a Route (irány),
-A szabály által lehet különböző paraméterekre szűrni vagy hozzáadni. Ez azért egy 
-nagyon hasznos funkció, mert ezáltal egy Session-n belül képes UDP forgalmat 
-címkékkel ellátni és ezen címkék alapján megfelelő irányba továbbítani a 
-forgalmat.
+Ezekkel az elemekkel és az egyszerűségük miatt rendkívül egyszerűen lehet konfigurálni
+az l7mp-t. 
 
 \subsubsection{Programozása}
 
-Az L7mp indításához mindig biztosítani kell neki egy alapkonfigurációt, ami 
-lehet általában egy L7mpController Listener-t és egy Cluster-t jelent, amin 
-keresztül információkat tudunk szerezni az éppen futó proxy-ról vagy új 
-elemeket lehet egyszerűen létrehozni. 
+Az l7mp programozása történhet konfigurációs fájlból és REST API hívásokon keresztül
+egyaránt. Viszont az l7mp indításához szükség van egy alapkonfigurációra, mivel
+anélkül nem fog létrejönni a kontroller figyelő, ami biztosítja az API 
+láthatóságát. Az alábbi kódrészleten látható, hogyan lehet egy ilyen induló konfigurációt
+létrehozni. 
 
-Új elemek hozzáadásához csak a proxy címére kell egy POST HTTP (HyperText Transfer 
-Protocol) hívást indítani, aminek keretében a konfigurációt YAML (YAML Ain't Markup 
-Language) vagy JSON (JavaScript Object Notation) formátumban tudjuk átadni.
-Erre alább lehet látni egy nagyon egyszerű példát, ahol az L7mp a következő címen 
-figyel: http://localhost:1234. 
+\begin{lstlisting}
+	admin:
+      log_level: info
+      log_file: stdout
+      access_log_path: /tmp/admin_access.log
+	listeners:
+      - name: controller-listener
+		spec: { protocol: HTTP, port: 1234 }
+		rules:
+		  - action:
+			   route:
+			     destination:
+		           name: l7mp-controller
+		           spec: { protocol: L7mpController }
+\end{lstlisting}
+
+A konfigurációt részről részre kifejtem. Az első része, az \textit{admin}, ahol
+a naplózás szintjét és helyét lehet meghatározni. A következő szintek vannak:
+silly, verbose, info, notice, warn, error, silent. Amik ebben a sorrendben
+egyre kevesebb információt naplóznak. A silly kiírja a beérkező csomagok tartalmát
+is, míg az info már csak munkafolyamat mélységig működik.
+
+Az utána következő részben létre jön a controller-listener, ami helyi hálózaton az 
+1234 porton hirdeti a REST API pontot, amin keresztül később új konfigurációkat lehet 
+konfigurálni. Ehhez egy olyan protokoll van használva, ami nem egy igazi protokoll
+csak ezzel van jelezve, hogy hozza létre API pontot. 
+
+Ez az API megvalósítja a teljes CRUD-t mindent komponensre, amivel tudunk létrehozni, 
+olvasni, frissíteni és törölni komponenseket. Minden komponenshez tartozik egy útvonal, 
+ami így tevődik össze, ha a fenti példát nézzük: http://127.0.0.1:1234/api/v1/listeners.
+Ha erre a címre egy POST üzenetben YAML vagy JSON konfigurációt küldünk, akkor az
+létre fog jönni a proxy-n belül. Ami még egy hasznos funkció ebben a megvalósításban
+az a rekurzív lekérés, aminek során egy GET üzenettel és az URI paraméterekben a 
+\textbf{recursive=true} paraméter beállításával a figyelők esetében részletesen 
+kiíratásra kerül minden benne lévő objektum. Az API teljes dokumentációja 
+megtalálható a következő oldalon: https://l7mp.io/openapi/. \\
+
+A következőkben látható lesz egy példa, ami pont az API-n keresztüli programozást
+hivatott bemutatni. 
 
 \begin{lstlisting}
 	curl -iX POST --header 'Content-Type:text/x-yaml' --data-binary @- <<EOF  http://localhost:1234/api/v1/listeners
@@ -260,10 +317,13 @@ figyel: http://localhost:1234.
 	EOF
 \end{lstlisting}
 
-A fenti hívásban az látható, hogyan lehet egy Listener-t minden attribútumával 
-létrehozni a proxy-n belül. Ez most a 127.0.0.1:2000-s címen figyel és minden 
-bejövő forgalmat UDP-n továbbít a 127.0.0.1:3000-s címre. De ettől sokkal több
-mindent is belehet állítani könnyedén. 
+A fenti hívásban látható, hogy létrehozunk egy figyelőt, ami a 127.0.0.1:2000-s
+címen fog WebSocket csomagokat várni, majd azokat UDP-re konvertálva továbbküldeni 
+a 127.0.0.1:3000-s címre.
+
+Ezen a példán látszik igazán, hogy milyen egyszerű az l7mp-vel a protokoll konverzió,
+mert ilyen rövid beállítással kettő nagyon különböző protokoll között lehet 
+átalakítást végezni.
 
 \subsection{L7mp, mint szolgáltatás háló}
 

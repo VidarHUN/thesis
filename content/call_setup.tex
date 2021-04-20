@@ -2,28 +2,41 @@
 \chapter{Hívásfelépítés Kubernetes nélkül}
 %---------------------------------------------------------------------------- 
 
-Ahhoz, hogy a valóshoz hasonló infrastruktúrát tudjak teremteni VirtualBox-t
-használtam, amivel virtuális gépeket lehet létrehozni, amik között különböző 
-hálózati kapcsolatokat lehet kialakítani. Esetemben a Bridged adapter volt a 
-legkézenfekvőbb, mert az így létrehozott virtuális gépek látszanak minden 
-eszköznek a lokális hálózaton. Így képes voltam hívást kezdeményezni a 
-hálózatban található két eszköz között. 
+Ahhoz, hogy a valóshoz hasonló infrastruktúrát lehessen létrehozni, több 
+számítógépet kellett valahogyan összekapcsolni és rajtuk a megfelelő szoftvereket
+elindítani. A környezet megvalósításához egy VirtualBox nevezetű virtuális gépeket
+létrehozó és kezelő alkalmazást választottam. Indoka a választásomnak azon
+alapult, hogy egyszerű használni és ingyenes.
 
-A híváshoz szükséges telepíteni valamilyen softphone alkalmazást mind a hívó
-feleknek, amikbe be kell jelentkezni egy már meglévő SIP fiókkal. Erre a célra
-tökéletesen megfelelt a Linphone, ami ingyenes és nagyon egyszerű konfigurálni. 
+De csak a virtuális gépek jelenléte még nem jelenti azt, hogy ezek tudnak egymással
+kommunikálni. Ezért a telepítés során csak sima Brideged adapter használtam minden
+virtuális gép esetében, ami kiszolgáló számítógép hálózati kártyáján keresztül
+képes elérni az internetet. Ezzel hálózattal tökéletesen lehetett tesztelni
+akkor, ha az rtpengine nem Kubernetes környezetben működött. Később át kellett
+térnem kiszolgáló adapteres hálózat használatára különben a lokális Kubernetes 
+fürtöt nem látták a SIP kliensek. 
 
-A rendszer kiépítéséhez elsőnek szükségem volt egy SIP szerverre, amire a 
-Kamailio-t választottam, mivel az rtpengine-t alapvetően ehhez ajánlják. 
-Majd létrehoztam egy második szervert, amin az rtpengine futott. 
+A kliensek tekintetében is az ingyenességre és az egyszerű használatra törekedtem, 
+de fontos volt még az a szempont is, hogy lehessen parancssorosan hívást kezdeményezni
+és fogadni. Ezekkel az a funkciókkal rendelkezett a Linphone nevezetű kliens, ami
+rendkívül sok beállítást engedélyez ingyenesen a felhasználóinak. Számomra a következő
+funkciók voltak nagyon hasznosnak: wav fájlból lejátszása hívás közben, használt kódolás
+kiválasztása és a hívás rögzítése. A wav fájl lejátszása, azért egy fontos funkció, mert
+így nem kell törődni azzal, hogy a mikrofon keresztül valamilyen hangot tudjon rögzíteni.
+
+Egy általános VoIP híváshoz szükség van legalább egy SIP szerverre, ami képes a felhasználókhoz
+kapcsolatos információkat kezelni. Erre a célra Kamailio-t használok, mivel ehhez készítették
+az rtpeninge-t. Így kézenfekvő volt a használata, de elméletileg lehet más SIP szervereket
+is használni az rtpengine-l. A másik fontos, de egyértelmű tényező az maga az rtpengine, 
+amiről a következő fejezetben lesz részletesen szó. 
 
 \section{rtpengine}
 
-Az rtpengine egy RTP (Real-time Transport Protocol) és UDP proxy, amivel könnyen lehet
-a forgalmat irányítani illetve transzkódolni. A Kamailio SIP proxy-hoz lett tervezve, de
-könnyen lehet más rendszerekkel is használni.
-
-Főbb funkció közé tartoznak az alábbiak, amiken kívül még nagyon sok mással is rendelkezi: 
+Az rtpengine egy Sipwise  által fejlesztett a Kamailio-hoz szánt RTP és UDP 
+proxy, ami nem csak forgalmat képes irányítani, hanem a beérkező csomagokat transzformálni is.
+Emellett olyan funkciókkal is rendelkezik, amikkel tudjuk a hívások minőségét, 
+rendelkezésre állóságát és biztonságát lehet növelni. A következő funkciókat érdemes 
+jobban kifejteni: 
 
 \begin{itemize}
 	\item Tud IPv4 és IPv6 címeket kezelni és közöttük média forgalmat továbbítani. 
@@ -34,6 +47,7 @@ Főbb funkció közé tartoznak az alábbiak, amiken kívül még nagyon sok má
 	\item Médiafolyamok felvétele. 
 	\item Híváshoz szükséges statisztikák számítása.
 	\item Transzkódolás és újracsomagolás.
+	\item SDP csomagok teljesen újraírása. 
 \end{itemize}
 
 \subsection{Kernel és felhasználói tér}

@@ -327,41 +327,72 @@ mert ilyen rövid beállítással kettő nagyon különböző protokoll között
 
 \subsection{L7mp, mint szolgáltatás háló}
 
-Szolgáltatás háló alatt igazából egy olyan operátora kell gondolni, ami a Kubernetes
-API-n (Application Programming Interface) keresztül képes L7mp proxy-k halmazát 
-kezelni. Ezáltal könnyen tudjuk az L7mp-t, mint ingress gateway használni és 
-mint sidecar az alkalmazás kapszulákban.
+A szolgáltatásháló egy olyan keretrendszert foglal magában, amivel a különböző 
+mikroszolgáltatások közötti kommunikációt lehet meghatározni. Ezek a szolgáltatások 
+konténerek, amik rendelkeznek egy olyan API interfésszel, amin keresztül lehet 
+őket programozni. Így a fürtön belül könnyen lehet olyan szolgáltatásokat 
+igénybe venni, mint a szolgáltatás felderítés, terhelés elosztás és felügyelhetőség.
+Ezeken kívül még rengeteg más funkcióval szokott rendelkezni egy szolgáltatás háló,
+de ezeket lehet mondani a legnépszerűbbeknek. 
 
-Ez az operátor három CRD-t használnak a L7mp proxy-k programozására, amik a következők:
-\textbf{VirtualService}, \textbf{Target}, \textbf{Rule}. Ezek sorban a következő proxy 
-elemeknek felelnek meg: \textbf{Listener}, \textbf{Cluster}, \textbf{Rule}. \\ 
+A pótkocsi proxy-n kívül szokott még lenni egy operátor is a fürtben, ami figyeli 
+minden egyes szolgáltatás állapot és értesül arról, ha egy új jön létre vagy törlődik egy.
 
-Egy \textbf{VirtualService} az absztrakt megvalósítási egy szerver oldali foglalatnak címnek. 
-Ezenfelül egy VirtualService mögött mindig áll egy Kubernetes szolgáltatás, ami 
-szolgáltatja a végpontok címét vagy címkéit az elérhetőség miatt.
+Az l7mp esetében a proxy-k használat egyértelműen az l7mp proxy lesz, de ahhoz, hogy ezeket
+könnyebben lehessen a fürtben állítani létre lett hozva három CRD, amiknek köszönhetően 
+az operátor könnyedén tudja, hogy milyen beállításokat kell végrehajtania a pótkocsikon. 
 
-VirtualService részei: 
+Ezek a CRD-k egy-egy l7mp objektumnak felelnek meg. Mivel a VirtualService segítségével
+figyelőket lehet létrehozni, míg a Target fürt specifikációkat tartalmaz és a Rule 
+egyértelműen a szabályoknak felel meg. 
 
-\begin{itemize}
-	\item Egy szelektor, ami kiválasztja a definiált kapszulákat címkék alapján.
-	\item Egy Listener, ami kezeli a beérkező forgalmat. 
-	\item (Opcionális) Egy szabálylista, ami tartalmazhat újraírást, érték ellenőrzést
-	és meghatározza a célt. 
-	\item (Opcionális) További beállítások.  
-\end{itemize}
+\subsubsection{Virtuális szolgáltatás - VirtualService}
 
-A kliens oldali foglalatot mindig a \textbf{Target} valósítja meg, de beállíthatóak még a 
-következő tulajdonságok is: terhelés elosztás, lokális cím lefoglalása, illetve 
-meghatározhatnak még végpontot is, amihez a kliensnek csatlakoznia kellene. Ez 
-lehet egy másik Target, konkrét cím vagy egy Listener is. Ezenfelül még meglehet 
-határozni a bejövő és kimenő forgalom útját is. Így különböző útvonalakat lehet 
-könnyen megvalósítani. 
+Egy virtuális szolgáltatás az absztrakt megvalósítása egy szerveroldali foglalatnak. 
+Ahhoz, hogy létre tudja hozni ezeket a foglalatokat létezni kell egy megfelelő Kubernetes
+szolgáltatásnak ami szolgáltatni fogja a végpontokat/kapszulákat a virtuális szolgáltatásnak.
+Ezeket a kapszulákat az alapértelmezett Kubernetes címkézéssel hivatkozik. 
 
-Ha egy Target egyedi névvel rendelkezik, akkor más L7mp erőforrás könnyen 
-felhasználhatja a névére való hivatkozással. Ez mind a három CRD-re igaz, de ha
-nem határozunk meg egy konkrét nevet, akkor a rendszer automatikusan generál 
-egyet minden erőforrásnak. 
+A virtuális szolgáltatásban meghatározott definíciót fogja az operátor beprogramozni a 
+megfelelő pótkocsikban, ahol a proxy-k találhatóak. Egy ilyen definíciónak két főbb része
+van mindig. Az első a \textbf{selector}, amiben meglehet mondani, hogy mely címkékkel
+rendelkező kapszulák rendelkezzenek a meghatározott konfigurációval. Míg a másodikban 
+a figyelő beállításait lehet megadni. 
 
-%--------------
-% PLACE OF RULE
-%--------------
+Ezenfelül fontos még az a tényező is, hogyha a figyelőn belül definiálásra kerül egy
+még nem létező cél, akkor az operátor automatikusan létrehozza anélkül, hogy egy 
+külön fájlban kellene definiálnunk. Ugyanez érvényes a szabályokra is. De szabályt 
+és célt is lehet létrehozni külön konfigurációs fájlból, viszont ismerni kell 
+a fürtben definiált nevét, ami általában igen hosszú.
+
+\subsubsection{Target - Cél}
+
+Egy cél definiálásával a kliens oldali foglalatokat lehet meghatározni. Ezeken 
+a címeken várja az alkalmazás vagy egy másik figyelő a forgalmat. Mivel egy cél 
+lényegében egy fürtöt valósít meg, így ez is a végpontokat tárolja, azzal a különbséggel,
+hogy célnál a végpontok a kapszulák, szolgáltatások vagy virtuális szolgáltatások is 
+lehetnek. 
+
+A felépítése hasonlóan néz, ki mint a virtuális szolgáltatásoknak szóval van egy 
+szelektor, hogy mely pótkocsikon legyen elérhető az adott fürt. Illetve a fürt
+definíciója. 
+
+Ebben a definícióban lehet megadni, hogy a milyen protokollú csomagokat fogad, végpontokat
+és a terheléselosztás beállításait. A végpontok kiválasztása szintén egy szelektorral
+történik, ami a Kubernetes erőforrások címkéi alapján választ. A másik fontos beállítása
+a terheléseloszlás, ami alapértelmezett esetben, mindig a nyilván tartott kapszulák 
+közül az elsőnek fogja irányítani a csomagokat. Viszont be lehet állítani úgy is, hogy
+egy a csomag fejlécében lévő mező alapján irányítsa a csomagokat. Ez a megoldás a
+HashRing megoldást, használja amivel elérhető, hogy egy kulcs alapján mindig ugyan az
+a végpont kapja meg a csomagokat. 
+
+\subsubsection{Rule - Szabály}
+
+Szabályokkal lehet összekötni figyelőket fürtökkel. De ebben az esetben lehet különálló
+CRD-ben szabályokat létrehozni és azokat többször felhasználni. Így átláthatóbbá és 
+kontrollálhatóbbá válik a szolgáltatás háló használat. 
+
+Használatukkal lehet szűrni a csomagokat forráscímük, fejlécük és még nagyon sok más 
+paraméter szerint. JSON predicate objektumokkal lehet szűrni az csomagokat, amivel 
+így komplex könnyen lehet több érték kombinációjára keresni. Ha egy csomag 
+megfelel minden kitételnek, akkor a definiált művelet szerint fog tovább haladni a csomag. 

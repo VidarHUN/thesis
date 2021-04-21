@@ -35,4 +35,27 @@ a hálózat szempontjából. Mivel a telepített Kubernetes fürt vezérlő- és
 ezen a két összeköttetésen osztozik. Szóval a lassabb interfészeken kommunikál az
 API szerver és a kubelet, míg a kube-proxy a nagy sebességű hálózati kártyákat 
 használja. Így lehetett egy olyan magas határt szabni a lehetséges forgalom
-sebességének, ami nehéz beleütközni. 
+sebességének, amibe nehéz beleütközni. 
+
+Ahhoz, hogy az előzőleg leírt hálózat elkülönítés működjön a Kuberspray programot 
+használtam, mert ennél könnyedén lehetett a telepítés során kettő különböző interfészt
+beállítani. A kuberspray programmal Kubernetes fürtöket lehet telepíteni szimplán
+szerverekre. A különlegessége az, hogy Ansible-t használ erre a célra. Szóval elég
+a mester szerver számára lehetővé tenni, hogy működjön az ssh a többi szerverrel és
+egyetlen konfigurációs fájl indításával képes minden szükséges szoftvert feltelepíteni
+és azokat beállítani. Az Ansible-l nagyjából bármilyen folyamatot lehet automatizálni a
+szerverek között. 
+
+\section{Kubernetes architektúra}
+
+A címben említett architektúra írja le, hogy a fürtön belül hogyan milyen Kubernetes
+erőforrások találhatóak meg és azok, hogyan vannak egymással összekötve. A következő
+ábrát kifejtve lehet ezt legjobban elmagyarázni.
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=1\textwidth, keepaspectratio]{figures/cluster.png}
+	\caption{Fürt felépítése}
+	\label{fig:HVSpaces}
+\end{figure}
+

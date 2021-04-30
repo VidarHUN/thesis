@@ -322,12 +322,46 @@ kubernetes_apis.append(
 Az első argumentummal lehet meghatározni a hívás azonosítóját és a másodikkal a félhez
 tartozó címkét, ami lehet \textit{from-tag} és \textit{to-tag} is. Majd ezután jön a
 klienshez tartozó cím, RTP és RTCP port. Aztán az rtpengine által a híváshoz lefoglalt
-RTP és RTCP port, végül pedig a \textit{without\_jsonsocket} és \textit{ws} argumentumokkal lehet még erőforrásokra vonatkozó paramétereket megadni.
+RTP és RTCP port, végül pedig a \textit{without\_jsonsocket} és \textit{ws} argumentumokkal
+lehet még erőforrásokra vonatkozó paramétereket megadni.
 
 Ha ez a konstruktor sikeresen lefutott, akkor az azt jelenti, hogy a fürtben létrejött
 minden szükséges erőforrás és adott minden a média forgalom kezeléséhez. \\
 
 A törlés ezzel szemben nagyon egyszerűen úgy történik, hogy a hívásazonosító alapján
 \textit{kubernetes\_apis} listából meghívjuk az objektum \textit{delete\_resources()}
-függvényét, ami az adott híváshoz kapcsolódó összes erőforrást törölni fogja.  
+függvényét, ami az adott híváshoz kapcsolódó összes erőforrást törölni fogja.
 
+\subsubsection{Parancsok feldolgozása}
+
+A parancsok feldolgozása kétféle módon történhet, lehet az átlagos foglalatokkal, ami 
+a TCP és UDP csomagok kezelését jelenti illetve lehet a WebSocket protokoll segítéségével 
+is. Az előzőeg említett feldolgozás azért teszi lehetővé, hogy mind TCP és UDP
+foglalatok használatával működjön, mert ezek a foglalatok küldés és fogadás szempontjából
+teljsen ugyanazokat a függvényeket valósítják meg. \\
+
+Az említett eljáráshoz tartozó függvény két foglalatot vár el argumentumként, amik közül 
+a \textit{sock} fogja lesz az amelyik a kliensektől várja a bejövő forgalmat és az 
+\textit{rtpe\_sock} lesz, amelyen keresztül kommunikálni fog a kontroller az rtpnengine-el. 
+Szóval a sock-n beérkező adat tárolásra kerül abban a formában, amelyben érkezik szóval 
+egy egyszerű karakterláncként és a feldolgott verziója is, amikor karakterlánc bencode 
+által kódolt része feloldásra és szótárba írásra kerül. Ez a feldolgozott változat hasznos 
+akkor, amikor az erőforrásokat kell létrehozni, míg a nyers beérkezett üzenet továbbküldésre 
+kerül az rtpengine felé, hiszen azon nem kell változtatni semmilyen paramétert.
+
+Ha az rtpengine válaszolt az adott parancsra és ez a parancs nem tartalmazott semilyen 
+SDP üzenetet, akkor egyszerűen visszaküldésre kerül a kliensnek. De ha a parancs egy offer
+vagy answer üzenet volt, akkor az rtpengine által adott válaszban szereplő SDP üzenetben
+módosítani kell a kapcsolat kiépítéséhez szükséges paraméterben szereplő IP címet. Ugyanis
+ez a cím minden eseetben 127.0.0.1 lesz, ami nem jó az olyan SIP klienseknek, mint a linphone.
+A szóban forgó címet kell lecsérlni az dolgozó csomópont IP címére. De az rtpengine 
+válasza után még vizsgálni kell azt is, hogy milyen parancs érkezett be a kontrollerhez. 
+Ha egy \textit{delete} üzenet érkezett, akkor a benne szereplő hívásazonosítóhoz tartozó
+kubernetes erőforrásokat mindenképpen törölni kell, hogy véletlenül sem maradjon nyitva
+olyan port a fürtön, ami nincs használatban. A másik ilyen fontos üzenet az \textit{answer}.
+Azért kell az ilyen parancssal rendelkező üzenetekre jobban figyelni, mint az \textit{offer}-re,
+mert csak ennek a megékezése után lehet a megfelelő erőforrásokat létrehozni és értesíteni
+a klienseket arról, hogy megkezdhetik médiaforgalom adását. Ha már az offer során 
+létrehozzásra kerülnek ezek az erőforrások, akkor könnyen előfordulhat, hogy egy üres híváshoz
+lefoglalt portok kerülnek beállításra az l7mp erőforrások számára, ami azt eredményezi, hogy
+a hívás egyik résztvevője nem tud semmilyen forgalmat küldeni az rtpengine felé.

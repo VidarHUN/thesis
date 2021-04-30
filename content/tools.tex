@@ -2,6 +2,62 @@
 \chapter{Használt eszközök bemutatása}
 %---------------------------------------------------------------------------- 
 
+\section{Híváshoz használt protokollok}
+
+\subsection{RTP \& RTCP}
+
+Az RTP (Real-time Transport Protocol) protokoll használatával valós időben lehet
+hang, videó vagy egyéb multimédiás információkat szállítani. Mivel az RTP UDP
+csomagokba van beágyazva így nem foglal le semmilyen erőforrást a kommunikáció
+során, ezért nem tud QoS-t (Quality of Service) biztosítani az alkalmazások számára.
+Egy RTP kommunikáció során időnként a felek küldenek egymásnak RTCP (RTP Control
+Protocol) üzeneteket is, amivel minimális ellenőrizhetőséget biztosít a média 
+folyam felett. Így információt lehet kapni arról, hogy hány csomag veszett el
+a továbbítás során vagy átlagosan milyen hosszú volt egy csomag körülfordulási
+ideje. Szóval egy RTCP csomag nem tartalmaz semmilyen multimédiás adatot, csak 
+a információkat az RTP folyamról. 
+
+Az RTCP-t még két különböző részre lehet bontani, ugyanis az RTCP-ben jelentések 
+vannak, amiket előállíthat a küldő és a fogadó is. A küldő jelentésben a következő
+adatok fognak megjelenni: küldő SSRC, utoljára elküldött RTP csomag időbélyege, 
+küldő valós órájának ideje illetve a folyamban elküldött csomagok száma és 
+mérete. A fogadó fél pedig egy fogadó jelentéssel fog válaszolni, melyben a következő
+információk fognak szerepelni: SSRC, elveszett csomagok száma, legmagasabb kapott
+sorszám, jitter és az utolsó küldő jelentés és az azóta eltelt idő. 
+
+\subsection{SIP}
+
+A SIP (Session Initiation Protcol) egy olyan alkalmazás rétegben működő viszonykezdeményező
+protokoll, amivel létrehozni, módosítani és törölni lehet kapcsolatot felek között. 
+Ezek a kapcsolatok általában az internet telefonálás vagy multimédiás forgalom
+lebonyolítását valósítják meg. 
+
+A SIP működése során fontos, hogy a felhasználók azonosíthatóak legyenek valamilyen
+paraméter szerint, amihez sok esetben nem megfelelő szimplán az IP cím. Egy 
+SIP kliens egyéniségét a SIP URI (Uniform Resource Identifier) fogja megadni, ami
+a  felhasználó nevéből és a SIP szerver által meghatározott tartománynévből áll.
+Ez a cím úgy néz ki, mint egy átlagos email cím azzal a különbséggel, hogy az 
+elején szerepel a \textit{sip:} szó. Egy példa arra, hogyan néz ki egy ilyen cím: 
+sip:peter@tartomany.com. Így ha az egyik kliens hívást kezdeményez Péter felé,
+akkor ezzel a címmel pontosan meglehet határozni az elhelyezkedését. 
+
+Működése nagyban hasonlít a HTTP kommunikációhoz, ahol a kliens bizonyos kéréseket
+küld a szerver felé, amire választ kap. A következők a fontosabb SIP kérések típusai: 
+
+\begin{itemize}
+	\item \textbf{INVITE}: Új kapcsolat létesítése.
+	\item \textbf{ACK}: INVITE üzenet elfogadását jelzi. 
+	\item \textbf{BYE}: Kapcsolat befejezése. 
+	\item \textbf{REGISTER}: Felhasználó regisztrálása a SIP szerverre. 
+\end{itemize}
+
+A SIP protokoll szerves része az SDP (Session Description Protocol), amivel a multimédia
+folyamatok kiépítésénél van szükséges. Ugyanis ebben a protokollban lehet megadni,
+hogy milyen média kódlásokat támogatnak a hívásban résztvevő felek és mely
+portokon várják a médiaforgalmat. Ezeken az információkon kívül még rengeteg 
+más hasznos információt is lehet közölni ezekben az üzenetekben, viszont a 
+szakdolgozat szempontjából ezek az érdekesebbek. 
+
 \section{Kubernetes}
 
 A Kubernetes egy nyílt forráskódú konténer kezelő platform, amivel automatizálni

@@ -2,3 +2,332 @@
 \chapter{Kontroller}
 %----------------------------------------------------------------------------
 
+A kontrollernek két fő feladata van egy hívás felépítése során. Az egyik, hogy
+a vezérlőprotokoll üzeneteit feldolgozza illetve továbbítsa az rtpengine
+felé. A másik pedig a híváshoz szükséges l7mp beállításokat hivatott 
+megvalósítani.
+
+Ehhez készítettem egy python szkriptet, ami ezeket a feladatokat képes ellátni
+különböző protokollokat támogatva. Azért a python lett választva a megvalósításhoz,
+mert ezt a nyelvet viszonylag jól ismerem illetve nagyon jó Kubernetes 
+támogatottsága van. Így könnyen és gyorsan lehetett haladni az írásával. \\
+
+Fontos megjegyezni, hogy a kontroller nem csak l7mp környezetben való használtra lett
+tervezve, hanem Envoy-l is. Így vannak olyan megvalósítások, amik csak Envoy
+vagy l7mp környezetben nyernek értelmet. 
+
+\section{Használata}
+
+Mielőtt részleteiben kifejtésre kerülne a kontroller működése, szeretném bemutatni a
+használatát.
+
+A kontroller működéséhez biztosítani kell egy konfigurációs fájlt, amiben definiálva
+van minden olyan paraméter, ami szerint szeretnénk, ha működne. Ezek a paraméterek
+az alábbi felsorolásban olvashatóak.
+
+\begin{itemize}
+	\item \textbf{protocol}: Használt protokoll a vezérlőparancsok küldéséhez. Ez lehet
+	udp, tcp és ws azaz WebSocket is.
+	\item \textbf{rtpe\_address}: Az rtpengine szolgáltatás neve vagy IP címe. 
+	\item \textbf{rtpe\_port}: A port amin az rtpengine várja a beérkező parancsokat. 
+	\item \textbf{envoy\_address}: Ha Envoy környezetben van használva akkor a menedzsment
+	szolgáltatás neve vagy IP címe. 
+	\item \textbf{envoy\_port}: Envoy menedzsment szolgáltatás portja. 
+	\item \textbf{local\_address}: Lehet állítani, hogy az üzenetek küldése során milyen
+	lokális címről küldje. Ez l7mp környezetben a '127.0.0.1' míg Envoy esetében '0.0.0.0'.
+	\item \textbf{local\_port}: Meghatározható, hogy a kimenő parancsok mely portról
+	induljanak el. 
+	\item \textbf{sidecar\_type}: Használt proxy típusa állítható be, ami lehet l7mp és envoy is.
+	\item \textbf{without\_jsonsocket}: A fejlesztés során több fajta architektúrát kipróbáltam
+	és ennek paraméternek a beállításával lehet váltani a létrehozandó l7mp erőforrások között. 
+	\item \textbf{ingress\_address}: A Kubernetes dolgozó csomópontjának az IP címe adható meg.
+	Azért van erre szükség, mert később ez a cím fog bekerülni a klienseknek válaszolt SDP
+	üzenetekbe. 
+\end{itemize}
+
+Ezt a konfigurációs fájlt érdemes létrehozni úgynevezett ConfigMap segítségével, amit fellehet
+használni a kontroller kapszulájának leírása során. Egy ilyen ConfigMap-ben kis fájlokat 
+lehet létrehozni és azokat hozzáadni különböző telepítő definíciókhoz. 
+
+A következő kódrészletben látható, hogy Kubernetes-n belül ezt a konténert hogyan kell 
+létrehozni és elindítani benne a kontroller-t. 
+
+\begin{lstlisting}
+...
+spec:
+  volumes:
+    - name: controller-volume
+        configMap:
+        name: controller-config
+  containers:
+    - name: rtpe-controller
+      image: vidarhun/rtpe-controller
+      volumeMounts:
+        - name: controller-volume
+          mountPath: /app/config
+      command: ["python"]
+      args: ["controller.py", "-c", "config/config.conf", "-l", "debug"]
+...
+\end{lstlisting}
+
+A \textit{volumes} részben került betöltésre a \textit{contoller-config} ConfigMap, ami 
+tartalmaz egy a kontroller számára megfelelő konfigurációt. Majd a \textit{volumeMounts}-ban
+kerül felcsatolásra a konténernek. Így már elérhező lesz a controller-config-ban meghatározott
+fájl az \textit{/app/config} mappában a konténeren belül. Végül pedig a \textit{command} és az
+\textit{args} paraméterekkel indul el maga a kontroller, ahol \textbf{-c} argumentummal 
+lehet a konfigurációs fájl elérését megadni és az \textbf{-l} argumentummal lehet állítani,
+hogy milyen szinten naplózzon a kontroller.
+
+\section{Kontroller részei}
+
+A kontroller fő részei közé tartozik az, hogy a Kubernetes API-val 
+hogyan történik a kommunikáció, vezérlőprotokoll parancsainak megalkotása és
+a beérkező üzenetek feldolgozása. 
+
+\subsection{Kubernetes API}
+
+Ahogy a Használt eszközök bemutatása fejezetben is lehet olvasni a Kubernetes
+fürtnek parancsokat a Kube API-n keresztül lehet adni. Ezért kellett egy olyan
+módszert találni, amivel a kontroller képes kommunikálni a Kubernetes API-val 
+egy kapszulából. Ehhez használtam egy olyan könyvtárat, ami kifejezetten amivel
+könnyen megvalósítható az API-val való kommunikáció. Mindemellett nagyon jól
+van dokumentálva ez a könyvtár, így viszonylag egyszerűen használható.
+
+A könyvtár telepítése után inicializálni kell a kapcsolatot a Kubernetes 
+API-val, amihez a \textit{client} és \textit{config} modult kell importálni
+a Kubernetes könyvtárból. Majd a \textit{config.load\_incluster\_config()}
+hívással lehet inicializálni az API-val való kapcsolatot. Így jelezzük, hogy 
+szkript egy fürtön belül egy kapszulában fog futni. De ahhoz ez ténylegesen jól 
+működjön ahhoz konfigurálni kell az RBAC-t (Role-based access control), amivel 
+olyan jogokat lehet biztosítani, amikkel hozzálehet férni Kubernetes 
+erőforrásokhoz. Szabályozni lehet ezzel azt is, hogy egy adott erőforráshoz 
+csak olvasási joggal rendelkezik a szkript így biztonságosabbá tehető a használata.
+
+A kontrollerhez alább látható YAML definíció létrehozásával lehet olyan jogokat
+adni, amikkel nagyjából bármilyen művelet eltud látni az l7mp által specifikált 
+erőforrásokon.
+
+\begin{lstlisting}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: rtpe-controller
+rules:
+  - apiGroups: ["l7mp.io"]
+    resources: ["virtualservices", "targets", "rules"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: rtpe-controller
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: rtpe-controller
+  apiGroup: rbac.authorization.k8s.io
+\end{lstlisting}
+
+A \textit{ClusterRole} segítségével lehet névtértől függetlenü jogokat biztosítani,
+amik ebben az esetben az l7mp által specifikált egyéni erőforrásokra vonatkoznak. 
+Ezeket az erőforrásokat az \textit{apiGroups} illetve a \textit{resources} listával
+lehet megadni. Majd a \textit{verbs} listában meghatárzott műveletekre kap 
+jogok a kontroller. Így képes adott erőforrás állapotát lekérni, listázni, figyelni,
+erőforrásokat létrehozni, frissíteni, kiegészíteni és törölni. 
+
+Majd ezt követően a \textit{ClusterRoleBidning} erőforrással lehet egy adott
+felhasználóhoz hozzárendelni a létrehozott jogokat. Ebben az esetben az alapértelmezett
+felhasználó kapja meg ezeket a jogokat tekintve, hogy a Kubernetesben csak ez az egy
+felhasználó van definiálva. Végül a \textit{roleRef}-ben lehet megadni, hogy mely
+jogokat kapja meg a definiált felhasználó. 
+
+Most, hogy már inicializálva van a Kubernetes API, létre kell hozni egy olyan 
+API objektumot a kontrollerben, amivel egyéni erőforrás definíciókat lehet létrehozni
+és törölni a fürtben. Ezt a következő sor használatával lehet létrehozni: 
+\textit{api = client.CustomObjectsApi()}. \\
+
+Így most már szabadon lehet az l7mp objektumait létrehozni és törölni a konrollerből is, 
+ami az előzőleg létrehozott \textit{api} objektum \textit{create\_namespaced\_custom\_object}
+illetve a \textit{delete\_namespaced\_custom\_object} segítségével valósítható meg. Az elsőnek
+említett függvény az alább felsorolt paramétereket várja.
+
+\begin{itemize}
+	\item \textbf{group}: A létrehozni kívánt erőforrás API címe.  
+	\item \textbf{version}: A \textit{group}-ban definiált API verziója. 
+	\item \textbf{namespace}: Melyik névtérben legyen létrehozva az erőforrás.
+	\item \textbf{plural}: Az erőforrás típusának többesszáma. Ez az előzőleg definiált
+	ClusterRole resources listájából valamelyik elem. 
+	\item \textbf{body}: Egy YAML definíciót kell megadni python szótárként. 
+\end{itemize}
+
+Ezek közül a legfontosabb body, azaz a törzs, ahova mindig a híváshoz szükséges definíciókat
+kell megadni. Ahhoz, hogy kódban ne legyenek ezek a definíciók annyira beégetve, ahhoz
+ezeket a YAML fájlokat kiszerveztem egy mappába és, mikor használni vagy módosítani kell,
+akkor csak a szükséges fájlt beolvassa a kontroller és módosítja a szükséges mezőket.
+
+Ha egy hívás beérkezik a kontrollerhez, akkor kettő virtuális szolgáltatás és kettő
+szabály fog létrejönni. A szolgáltatások mindig az l7mp-ingress-n fognak beállítódni, 
+ugyanis ezek nyitják ki a rtpengine által meghatározott portokat a kliensek számára
+a fürtön. A két szabály pedig az rtpengine kapszulák melletti l7mp proxy-ban 
+fog létrejönni, ahol a már előre definiált szabálylistához adódak hozzá. 
+
+Az így létrehozott erőforrásoknak a neveit tárolni kell, mivel a hívás vége után ezeket
+a létrehozott erőforrásokat törölni kell mindig, ahhoz pedig szükséges az erőforrás 
+neve. 
+
+\subsection{Működése}
+
+\subsubsection{Konfigurálás és naplózás}
+
+A kontroller indítása után az első feladata az a kódnak, hogy beolvassa az indítás
+során megadott argumentumokat és feldolgozza az konfigurációs fájlban megadott 
+paramétereket. Az argumentumok beolvasását a \textit{argparse} könyvár használatával
+oldottam meg, mivel egy könnyel használható és bővíthető. Így a későbbiekben, ha 
+több argumentum átadására van szükség nem lesz nagy feladat a megvalósítása. Másfelől
+a konfigurációs fájl feldologzásához is létezik egy könyvtár, amit \textit{configparser}-nek
+hívnak és a Microsoft Windows INI fájljaihoz hasonló konfigurációkat képes beolvasni. Beolvasás
+után feloldásra kerülnek az olyan paraméterek értékei, amik tartalmazhatnak tartomány neveket
+is. Erre azért van szükség, mert létrehozott foglalatokkal csak konkrét IP címekre lehet 
+csomagokat küldeni. A beolvasott paraméterek egy globális szótár objektumba kerülnek, ami 
+miatt ezek a paraméterek könnyedén elérhetőek lesznek bármelyik függvényből. Ezzel a fejlesztés
+nagy mérték megkönnyebbül és átláthatóbb lesz a kód is. \\
+
+A naplózás egy kulcsfontosságú része a kontrollernek, mivel fejlesztéskor vagy használata
+során az stdout-ra kiírt események nagyban segítik a problémák keresését illetve azok 
+megoldását. Naplózáshoz a \textit{logging} nevezetű könyvtárat használom, amiatt mert 
+sok már könyvtár is ezt használja így, ha azok is valamit naplóznak, akkor az egyben 
+látható lesz. Ininicializálása során megadható, hogy milyen szinten naplózza az eseményeket 
+és az is, hogy milyen formátumba. Ezért a kontroller egy naplóbejegyzései az alább látható 
+módon néz ki. Ami a másodpercre pontos időből, a naplózás szintjéből illetve magából az 
+üzenetből áll.
+
+\begin{lstlisting}
+15:41:55 [INFO] Started!
+15:41:55 [INFO] Configuration file loaded!
+\end{lstlisting}
+
+\subsubsection{Foglalatok létrehozása}
+
+Mivel a kontroller három protokollt képes jelenleg támogatni ezért háromféle foglalatot 
+kell tudnia használni. Ami az UDP, TCP, WebSocket protokollokat támogatják. Ezeknek a
+létrehozására mind van egy-egy függvény, ami képes a hozzájuk tartozó beállításokat 
+beállítani és a megfelelő foglattal visszatérni, hogy azt több helyen lehessen használni. \\
+
+A legegyszerűbb ebben az esetben az UDP foglalat megalkotása. Azért ez a legegyszerűbb,
+mert ennél nem kell figyelembe venni a célját, mint a TCP esetében. Egy UDP foglalat 
+léterhozához szükség van a lokális címre és portra, amikhez a foglalot hozzá kell 
+kötni. A hozzákötés után, ha ezen a foglalaton keresztül történik csomagtovábbítás, 
+akkor a megadott cím és port lesz a forrás cím és port. Emellett beállításra is
+kerül egy időtúllépés paraméter is, ami 10 másodperc lesz. Ez azt jelenti, hogy
+mikor a foglalat éppen csomagokat vár, akkor 10 másodpercig fog várni, majd generál 
+egy kivételt és visszalép. Így használható egy olyan ciklusban, ami időközönként
+valamilyen más feladat ellátását is megtudja valósítani. \\
+
+Aztán van a TCP foglalat, aminél már figyelembe kell venni azt, hogy a WebSocket
+protkollt használó kliens számára lesz gyártva vagy szimpla TCP kommunikációhoz 
+használják. Ugyanis, ha önmagában kerül felhasználásra, akkor hozzáköti magát
+az adott lokális címhez és porthoz és lényegében ugyan úgy kerül felhasználásra,
+mint UDP esetben. Viszont, ha WebSocket kliens számára van létrehozva, akkor ezt
+nem teszi meg, de ehelyett csatlakozik az rtpengine-hez az adott címen. Azt, hogy
+miért van szükség a WebSocket számára egy TCP foglalatra azt a következő részben 
+fejtem ki bővebben. De a csatlakozás az rtpengine-hez azért szükséges ebben az
+esetben, mert másképp a kliens nem tudja TCP-nél jellemző kézfogás folyamatot
+teljseíteni az rtpengine-l. \\
+
+Végül pedig van a WebSocket-s verzió, amikor egy WebSocket foglalat kerül létrehozásra.
+De ennek a létrezhozás a nem az általában használt python könyvtárat a \textit{socket}-t
+fogja használni, hanem a \textit{websocket} könyvtárnak a \textit{create\_connection()}
+függvényét. Ezzel a függvény egy olyan foglalattal tér vissza, aminél az elküldött 
+üzenetek rendelkezni fognak a létrehozáskor beállított fejlécekkel. A következő 
+függvény az, ami a kontrolleren belül létrehozza a WebSocket foglaltot. 
+
+\begin{lstlisting}[language=python]
+def create_ws_socket(sock, header):
+	return create_connection(
+		f'ws://{config["rtpe_address"]}:{config["rtpe_port"]}',
+		subprotocols=["ng.rtpengine.com"],
+		origin=config['local_address'],
+		socket=sock,
+		header=header
+	)
+\end{lstlisting}
+
+A következő listában sorrendben olvashatóak, hogy mely argumentum mit állít be és miért
+pont azt.
+
+\begin{itemize}
+	\item Az rtpengine meghírdetett WebSocket URL-jét kapja meg. Fontos, hogy ezt
+	kapja, mivel az rtpengine egyszer több féle protokollon keresztül tud 
+	vezérlőparancsokat fogadni.
+	\item Alprotkollokat is lehet használnii WebSocket esetén, ami azért fontos, mert
+	az rtpengine csak azokat WebSocket csomagokat képes feldolgozni, amik rendelkeznek
+	ezzel az \textit{ng.rtpengine.com} alprotokollal.
+	\item A forrás címet lehet beállítani az \textit{origin} argumentummal. 
+	\item Be lehet állítani azt, hogy a kapcsolat kiépítése során egyéni foglalatot
+	használjon, így könnyen kontrollálható, hogy a foglalat milyen paraméterekkel 
+	rendelkezzen. Ezért van szükség arra, hogy a TCP foglalat megalkotása során
+	figyelembe vegyük azt, hogy WebSocket kliens számára hozzuk létre vagy csak úgy
+	általánosan.
+	\item Lehet megadni egyéni fejléceket is, amikben bármi tárolható egy adott
+	méretig. Ha létrejön egy hívás, akkor itt beállítód a hívás azonosítója, majd 
+	később az l7mp proxy, ami a kontroller mellett van, majd ez alapján fogja eldönteni,
+	hogy mely rtpengine kapszula kapja meg az üzentet.
+\end{itemize}
+
+\subsubsection{Erőforrások létrehozása és törlése}
+
+Arról, hogy az erőforrások létrehozása illetve törlése mikor történik a feldolgozás
+fejezetben lesz szó. 
+
+Mikor elindul a kontroller, akkor már a kezdetekkor van egy \textit{kubernetes\_apis}
+lista, ami tartalmazza az összes Kubernetes API kliens objektumot. Így mindig van egy
+pontos képe a kontrollernek arról, hogy milyen paraméterekkel lettek erőforrások 
+létrehozva a működése során. Szóval egy új hívás esetén kettő új API kliens objektum 
+fog bekerülni ebbe a listába, egy hívó fél adataival és egy a hívott fél adataival 
+és törlésnél ez a kettő kerül törlésre a hívásazonosító alapján. 
+
+Egy erőforrás létrehozása során elsőnek ebben a listában kell ellenőrizni azt, hogy
+ilyen hívásazonosítóval már létezik-e erőforrás, ha nem csak akkor lehet létrehozni. 
+Erre azért van szükség, mert a Kamailio rendelkezik egy válaszidővel, ami ha lejár
+akkor az utljára kiküldött üzenetet megismétli. De ebben az esetben könnyen előfordulhat,
+hogy később küldi vissza a kontroller az üzenetet, mint ez az időkeres és ilyenkor 
+a duplikáltan küldött üzeneteket elveti a kontroller.
+
+Ezután egy \textit{query} üzenetet kell küldeni az rtpengine felé, ugyanis az 
+\textit{offer} és \textit{answer} üzenetekre kapott válaszban nem biztos, hogy ugyan
+az a port lesz lefoglalva. De a \textit{query} üzenettel ez kiküszöbölhető, mert az 
+erre adott válaszban mindig a megfelelő portok fognak szerepelni. A portokra azért van
+szükség, mert az API kliens objektumok által létrehozott erőforrásokban ezek használva
+vannak. Alább látható, hogy egy API kliens objektum miként kerül létrehozásra.
+
+\begin{lstlisting}[language=python]
+kubernetes_apis.append(
+	Client(
+		call_id=call_id,
+		tag=tag,
+		local_ip=address,
+		local_rtp_port=client_port,
+		local_rtcp_port=client_port + 1,
+		remote_rtp_port=remote_port,
+		remote_rtcp_port=remote_port + 1,
+		without_jsonsocket=config['without_jsonsocket'],
+		ws=ws
+	)
+)
+\end{lstlisting}
+
+Az első argumentummal lehet meghatározni a hívás azonosítóját és a másodikkal a félhez
+tartozó címkét, ami lehet \textit{from-tag} és \textit{to-tag} is. Majd ezután jön a
+klienshez tartozó cím, RTP és RTCP port. Aztán az rtpengine által a híváshoz lefoglalt
+RTP és RTCP port, végül pedig a \textit{without\_jsonsocket} és \textit{ws} argumentumokkal lehet még erőforrásokra vonatkozó paramétereket megadni.
+
+Ha ez a konstruktor sikeresen lefutott, akkor az azt jelenti, hogy a fürtben létrejött
+minden szükséges erőforrás és adott minden a média forgalom kezeléséhez. \\
+
+A törlés ezzel szemben nagyon egyszerűen úgy történik, hogy a hívásazonosító alapján
+\textit{kubernetes\_apis} listából meghívjuk az objektum \textit{delete\_resources()}
+függvényét, ami az adott híváshoz kapcsolódó összes erőforrást törölni fogja.  
+

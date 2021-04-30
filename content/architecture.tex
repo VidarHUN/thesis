@@ -129,11 +129,23 @@ ez a megoldás nem a legszebbek közé tartozik, mert nem követi a Kubernetes �
 irányokat. A szép megoldás az lenne, ha a \textbf{B} példányon csak akkor nyílnának ki ezek a 
 portok, ha \textbf{A} biztosan megszűnt. Ezt a későbbiek során lehet javítani. \\
 
-A pótkocsik még nagyon fontosak ennél a résznél. Mert egyrészt van egy figyelő, ami a kontroll
-üzenetekre figyel és végzi az átalakítást WebSocket-ről UDP-re és van kettő másik, amik 
-az RTP és RTCP üzeneteket fogják kezelni. Legegyszerűbben szemléltetni és kifejteni ezt is egy 
-ábra segítségével lehet. 
+A pótkocsik még nagyon fontosak ennél a résznél. Itt három fontos figyelő van, melyek közül
+kettő dinamikusan módosul.
 
+\begin{enumerate}
+	\item Van egy figyelő, ami WebSocket üzeneteket vár a 22222-s porton és ezeket alakítja át
+	UDP üzenetekre egy UDP fürttel, aminek a végpontja a 127.0.0.1:22222 cím. Ezen a címen várja
+	az rtpengine a vezérlőüzeneteket. 
+	\item Induláskor statikusan kerül be egy üres figyelő a 19000-s portra, amire az RTP csomagok
+	fognak érkezni és bejutni az rtpengine által beállított portokra. Itt felmerül a kérdés, hogy 
+	több hívás esetén hogyan kerülnek megkülönböztetésre a hívásokhoz tartozó csomagok. Ezt az
+	oldja meg, hogy az l7mp-ingress ezeket a csomagokat mind JSONSocket-re alakítja át, ami már 
+	rendelkezik fejléccel, ami tartalmazza a hívás azonosítóját és a hívó címkéjét. Így dinamikusan
+	hozzá lehet adni szabályokat ehhez a figyelőhöz és az összes beérkező médiaforgalmat képes jó
+	irányba küldeni. 
+	\item Lényegében ugyanazt a funkciót valósítja meg, mint az előző, azzal a különbséggel, hogy
+	ez a figyelő a 19001-s porton hallgat RTCP csomagokat. 
+\end{enumerate}
 
 
  

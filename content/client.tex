@@ -1,3 +1,196 @@
 %----------------------------------------------------------------------------   
 \chapter{Kliens}
-%---------------------------------------------------------------------------- 
+%----------------------------------------------------------------------------
+
+Ahhoz, hogy az előzőleg tárgyalt rendszert érdemben lehessen tesztelni írnom
+kellett egy saját alkalmazást, ami képes volt adott számú médiaforgalmat 
+generálni, de tud kommunikálni az rtpengine-l is. Szóval egyben a SIP
+klienst és szervert is megvalósítja.
+
+A kliens felépítése nagyon hasonlóan néz ki, mint a kontrolleré, ami azt 
+eredményezi, hogy képesnek kell lennie  TCP, UDP és WebSocket protokollokon
+keresztül kommunikálni az rtpengine-l. Viszont a klienshez nem érkeznek be 
+vezérlőparancsok, hanem a kliens gyártja ezeket. Így a kliensnek tudnia kell
+az összes rtpengine által támogatott vezérlőparancsot megalkotnia bizonyos 
+paraméterekkel. Ezen felül tudnia kell médiaforgalmat is generálni, amihez
+jelenleg két fajta megoldás létezik. Használható az FFmpeg és az rtpsend 
+is arra, hogy ezt a forgalmat legenerálja, viszont mind a kettőnek megvan
+az előnye és a hátránya is. 
+
+Ebben a fejezetben kifejtésre kerül a kliensben használt külső alkalmazások
+működése és célja, a kliens használata és annak felépítése. 
+
+\section{FFmpeg \& rtpsend}
+
+Elsőnek az FFmpeg-t szeretném bemutatni, mert ezt az eszközt többen ismerhetik,
+mint az rtpsend-t. 
+
+Az FFmpeg egy nyílt forráskódú szoftver, amely különböző könyvtárak felhasználásával
+képes videó, hang és egyéb multimédiás adatfolyamok kezelésére. Így olyan feladatokat
+lehet vele ellátni többek között, mint kódolás, dekódolás, transzformálás és 
+adatfolyam sugárázása. Így egy olyan feladat ellátása, hogy adott hangfájl sugárzása a 
+hálózaton keresztül könnyen megvalósítható. Viszont rendelkezik különböző hátrányokkal
+amik nem elhanyagolhatóak a teszt szempontjából.
+
+Az első ilyen probléma vele, hogy az erőforrás igénye nagyon magas tud lenni 
+annak függvényében, hogy mennyire komplex feladatot lát el. Ami alapesetben nem lenne
+probléma, viszont ebben a környezetben sok egymás mellett futó FFmpeg végez majd
+komplex feladatot, amihez így sok erőforrás szükséges.
+
+A második probléma, hogy a sugárzott RTP folyamot nem lehet eléggé testre szabni, 
+amennyire szükséges lenne. Így például a csomagokban lévő adat nem mindig lesz 
+ugyanakkora méretű. Ami a mérési eredményeket könnyen torzítani fogja, hiszen 
+minden médiafolyam rendelkezik egy bizonyos kódolással, amihez megvan határozva, hogy
+milyen méretű csomagok szükségesek.
+
+Végül a legnagyobb probléma, ami előjön az FFmpeg és rtpsend esetében is, hogy nem
+tudnak RTCP fogadó jelentést gyártani, ami miatt a hívás minősége nem monitorozható 
+megfelelően. Ez a probléma úgy lett kiküszöbölve, hogy rtpsend vagy FFmpeg gyárt
+egy adott mennyiségű háttérforgalmat és két linphone kliens segítségével elindításra 
+kerül mellettük egy rendes hívás. Így mérhetővé válik, hogy valamekkora háttérforgalom
+mellett milyen minőséget tud nyújtani a rendszer. \\
+
+Az alábbi parancs szükséges ahhoz, hogy egy wav fájlt sikeresen lehessen sugározni
+RTP segítségével az rtpengine számára, így a híváshoz szükséges adatfolyamot lehet
+szimulálni. 
+
+\begin{lstlisting}
+ffmpeg -re -i audio.wav -ar 8000 -ac 1 -acodec pcm_mulaw \\
+-f rtp 'rtp://127.0.0.1:23000?localrtpport=2000'
+\end{lstlisting}
+
+Ez a sor az \textit{audio.wav} fájlt fogja a lokális hálózaton lévő rtpengine 23000-s
+portjára küldeni a 2000-s portról PCMU kódolással. A következő felsorolás 
+tartalmazza részletesen, hogy a paraméterei mit csinálnak.
+
+\begin{itemize}
+	\item \textbf{-re -i}: Natív képkockasebességgel való beolvasást tesz lehetővé, 
+	így lehet szimulálni egy élő forrást, például egy mikrofont. Emellett lelassítja
+	a fájl olvasásának sebesseggét annyira, hogy hasonlítson az a valós idejű
+	adatbevolvasáshoz, ugyanis alapértelmezetten olyan gyorsan ovassa az FFmpeg a
+	fájlokat amilyen gyorsan csak tudja és gyorsabban történik, mint a fájl hossza. 
+	Így lehetővé teszi azt, hogy egy három perces hanfájl ne pár másodperc alatt 
+	legyen leküldve a hálózaton, hanem három perc alatt. 
+	\item \textbf{-ar}: Beállítja a mintavételezési periódust, ami itt 8000 Hz, ami 
+	azt jelenti, hogy másodpercenként 8000 mintát vesz a forrásból. 
+	\item \textbf{ac}: Beállítja a használt hangcsatornák számát.
+	\item \textbf{-acodec}: Megadja, hogy milyen hangkódolást használjon. Ebben az 
+	esetben PCM u-law alapú kódolás történik.
+	\item \textbf{-f}: A kimenti fájl formátumát lehet megadni, de ebben az esetben
+	nem egy fájl, hanem egy cím van megadva így a hálózaton RTP csomagokban fogja 
+	küldnei a kódolt hanganyagot. Ha jobban megnézzük, akkor ez a cím két részből áll,
+	ahol az első határozza meg azt, hogy hova küldje a csomagokat. Ez a 
+	\textit{127.0.0.1:23000} az rtpengine címe és a híváshoz meghatározott egyik RTP
+	port. Míg a második rész a \textit{localrtpport}, amivel meghatározható, hogy
+	mely portról küldje ezeket a csomagokat.
+\end{itemize}
+
+\subsection{rtpsend}
+
+Az rtpsend teljesen eltér az FFmpeg-től, hiszen itt nincs semmilyen hang vagy videó
+feldolgozás, átalkítás vagy bármi más. Itt egyszerűen csak egy RTP folyam visszajátszása
+történik, amit az \textit{rtpdump} eszközzel lehet felvenni. Ez a két szoftver egy 
+eszköztárba tartoznak, aminek a neve \textit{rtptools}, amit Henning Schulzrinne
+alkotott meg, aki a Columbia Egyetem oktatója.
+
+Szóval elsőnek fel kell venni egy híváshoz tartozó RTP folyamot az rtpdump parancssal,
+ami úgy működik, hogy meg kell adni egy címet, amin az RTP csomagokat elkapja és 
+ezeket alakítja át egy olyan formátumba, amit később az \textit{rtpsend}-l újra
+lehet alkotni. Abból a szempontból előnyös, hogy az rtpengine-nek a médiaformátum
+átalakítását jól lehet vele tesztelni, mert fellehet venni két különböző kódolású
+hívást és azokat lejátszani egy szimulált híváson belül.
+
+A lejátszáshoz ez a parancs lesz használva: 
+
+\begin{lstlisting}
+rtpsend -l -s 3002 -f dump.rtp 127.0.0.1/23000
+\end{lstlisting}
+
+Ezzel azt az utasítást adjuk ki, hogy folyamatos ismétléssel küldje el a 
+\textit{dump.rtp} fájlt a \textit{127.0.0.1:3002} címről a \textit{127.0.0.1:23000}
+címre, amin az rtpengine várja az egyik oldaltól a médiafolyamot.
+
+\section{Felépítése}
+
+A kliens felépítése nagyon hasonló, mint a kontrolleré és ez látszik abban is, hogy
+ugyan azokat a könyvtárakat használja naplózáshoz, konfiguráció beolvasásához és
+argumentumk átadására. Viszont a konfigurácós fálban más paramétereket lehet 
+beállítani. A következő felsorolásban fejtem, hogy mely paraméter milyen értékeket 
+vehet fel és mi történik ezek használata során. 
+
+\begin{itemize}
+	\item \textbf{local\_address}: Meglehet adni, hogy milyen címről küldje
+	ki a vezérlőparancsokat.
+	\item \textbf{protocol}: Megadja, hogy milyen protkollt használjon a kliens az
+	vezérlőparancsok küldésére. Ez lehet udp, tcp, ws azaz WebSocket.
+	\item \textbf{rtpe\_address}: Az rtpengine címe. 
+	\item \textbf{rtpe\_port}:Az rtpengine portja.
+	\item \textbf{ping}: Ha csak azt akarjuk a klienssel ellenőrizni, hogy az rtpengine
+	elérhető, akkor leht küldeni egy szimpla \textit{ping} üzenet. Ha visszajön egy
+	\textit{pong} az rtpengien elérhető. Ha ennek a mezőnek az értéke yes, akkor 
+	az előzőleg leírt megtörténik és vége a kliens futásának. 
+	\item \textbf{number\_of\_calls}: A generálni kívánt hívások számát lehet megadni. 
+	\item \textbf{send\_method}: Megadhatjuk, hogy FFmpeg vagy rtpsend segítségével
+	generáljon médiaforgalmat a kliens.
+	\item \textbf{wav\_location}: Ha FFmpeg lett beállítva a \textit{send\_method} 
+	paraméternél, akkor az ehhez szükséges wav hangfájl elérési útvonala adható meg.
+	\item \textbf{rtp\_dump\_location}: Ha rtpsend lett beállítva a 
+	\textit{send\_method} paraméternél, akkor az ehhez szükséges rtp fájl elérési 
+	útvonala adható meg.
+\end{itemize}
+
+Indításánál ugyanúgy a konfigutációs fájlt és a naplózás szintjét lehet beállítani,
+mint a kontrollernél. \\
+
+Ami még hasonlóan működik, mint a kontroller esetében az a foglatok kezelése.
+Szóval az UDP és TCP protkoll kezélse az teljesen ugyan az, de a WebSocket estében
+nincs szerver implementálva csak a kliens. 
+
+\subsection{Médiaforgalom generálása}
+
+Ahogy az előzőekben ki lett fejtve, a médiafogralom generálására két eszköszt 
+használ a kontroller az rtpsend-t és az FFmpeg-t. Viszont ezekből tetszőleges
+számút kell tudni elindítani attól függően, hogy hány párhuzamos hívást kell 
+a kliensnek indítania.
+
+Első próbálkozásnál a szálkezeléssel próbálkoztam, de hamar rákellett jönnöm,
+hogy az csak abban az esetben hasznos, ha python kódot kell konkurensen 
+használni. Ezért átváltottam a \textit{subprocess} modulra, amivel külső alkalmazásokat
+lehet párhuzamosan használni.
+
+Ahhoz, hogy ezzel a modulal létre lehessen hoszni egy folyamatot, ahhoz a \textit{Popen}
+konstruktort kell használni, amiben az elindítani kívánt folyamat argumentumait lehet
+megadni egy listaként. Mivel egy így létrehozott objektum csak egyetlen folyamatot 
+képes elindítani, ézért több ilyen objektumot kell létrehozni más paraméterekkel. Ezért
+az FFmpeg és az rtpsend esetében is megkell találni azokat a részket, amik minden 
+hívásnál változnak és ezek szerint létrehozni ezeket az objektumokat. Az FFmpeg esetében
+elég volt a rtpengine címét és a híváshoz lefoglalt portját megadni. Így ezeket a címeket
+egy listába rendezve majd azen listát iterálva ellehet indítani a hívásonként kettő
+FFmpeg folyamatot. Az rtpsend esetében is ugyanez a felállás, viszont ott a forrás és 
+a cél port két különböző paraméterben szerpel. Ehhez már nem egy listát, hanem egy 
+szótárat használtam, ahol az rtpengine címe volt a kulcs és a forrás port volt a hozzárendelt
+érték.
+
+\subsection{Hívások generálása}
+
+A hívás generálás során biztosítani kell azt, hogy legyen megfelelő mennyiségű port
+nyitva médiaforgalomhoz és miellőt a médiaforgalom elindul megkell teremteni a hívást
+magán az rtpengine szerveren. Amihez szükség van egy \textit{offer} és \textit{answer}
+üzenetpárosra.
+
+Viszont mielőtt még ezek az üzenetek megalkotásra és elküldésre kerülnek azelőtt
+a hozzájuk tartozó SDP üzeneteket kell megalkotni. Ezt egy sablon alapján készíti el 
+a kontroller, amiben módosítása során csak a munkamenet azonosító helyére kerül
+mindig egy véletlenszerű szám és a kapcsolódást leíró paraméter kapja meg a lokásis 
+címet azaz a hívó félét. Ha ez megtörtént azután már ellehet küldeni elsőnek az offer-t
+majd az answer-t. Amik ugyanazzal a hívásazonosítóval és \textit{from-tag}-l rendelkeznek,
+viszont az answer esetében meg kell adni egy \textit{to-tag}-t is.
+
+Az így megalkotott hívásról információk kerülnek tárolásra egy listában, ami szükéges
+a hívások törtléshez. Mert ha vége az adott folyamatoknak, attól még az rtpengine szerveren
+él a hívás, csak nem érkezik be hozzá semmilyen adat. Amit lehetne, hagyni, hogy majd 
+magától megszűnik, hiszen egy adott idejű inaktivitás után törli. De, ha rövid időn 
+belül új tesztet kell elindítani, akkor összeakadhatnak a portok és az azonosítók. Így a 
+kontroller olyan esetben, amikor az hívás megszakad küld egy \textit{delete} vezérlőüzenetet
+az rtpengine felé hívásonként az hozzájuk tartozó azonosítókkal.
+

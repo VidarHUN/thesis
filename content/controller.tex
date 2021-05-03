@@ -50,7 +50,7 @@ használni a kontroller kapszulájának leírása során. Egy ilyen ConfigMap-be
 lehet létrehozni és azokat hozzáadni különböző telepítő definíciókhoz. 
 
 A következő kódrészletben látható, hogy Kubernetes-n belül ezt a konténert hogyan kell 
-létrehozni és elindítani benne a kontroller-t. 
+létrehozni és elindítani benne a kontrollert. 
 
 \begin{lstlisting}
 ...
@@ -70,9 +70,9 @@ spec:
 ...
 \end{lstlisting}
 
-A \textit{volumes} részben került betöltésre a \textit{contoller-config} ConfigMap, ami 
+A \textit{volumes} részben került betöltésre a \textit{controller-config} ConfigMap, ami 
 tartalmaz egy a kontroller számára megfelelő konfigurációt. Majd a \textit{volumeMounts}-ban
-kerül felcsatolásra a konténernek. Így már elérhező lesz a controller-config-ban meghatározott
+kerül felcsatolásra a konténernek. Így már elérhető lesz a controller-config-ban meghatározott
 fájl az \textit{/app/config} mappában a konténeren belül. Végül pedig a \textit{command} és az
 \textit{args} paraméterekkel indul el maga a kontroller, ahol \textbf{-c} argumentummal 
 lehet a konfigurációs fájl elérését megadni és az \textbf{-l} argumentummal lehet állítani,
@@ -89,14 +89,14 @@ a beérkező üzenetek feldolgozása.
 Ahogy a Használt eszközök bemutatása fejezetben is lehet olvasni a Kubernetes
 fürtnek parancsokat a Kube API-n keresztül lehet adni. Ezért kellett egy olyan
 módszert találni, amivel a kontroller képes kommunikálni a Kubernetes API-val 
-egy kapszulából. Ehhez használtam egy olyan könyvtárat, ami kifejezetten amivel
+egy kapszulából. Ehhez használtam egy olyan könyvtárat, amivel
 könnyen megvalósítható az API-val való kommunikáció. Mindemellett nagyon jól
 van dokumentálva ez a könyvtár, így viszonylag egyszerűen használható.
 
 A könyvtár telepítése után inicializálni kell a kapcsolatot a Kubernetes 
 API-val, amihez a \textit{client} és \textit{config} modult kell importálni
 a Kubernetes könyvtárból. Majd a \textit{config.load\_incluster\_config()}
-hívással lehet inicializálni az API-val való kapcsolatot. Így jelezzük, hogy 
+hívással lehet inicializálni az API-val való kapcsolatot. Így jelezzük, hogy a
 szkript egy fürtön belül egy kapszulában fog futni. De ahhoz ez ténylegesen jól 
 működjön ahhoz konfigurálni kell az RBAC-t (Role-based access control), amivel 
 olyan jogokat lehet biztosítani, amikkel hozzálehet férni Kubernetes 
@@ -150,8 +150,8 @@ API objektumot a kontrollerben, amivel egyéni erőforrás definíciókat lehet 
 \textit{api = client.CustomObjectsApi()}. \\
 
 Így most már szabadon lehet az l7mp objektumait létrehozni és törölni a konrollerből is, 
-ami az előzőleg létrehozott \textit{api} objektum \textit{create\_namespaced\_custom\_object}
-illetve a \textit{delete\_namespaced\_custom\_object} segítségével valósítható meg. Az elsőnek
+ami az előzőleg létrehozott \textit{api} objektum \textit{create\_namespaced\_custom\_object()}
+illetve a \textit{delete\_namespaced\_custom\_object()} segítségével valósítható meg. Az elsőnek
 említett függvény az alább felsorolt paramétereket várja.
 
 \begin{itemize}
@@ -178,9 +178,7 @@ Az így létrehozott erőforrásoknak a neveit tárolni kell, mivel a hívás v�
 a létrehozott erőforrásokat törölni kell mindig, ahhoz pedig szükséges az erőforrás 
 neve. 
 
-\subsection{Működése}
-
-\subsubsection{Konfigurálás és naplózás}
+\subsection{Konfigurálás és naplózás}
 
 A kontroller indítása után az első feladata az a kódnak, hogy beolvassa az indítás
 során megadott argumentumokat és feldolgozza az konfigurációs fájlban megadott 
@@ -193,14 +191,14 @@ után feloldásra kerülnek az olyan paraméterek értékei, amik tartalmazhatna
 is. Erre azért van szükség, mert létrehozott foglalatokkal csak konkrét IP címekre lehet 
 csomagokat küldeni. A beolvasott paraméterek egy globális szótár objektumba kerülnek, ami 
 miatt ezek a paraméterek könnyedén elérhetőek lesznek bármelyik függvényből. Ezzel a fejlesztés
-nagy mérték megkönnyebbül és átláthatóbb lesz a kód is. \\
+nagy mértékben megkönnyebbül és átláthatóbb lesz a kód is. \\
 
 A naplózás egy kulcsfontosságú része a kontrollernek, mivel fejlesztéskor vagy használata
 során az stdout-ra kiírt események nagyban segítik a problémák keresését illetve azok 
 megoldását. Naplózáshoz a \textit{logging} nevezetű könyvtárat használom, amiatt mert 
-sok már könyvtár is ezt használja így, ha azok is valamit naplóznak, akkor az egyben 
+sok más könyvtár is ezt használja így, ha azok is valamit naplóznak, akkor az egyben 
 látható lesz. Ininicializálása során megadható, hogy milyen szinten naplózza az eseményeket 
-és az is, hogy milyen formátumba. Ezért a kontroller egy naplóbejegyzései az alább látható 
+és az is, hogy milyen formátumba. Ezért a kontroller egy naplóbejegyzése az alább látható 
 módon néz ki. Ami a másodpercre pontos időből, a naplózás szintjéből illetve magából az 
 üzenetből áll.
 
@@ -209,7 +207,7 @@ módon néz ki. Ami a másodpercre pontos időből, a naplózás szintjéből il
 15:41:55 [INFO] Configuration file loaded!
 \end{lstlisting}
 
-\subsubsection{Foglalatok létrehozása}
+\subsection{Foglalatok létrehozása}
 
 Mivel a kontroller három protokollt képes jelenleg támogatni ezért háromféle foglalatot 
 kell tudnia használni. Ami az UDP, TCP, WebSocket protokollokat támogatják. Ezeknek a
@@ -218,7 +216,7 @@ beállítani és a megfelelő foglattal visszatérni, hogy azt több helyen lehe
 
 A legegyszerűbb ebben az esetben az UDP foglalat megalkotása. Azért ez a legegyszerűbb,
 mert ennél nem kell figyelembe venni a célját, mint a TCP esetében. Egy UDP foglalat 
-léterhozához szükség van a lokális címre és portra, amikhez a foglalot hozzá kell 
+léterhozához szükség van a lokális címre és portra, amikhez a foglalatot hozzá kell 
 kötni. A hozzákötés után, ha ezen a foglalaton keresztül történik csomagtovábbítás, 
 akkor a megadott cím és port lesz a forrás cím és port. Emellett beállításra is
 kerül egy időtúllépés paraméter is, ami 10 másodperc lesz. Ez azt jelenti, hogy
@@ -237,8 +235,8 @@ fejtem ki bővebben. De a csatlakozás az rtpengine-hez azért szükséges ebben
 esetben, mert másképp a kliens nem tudja TCP-nél jellemző kézfogás folyamatot
 teljseíteni az rtpengine-l. \\
 
-Végül pedig van a WebSocket-s verzió, amikor egy WebSocket foglalat kerül létrehozásra.
-De ennek a létrezhozás a nem az általában használt python könyvtárat a \textit{socket}-t
+Végül pedig van a WebSocket verzió, amikor egy WebSocket foglalat kerül létrehozásra.
+De ennek a létrehozására nem az általában használt python könyvtárat a \textit{socket}-t
 fogja használni, hanem a \textit{websocket} könyvtárnak a \textit{create\_connection()}
 függvényét. Ezzel a függvény egy olyan foglalattal tér vissza, aminél az elküldött 
 üzenetek rendelkezni fognak a létrehozáskor beállított fejlécekkel. A következő 
@@ -259,11 +257,11 @@ A következő listában sorrendben olvashatóak, hogy mely argumentum mit állí
 pont azt.
 
 \begin{itemize}
-	\item Az rtpengine meghírdetett WebSocket URL-jét kapja meg. Fontos, hogy ezt
-	kapja, mivel az rtpengine egyszer több féle protokollon keresztül tud 
+	\item Az rtpengine meghírdetett WebSocket URL-jét (Uniform Resource Locator) kapja 
+	meg. Fontos, hogy ezt kapja, mivel az rtpengine egyszere több féle protokollon keresztül tud 
 	vezérlőparancsokat fogadni.
-	\item Alprotkollokat is lehet használnii WebSocket esetén, ami azért fontos, mert
-	az rtpengine csak azokat WebSocket csomagokat képes feldolgozni, amik rendelkeznek
+	\item Alprotokollokat is lehet használni WebSocket esetén, ami azért fontos, mert
+	az rtpengine csak azokat a WebSocket csomagokat képes feldolgozni, amik rendelkeznek
 	ezzel az \textit{ng.rtpengine.com} alprotokollal.
 	\item A forrás címet lehet beállítani az \textit{origin} argumentummal. 
 	\item Be lehet állítani azt, hogy a kapcsolat kiépítése során egyéni foglalatot
@@ -271,16 +269,16 @@ pont azt.
 	rendelkezzen. Ezért van szükség arra, hogy a TCP foglalat megalkotása során
 	figyelembe vegyük azt, hogy WebSocket kliens számára hozzuk létre vagy csak úgy
 	általánosan.
-	\item Lehet megadni egyéni fejléceket is, amikben bármi tárolható egy adott
-	méretig. Ha létrejön egy hívás, akkor itt beállítód a hívás azonosítója, majd 
-	később az l7mp proxy, ami a kontroller mellett van, majd ez alapján fogja eldönteni,
-	hogy mely rtpengine kapszula kapja meg az üzentet.
+	\item Mehlehet adni egyéni fejléceket is, amikben bármi tárolható egy adott
+	méretig. Ha létrejön egy hívás, akkor itt beállítódott hívás azonosítója alapján
+	fogja a mellette lévő l7mp proxy eldöneni, hogy mely rtpengine kapszula kapja
+	meg az üzeneteket.
 \end{itemize}
 
-\subsubsection{Erőforrások létrehozása és törlése}
+\subsection{Erőforrások létrehozása és törlése}
 
 Arról, hogy az erőforrások létrehozása illetve törlése mikor történik a feldolgozás
-fejezetben lesz szó. 
+fejezetben lesz szó. Ebben arról lesz, hogy hogyan működnek.
 
 Mikor elindul a kontroller, akkor már a kezdetekkor van egy \textit{kubernetes\_apis}
 lista, ami tartalmazza az összes Kubernetes API kliens objektumot. Így mindig van egy
@@ -290,10 +288,10 @@ fog bekerülni ebbe a listába, egy hívó fél adataival és egy a hívott fél
 és törlésnél ez a kettő kerül törlésre a hívásazonosító alapján. 
 
 Egy erőforrás létrehozása során elsőnek ebben a listában kell ellenőrizni azt, hogy
-ilyen hívásazonosítóval már létezik-e erőforrás, ha nem csak akkor lehet létrehozni. 
+ilyen hívásazonosítóval már létezik-e erőforrás, ha nem létezik 0csak akkor lehet létrehozni. 
 Erre azért van szükség, mert a Kamailio rendelkezik egy válaszidővel, ami ha lejár
 akkor az utljára kiküldött üzenetet megismétli. De ebben az esetben könnyen előfordulhat,
-hogy később küldi vissza a kontroller az üzenetet, mint ez az időkeres és ilyenkor 
+hogy később küldi vissza a kontroller az üzenetet, mint ez az időkeret és ilyenkor 
 a duplikáltan küldött üzeneteket elveti a kontroller.
 
 Ezután egy \textit{query} üzenetet kell küldeni az rtpengine felé, ugyanis az 
@@ -332,16 +330,16 @@ A törlés ezzel szemben nagyon egyszerűen úgy történik, hogy a hívásazono
 \textit{kubernetes\_apis} listából meghívjuk az objektum \textit{delete\_resources()}
 függvényét, ami az adott híváshoz kapcsolódó összes erőforrást törölni fogja.
 
-\subsubsection{Parancsok feldolgozása}
+\subsection{Parancsok feldolgozása}
 
 A parancsok feldolgozása kétféle módon történhet, lehet az átlagos foglalatokkal, ami 
 a TCP és UDP csomagok kezelését jelenti illetve lehet a WebSocket protokoll segítéségével 
-is. Az előzőeg említett feldolgozás azért teszi lehetővé, hogy mind TCP és UDP
+is. Az előzőeg említett feldolgozás lehetővé teszi, hogy mind TCP és UDP
 foglalatok használatával működjön, mert ezek a foglalatok küldés és fogadás szempontjából
-teljsen ugyanazokat a függvényeket valósítják meg. \\
+teljesen ugyanazokat a függvényeket valósítják meg. \\
 
 Az említett eljáráshoz tartozó függvény két foglalatot vár el argumentumként, amik közül 
-a \textit{sock} fogja lesz az amelyik a kliensektől várja a bejövő forgalmat és az 
+a \textit{sock} az a foglalat lesz amelyik a kliensektől várja a bejövő forgalmat és az 
 \textit{rtpe\_sock} lesz, amelyen keresztül kommunikálni fog a kontroller az rtpnengine-el. 
 Szóval a sock-n beérkező adat tárolásra kerül abban a formában, amelyben érkezik szóval 
 egy egyszerű karakterláncként és a feldolgott verziója is, amikor karakterlánc bencode 
@@ -353,8 +351,8 @@ Ha az rtpengine válaszolt az adott parancsra és ez a parancs nem tartalmazott 
 SDP üzenetet, akkor egyszerűen visszaküldésre kerül a kliensnek. De ha a parancs egy offer
 vagy answer üzenet volt, akkor az rtpengine által adott válaszban szereplő SDP üzenetben
 módosítani kell a kapcsolat kiépítéséhez szükséges paraméterben szereplő IP címet. Ugyanis
-ez a cím minden eseetben 127.0.0.1 lesz, ami nem jó az olyan SIP klienseknek, mint a linphone.
-A szóban forgó címet kell lecsérlni az dolgozó csomópont IP címére. De az rtpengine 
+ez a cím minden eseetben 127.0.0.1 lesz, ami nem jó az olyan SIP klienseknek, mint a Linphone.
+A szóban forgó címet kell lecsérlni a dolgozó csomópont IP címére. De az rtpengine 
 válasza után még vizsgálni kell azt is, hogy milyen parancs érkezett be a kontrollerhez. 
 Ha egy \textit{delete} üzenet érkezett, akkor a benne szereplő hívásazonosítóhoz tartozó
 kubernetes erőforrásokat mindenképpen törölni kell, hogy véletlenül sem maradjon nyitva

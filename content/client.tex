@@ -68,8 +68,9 @@ tartalmazza részletesen, hogy a paraméterei mit csinálnak.
 	így lehet szimulálni egy élő forrást, például egy mikrofont. Emellett lelassítja
 	a fájl olvasásának sebesseggét annyira, hogy hasonlítson az a valós idejű
 	adatbevolvasáshoz, ugyanis alapértelmezetten olyan gyorsan ovassa az FFmpeg a
-	fájlokat amilyen gyorsan csak tudja és gyorsabban történik, mint a fájl hossza. 
-	Így lehetővé teszi azt, hogy egy három perces hanfájl ne pár másodperc alatt 
+	fájlokat amilyen gyorsan csak tudja és így gyorsabban lesz beolvasva a fájl,
+	mint a fájl időtartama. 
+	Így lehetővé teszi azt, hogy egy három perces hangfájl ne pár másodperc alatt 
 	legyen leküldve a hálózaton, hanem három perc alatt. 
 	\item \textbf{-ar}: Beállítja a mintavételezési periódust, ami itt 8000 Hz, ami 
 	azt jelenti, hogy másodpercenként 8000 mintát vesz a forrásból. 
@@ -90,7 +91,7 @@ tartalmazza részletesen, hogy a paraméterei mit csinálnak.
 Az rtpsend teljesen eltér az FFmpeg-től, hiszen itt nincs semmilyen hang vagy videó
 feldolgozás, átalkítás vagy bármi más. Itt egyszerűen csak egy RTP folyam visszajátszása
 történik, amit az \textit{rtpdump} eszközzel lehet felvenni. Ez a két szoftver egy 
-eszköztárba tartoznak, aminek a neve \textit{rtptools}, amit Henning Schulzrinne
+eszköztárba tartozik, aminek a neve \textit{rtptools}, amit Henning Schulzrinne
 alkotott meg, aki a Columbia Egyetem oktatója.
 
 Szóval elsőnek fel kell venni egy híváshoz tartozó RTP folyamot az rtpdump parancssal,
@@ -114,7 +115,7 @@ címre, amin az rtpengine várja az egyik oldaltól a médiafolyamot.
 
 A kliens felépítése nagyon hasonló, mint a kontrolleré és ez látszik abban is, hogy
 ugyan azokat a könyvtárakat használja naplózáshoz, konfiguráció beolvasásához és
-argumentumk átadására. Viszont a konfigurácós fálban más paramétereket lehet 
+argumentumk átadására. Viszont a konfigurácós fájlban más paramétereket lehet 
 beállítani. A következő felsorolásban fejtem, hogy mely paraméter milyen értékeket 
 vehet fel és mi történik ezek használata során. 
 
@@ -126,7 +127,7 @@ vehet fel és mi történik ezek használata során.
 	\item \textbf{rtpe\_address}: Az rtpengine címe. 
 	\item \textbf{rtpe\_port}:Az rtpengine portja.
 	\item \textbf{ping}: Ha csak azt akarjuk a klienssel ellenőrizni, hogy az rtpengine
-	elérhető, akkor leht küldeni egy szimpla \textit{ping} üzenet. Ha visszajön egy
+	elérhető, akkor lehet küldeni egy szimpla \textit{ping} üzenet. Ha visszajön egy
 	\textit{pong} az rtpengien elérhető. Ha ennek a mezőnek az értéke yes, akkor 
 	az előzőleg leírt megtörténik és vége a kliens futásának. 
 	\item \textbf{number\_of\_calls}: A generálni kívánt hívások számát lehet megadni. 
@@ -143,12 +144,12 @@ Indításánál ugyanúgy a konfigutációs fájlt és a naplózás szintjét le
 mint a kontrollernél. \\
 
 Ami még hasonlóan működik, mint a kontroller esetében az a foglatok kezelése.
-Szóval az UDP és TCP protkoll kezélse az teljesen ugyan az, de a WebSocket estében
+Szóval az UDP és TCP protokoll kezélse az teljesen ugyan az, de a WebSocket estében
 nincs szerver implementálva csak a kliens. 
 
 \subsection{Médiaforgalom generálása}
 
-Ahogy az előzőekben ki lett fejtve, a médiafogralom generálására két eszköszt 
+Ahogy az előzőekben ki lett fejtve, a médiaforgalom generálására két eszköszt 
 használ a kontroller az rtpsend-t és az FFmpeg-t. Viszont ezekből tetszőleges
 számút kell tudni elindítani attól függően, hogy hány párhuzamos hívást kell 
 a kliensnek indítania.
@@ -165,9 +166,9 @@ képes elindítani, ézért több ilyen objektumot kell létrehozni más paramé
 az FFmpeg és az rtpsend esetében is megkell találni azokat a részket, amik minden 
 hívásnál változnak és ezek szerint létrehozni ezeket az objektumokat. Az FFmpeg esetében
 elég volt a rtpengine címét és a híváshoz lefoglalt portját megadni. Így ezeket a címeket
-egy listába rendezve majd azen listát iterálva ellehet indítani a hívásonként kettő
+egy listába rendezve majd a listát iterálva ellehet indítani hívásonként kettő
 FFmpeg folyamatot. Az rtpsend esetében is ugyanez a felállás, viszont ott a forrás és 
-a cél port két különböző paraméterben szerpel. Ehhez már nem egy listát, hanem egy 
+a cél port két különböző paraméterben szerepel. Ehhez már nem egy listát, hanem egy 
 szótárat használtam, ahol az rtpengine címe volt a kulcs és a forrás port volt a hozzárendelt
 érték.
 
@@ -181,16 +182,16 @@ magán az rtpengine szerveren. Amihez szükség van egy \textit{offer} és \text
 Viszont mielőtt még ezek az üzenetek megalkotásra és elküldésre kerülnek azelőtt
 a hozzájuk tartozó SDP üzeneteket kell megalkotni. Ezt egy sablon alapján készíti el 
 a kontroller, amiben módosítása során csak a munkamenet azonosító helyére kerül
-mindig egy véletlenszerű szám és a kapcsolódást leíró paraméter kapja meg a lokásis 
+mindig egy véletlenszerű szám és a kapcsolódást leíró paraméter kapja meg a lokális 
 címet azaz a hívó félét. Ha ez megtörtént azután már ellehet küldeni elsőnek az offer-t
 majd az answer-t. Amik ugyanazzal a hívásazonosítóval és \textit{from-tag}-l rendelkeznek,
 viszont az answer esetében meg kell adni egy \textit{to-tag}-t is.
 
 Az így megalkotott hívásról információk kerülnek tárolásra egy listában, ami szükéges
-a hívások törtléshez. Mert ha vége az adott folyamatoknak, attól még az rtpengine szerveren
+a hívások törléshez. Mert ha vége az adott folyamatoknak, attól még az rtpengine szerveren
 él a hívás, csak nem érkezik be hozzá semmilyen adat. Amit lehetne, hagyni, hogy majd 
 magától megszűnik, hiszen egy adott idejű inaktivitás után törli. De, ha rövid időn 
 belül új tesztet kell elindítani, akkor összeakadhatnak a portok és az azonosítók. Így a 
-kontroller olyan esetben, amikor az hívás megszakad küld egy \textit{delete} vezérlőüzenetet
-az rtpengine felé hívásonként az hozzájuk tartozó azonosítókkal.
+kontroller olyan esetben, amikor a hívás megszakad küld egy \textit{delete} vezérlőüzenetet
+az rtpengine felé hívásonként a hozzájuk tartozó azonosítókkal.
 

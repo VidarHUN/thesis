@@ -6,7 +6,7 @@ Az első rész, ami egyértelmű a kliensek, akik a hívásokat kezdeményezik �
 fogadják őket. A második maga a SIP (Session Initiation Protocol) szerver, aminek
 az a dolga, hogy a kliensek által kapott SIP üzeneteket feldolgozza és ezek alapján
 megfelelően állítsa be a harmadik elemet, ami egy RTP (Real-time Transport Protocol) 
-proxy. Erre az proxy-ra azért van szükség, hogy irányítani lehessen az áthaladó 
+proxy. Erre az proxyra azért van szükség, hogy irányítani lehessen az áthaladó 
 forgalmat. De ezen felül még rengeteg más funkcióval is rendelkezik egy ilyen
 proxy. Az alábbi ábrán látható egy ilyen rendszer egyszerűsített rajza.
 
@@ -21,15 +21,15 @@ Az ábrán egy általános hívásfelépítés látszik, ahol \textbf{A} hívja 
 Ehhez, viszont SIP üzenetekben közölniük kell a SIP szerverrel, hogy ki milyen 
 médiaformátumokat fogad el, melyik porton szeretnének kommunikálni a másikkal és 
 hasonló információkat. A későbbiekben az összes ilyen protokoll kifejtésre fog
-kerülni, hogy könnyebb látható legyen melyikre miért van szükség. Ha a SIP szerver
+kerülni, hogy könnyebben látható legyen melyikre miért van szükség. Ha a SIP szerver
 az összes üzenetet megkapta ahhoz, hogy létre tudjon hozni egy hívást, akkor az 
-RTP proxy-nak megmondja, hogy hozzon létre egy hívást. Ha sikeresen létrejött a 
+RTP proxynak megmondja, hogy hozzon létre egy hívást. Ha sikeresen létrejött a 
 hívás, akkor kinyit két-két portot a hívásban résztvevő feleknek, amikre érkezhet
 az adatfolyam. Azért nyit ki kettő portot kliensenként, mert az egyiken RTP 
 csomagokat fog kezelni, míg a másikon RTCP (Real-time Transport Control Protocol) 
 csomagokat. Mindezek mellett képes formátum konverziót is végrehajtani. Így ha 
-a hívásban lévő két fél nem rendelkezik közös kodekkel, akkor is tudnak 
-beszélgetni, mert az RTP proxy átfordítja mindkét félnek olyan formátumra, amit 
+a hívásban lévő két fél nem rendelkezik közös kódolási technikával, akkor is tudnak 
+beszélgetni, mert az RTP proxy átfordítja mindkét félnek olyan kódolásra, amit 
 képesek használni.
 
 Ezzel a felépítéssel az a probléma, hogy az RTP proxy nem tud végtelen mennyiségű
@@ -67,7 +67,7 @@ a jelenlegi szolgáltatáshálók közül kevesen képesek.
 Ezenfelül kell egy kontroller, ami képes lesz hidat képezni az l7mp és az RTP 
 proxy között. Erre azért van szükség, mert az l7mp nem képes automatikusan 
 létrehozni a megfelelő forgalmi szabályokat. Ilyen szabályok szükségesek ahhoz, 
-hogy egy hívás alatt a forgalom mindig ugyanahhoz az RTP proxy-hoz érkezzen és 
+hogy egy hívás alatt a forgalom mindig ugyanahhoz az RTP proxyhoz érkezzen és 
 ne összevissza a többi példány között.  
 
 \section{Szakdolgozat felépítése}
@@ -76,9 +76,9 @@ Elsőnek a rendszerben résztvevő elemeket fogom részletesen bemutatni, hogy
 tágabb rálátást lehessen nyerni ezekre a technológiákra. Majd részletesebben 
 foglalkozok azzal, hogy a hagyományos rendszer alatt hogyan működik egy hívás 
 kezelése. Erre azért van szükség, mert az új rendszerben is pontosan ugyanígy fog 
-működni, viszont sokkal kevesebb mozgó elem segítségével mutatható be. 
+működni, viszont az RTP proxy már nem csak egy egyszerű szerver lesz. 
 Ezután a felépített rendszerről lesz részletesebben információ és arról, hogy a
-kontroller hogyan működik ebben az egész megvalósításban. 
-Végül a teszteléshez szükséges kliens bemutatása lesz terítéken, mivel annak a 
-megvalósítása és működése is egy fontos része a dolgozatomnak. Végezetül pedig 
+kontroller hogyan működik ebben az egész megvalósításban. Amihez a használt
+klienst is befogom mutatni, mert azzal közvetlen lehet kommunikálni az RTP proxyval
+és tetszőleges számú hívás indítható el párhuzamosan. Végezetül pedig 
 a tesztek értékelése lesz és összehasonlítása az új és a régi rendszer között. 

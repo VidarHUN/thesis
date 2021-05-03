@@ -20,7 +20,7 @@ A kliensek tekintetében is az ingyenességre és az egyszerű használatra tör
 de fontos volt még az a szempont is, hogy lehessen parancssorosan hívást kezdeményezni
 és fogadni. Ezekkel az a funkciókkal rendelkezett a Linphone nevezetű kliens, ami
 rendkívül sok beállítást engedélyez ingyenesen a felhasználóinak. Számomra a következő
-funkciók voltak nagyon hasznosnak: wav fájlból lejátszása hívás közben, használt kódolás
+funkciók voltak nagyon hasznosnak: wav fájl lejátszása hívás közben, használt kódolás
 kiválasztása és a hívás rögzítése. A wav fájl lejátszása, azért egy fontos funkció, mert
 így nem kell törődni azzal, hogy a mikrofon keresztül valamilyen hangot tudjon rögzíteni.
 
@@ -32,10 +32,10 @@ amiről a következő fejezetben lesz részletesen szó.
 
 \section{rtpengine}
 
-Az rtpengine egy Sipwise  által fejlesztett a Kamailio-hoz szánt RTP és UDP 
+Az rtpengine egy Sipwise  által fejlesztett a Kamailio-hoz szánt RTP 
 proxy, ami nem csak forgalmat képes irányítani, hanem a beérkező csomagokat transzformálni is.
-Emellett olyan funkciókkal is rendelkezik, amikkel tudjuk a hívások minőségét, 
-rendelkezésre állóságát és biztonságát lehet növelni. A következő funkciókat érdemes 
+Emellett olyan funkciókkal is rendelkezik, amikkel tudjuk a hívások minőségét monitorozni, 
+rendelkezésre állóságát és biztonságát növelni. A következő funkciókat érdemes 
 jobban kifejteni: 
 
 \begin{itemize}
@@ -56,8 +56,8 @@ Az rtpengine alapvetően a felhasználói térben működik így ilyenkor minden
 magasabb késeltetést és processzor használatot igényel. Az oka ennek, hogy mikor egy csomag
 érkezik a hálózati interfészre az áthalad a kernelen a fájlleíróig. Ha odajutott egy 
 csomag, akkor a hozzá kapcsolódó folyamatot értesíti, ami ebben az esetben az rtpengine, hogy
-van mit leolvasni onnét. Ennek során a csomag átkerül a kernelből a felhasználóit térbe és 
-ez egy nagyon drága művelet. Ha feldolgozásra került a csomag, akkor ugyanezen az útvonalon
+van mit leolvasni onnét. Ennek során a csomag átkerül a kernelből a felhasználói térbe és 
+ami egy nagyon drága művelet. Ha feldolgozásra került a csomag, akkor ugyanezen az útvonalon
 fog kimenni. Ez azért nagy probléma, mert az RTP protokoll UDP-t használ és így rengeteg 
 kis csomag érkezik folyamatosan, ami nagy terhelést jelent a szerver számára. 
 
@@ -120,7 +120,7 @@ mind a kettő számára képes egy olyat nyújtani, amit elfogad, akkor a hívá
 
 Ha aktív transzkódolás van, akkor az SDP-ből kikerül minden olyan kodek, amit nem támogatnak
 a kliensek. Emellett ezt nem lehet kernel szinten továbbítani, ezért mindenképpen a 
-felhasználói térben lesznek ezek a csomagok feldolgozva. \\
+felhasználói térben lesznek ezek a csomagok feldolgozva.
 
 Ezek a formátumok vannak támogatva: G.711 (a-Law és µ-Law), G.722, G.723.1, G.729, Speex, 
 GSM, iLBC, Opus, AMR (keskeny és széles sávú)
@@ -129,13 +129,17 @@ GSM, iLBC, Opus, AMR (keskeny és széles sávú)
 
 Ahhoz, hogy bizonyos funkciók engedélyezve legyenek az rtpengine-ben kifejlesztettek 
 egy vezérlési protokollt, amibe a SIP proxy beágyazva áttudja adni az SDP törzset 
-azt rtpengine-nek, majd az ezt a törzset módosítva küldi vissza. 
+az rtpengine-nek, ami ennek a SDP üzenetnek a módosított verzióját fogja visszaküldeni
+a klienseknek.
 
 Ez a vezérlőprotokoll bencode formátumban küldi ki el az üzeneteket. Ez nagyon hasonló
 felépítéssel rendelkezik, mint a JSON, viszont sokkal egyszerűbb és gyorsabb a kódolása 
-és dekódolása. Ami hátránya a JSON-l szemben, hogy kevésbé olvasható. Fontos 
-megjegyezni, hogy ilyen üzenetek képes fogadni az rtpengine ezeken a protokollokon: 
-UDP, TCP, HTTP, HTTPS, WebSocket, WebSocket Secure. 
+és dekódolása. Ami hátránya a JSON-l szemben, hogy kevésbé olvasható.
+
+Fontos megjegyezni, hogy ilyen üzenetek képes fogadni az rtpengine ezeken a protokollokon: 
+UDP, TCP, HTTP, HTTPS, WebSocket, WebSocket Secure. De a projekt során a HTTP, HTTPS és 
+WebSocket protokollokat nem lehet használni a használt rtpengine és kamailio 
+verzió miatt, ami az architektúra fejezetben kiderül, hogy miért nem.
 
 Minden ilyen üzenet két részből áll. Egy sütiből, ami ebben az esetben azonosítóként
 funkciónál és egy bencode szótárból, ami legalább egy parancsot tartalmaz az 
@@ -173,7 +177,8 @@ Ezzel a következő dolgokat állítom be:
 
 \begin{itemize}
 	\item \textbf{interface}: Megadja az RTP helyi hálózati interfészét. Legalább
-	egyet meg kell adni, de több is megadható.
+	egyet meg kell adni, de több is megadható. Ez ez interfész fogja kezelni a 
+	médiaforgalmat. 
 	\item \textbf{listen-ng}: A vezérlő üzeneteket ezen a címen várja. 
 	\item \textbf{port-min és port-max}: Az UDP média forgalom számára lefoglalható
 	portok tartománya. 
@@ -200,38 +205,70 @@ definiálni, amikkel lehet kontrollálni, hogy a konfiguráció mely része fuss
 
 Aztán jönnek a \textbf{modul beállítások}, ahol az alapértelmezett modulokhoz tudunk plusz
 modulokat betölteni és beállítani. Ez azért egy fontos rész, mert a Kamailio alapvetően 
-nem rtpengine-re van beállítva, hanem annak az előző verziójához, ami az rtpproxy. 
-Az rtpproxy-t nem kell telepíteni, mert ez kamailio csomagjai közt szerepel. 
+nem rtpengine-re van beállítva, hanem annak az előző verziójához, ami az rtpproxy. Ami 
+nem kerül telepítésre az kamailio-val együtt. Így, ha se rtpengine se rtpproxy nincs,
+akkor az kamailio két SIP klienst közvetlen fogja összekötni.
 
-Végül van az irányítási blokk, ahol különböző SIP üzenetekre lehet megmondani, hogy mi
+Végül van az \textbf{irányítási blokk}, ahol különböző SIP üzenetekre lehet megmondani, hogy mi
 történjen velük, ha beérkeznek a hálózati interfészre. Itt betudjuk állítani azt, hogy
 az \textbf{INVITE} üzenetek esetén az ng vezérlőprotokollon keresztül állítsa be a hívást
 az rtpengine szerveren.
 
 \section{Kommunikáció}
 
-Ahhoz, hogy ezt a hálózatot létrehozzam Virtualbox-t használtam, amivel tetszőleges 
-virtuális gépeket lehet elindítani. Így létrehoztam négy Ubuntu 20.04 Linux szervert, amik
-Bridge adaptert használva képesek egymással kommunikálni közvetlenül. 
+Az normál architektúrához a már említett VirtualBox-l létrehoztam négy virtuális gépet,
+amik Ubuntu 20.04 operációs rendszer használnak. Ezek közül egyre telepítésre került 
+a Kamailio, egyre az rtpengine és kettőre egy-egy Linphone kliens. A klienseknek azért
+van szüksége két különböző virtuális gépre, mert Linphone-ból nem lehet kettőt
+párhuzamosan futtatni egy géppen.
 
-A Kamailio és az rtpengine-n kívül használtam még 2 Linphone klienst is, amikkel a hívást
-generálom. Ezeknek azért kellett kettő különböző virtuális gép, mert egy rendszeren 
-csak egy kliens indítható el.
+A Kamailio beállítása során egy a publikus github tárolóban található konfigurációt
+használtam, mivel abban beállításra került az rtpengine használata. Így nekem 
+csak a modul inicializásánál kellett megadnom az rtpengine címét és annak portját. 
+Viszont az rtpengine beállítása teljes mértékben azonos az rtpengine bemutatására
+szolgáló fejezetben megadott konfigurációval azzal a különbéggel, hogy más IP
+címek szerepel benne.
 
-Fontos még megjegyezni, hogy a Linphone segítségével belehet állítani, hogy ne használjon
-semmilyen hangkártyát, hanem egy wav (RIFF WAVE) fájlt játsszon le, mikor a hívás kiépült.
+Amit még a Kamailio-val kellett tenni, hogy két felhasználókat kellett regisztrálni
+különben nem lehetne a két kliens között hívást kezdeményezni. Az ehhez használt parancs
+alább látható, ahol az első paraméter a felhasználó neve majd az azutáni a felhasználó
+jelszava.
 
-Az alábbi ábra segítségével fogom ismertetni egy teljes hívás részeit:
+\begin{lstlisting}
+kamctl add A 123
+\end{lstlisting}
+
+Abban az esetben, ha a Kamailio-t futtató szerver IP címe 192.168.99.102, akkor az 
+így létrejött felhasználó azonosítója a következő lesz: sip:A@192.168.99.102. Ezzel a
+címmel lehet a Linphone kliensekben regisztálni ezt a felhasználót. 
+
+De hogyan is kell beállítani a Linphone klienseket? Erre add választ a következő 
+pár sor. 
+
+\begin{lstlisting}
+register sip:A@192.168.99.102 192.168.99.102 123
+soundcard use files
+play /home/user/input.wan
+\end{lstlisting}
+
+Az első sorral kerül regisztrálásra a felhasználó, ahol az első argumentum adja meg a 
+felhasználó azonosítóját, második a tarmony címét és a végül a jeszó kerül átadásra. 
+Eztután, ha újraindításra kerül a Linphone, akkor automatikusan megpróbálja a definált
+felhasználót regisztrálni. 
+
+A következő sor azt adja meg, hogy ne használjon semmilyen hangkártyát és csak a 
+harmadik sorban specifikált fájlt játsza le a hívásban részvevő feleknek.  \\
 
 \begin{figure}[!ht]
 	\centering
 	\includegraphics[width=0.9\textwidth, keepaspectratio]{figures/basic_call_flow.png}
 	\caption{Kubernetes nélküli hívásfelépítés}
-	\label{fig:HVSpaces}
+	\label{fig:callflow}
 \end{figure}
 
-Az ábrán látható egy teljes hívás folyamata a regisztrációtól egészen a hívás bontásáig.
-Négy részre bontottam a hívást annak érdekében, hogy könnyebb legyen a megértése.
+Az \ref{fig:callflow} ábra segítségével a hívásfelépítés részeit.  Az ábrán látható 
+egy teljes hívás folyamata a regisztrációtól egészen a hívás bontásáig. Négy részre 
+bontottam a hívást annak érdekében, hogy könnyebb legyen a megértése.
 
 Az első rész a regisztráció amelynek során a felhasználók csatlakoznak a SIP szerverhez.
 Ilyenkor a kliens SIP REGISTER üzenetet küld a szervernek, amikkel hozzáadni, törölni és
@@ -242,8 +279,7 @@ hitelesítéshez szükséges felhasználói azonosítót és jelszót, amit egy 
 üzenetben fog újraküldeni titkosítva. Ha minden megfelelt, akkor 200 OK üzenetet kap 
 vissza a kliens, ami jelzi, hogy minden rendben és tud hívásokat kezdeményezni. Az ábrán
 szereplő folyamat nem tartalmazza a 401-s üzenetet, mert már többször használva volt a 
-kliens azon a virtuális gépen. Mint látszik a leírtakból és az ábrán is nagyon hasonlóan
-működik a SIP protokoll, ami megkönnyíti a megértését azoknak, akik járatosak a HTTP-ben. 
+kliens azon a virtuális gépen.
 
 A következő rész pedig már a konkrét hívás kezdeményezése és felépítése. A hívást az 
 \textbf{A} felhasználó kezdeményezi \textbf{B} irányába egy INVITE üzenettel, ami tartalmaz
@@ -267,7 +303,7 @@ ugyan azt jelenti, mint mikor az \textbf{A} kezdeményezett. De itt már szerepe
 az üzenetet megkapja \textbf{A} is. 
 
 Ha \textbf{B} elfogadta a hívást, akkor \textbf{200 OK}-l jelez a szervernek, amiből a
-SIP szerver tudja, hogy answer-t kell küldenie az rtpengine felé, amivel a hívás teljesen
+SIP szerver tudja, hogy \textbf{answer}-t kell küldenie az rtpengine felé, amivel a hívás teljesen
 ki fog épülni az rtpengine-ben is. Az answer igazából ugyanazt a funkciót valósítja meg,
 mint az offer. Mivel az rtpengine kapott offer-t és answer-t is, így a hívást kiépítheti
 és az előzőleg lefoglalt négy porton képes fogadni a forgalmat, amit feldolgozva 

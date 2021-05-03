@@ -6,34 +6,70 @@
 
 \subsection{RTP \& RTCP}
 
-Az RTP (Real-time Transport Protocol) protokoll használatával valós időben lehet
-hang, videó vagy egyéb multimédiás információkat szállítani. Mivel az RTP UDP
-csomagokba van beágyazva így nem foglal le semmilyen erőforrást a kommunikáció
-során, ezért nem tud QoS-t (Quality of Service) biztosítani az alkalmazások számára.
-Egy RTP kommunikáció során időnként a felek küldenek egymásnak RTCP (RTP Control
-Protocol) üzeneteket is, amivel minimális ellenőrizhetőséget biztosít a média 
-folyam felett. Így információt lehet kapni arról, hogy hány csomag veszett el
-a továbbítás során vagy átlagosan milyen hosszú volt egy csomag körülfordulási
-ideje. Szóval egy RTCP csomag nem tartalmaz semmilyen multimédiás adatot, csak 
-a információkat az RTP folyamról. 
+Az RTP protokoll használatával valós időben lehet hang, videó vagy egyéb multimédiás 
+információkat szállítani egy-egy felhasználó között. A valós idejű továbbítás mellett
+információkat szolgáltat arról, hogy a csomag tartalma milyen kódolást használ, 
+sorszámozza a csomagokat, ellátja őket időbélyeggel és lehetővé teszi szállítási folyamat
+monitorozását. Az alkalmazások általában UDP felett használják az RTP-t így ki lehet
+használni az UDP által nyújtott előnyöket. Ez viszont nem azt jelenti, hogy az RTP
+csak UDP-vel tud működni, mert elméletileg minden UDP-hez hasonló protokoll tudja kezelni
+az RTP-t.
 
-Az RTCP-t még két különböző részre lehet bontani, ugyanis az RTCP-ben jelentések 
-vannak, amiket előállíthat a küldő és a fogadó is. A küldő jelentésben a következő
-adatok fognak megjelenni: küldő SSRC, utoljára elküldött RTP csomag időbélyege, 
-küldő valós órájának ideje illetve a folyamban elküldött csomagok száma és 
-mérete. A fogadó fél pedig egy fogadó jelentéssel fog válaszolni, melyben a következő
-információk fognak szerepelni: SSRC, elveszett csomagok száma, legmagasabb kapott
-sorszám, jitter és az utolsó küldő jelentés és az azóta eltelt idő. 
+Fontos megjegyezni, hogy az RTP nem szolgáltat semmilyen mechanizmust, ami biztosítaná,
+hogy a csomagok időben megérkeznek így QoS-t (Quality of Service) sem garantál. Ezen kívül
+az RTP nem garantálja, hogy a csomagok egyáltalán megérkeznek, nem akadályozza meg, hogy a 
+csomag soron kívül érkezzenek és nem ellenőrzi, hogy a használt hálózat megbízható és az
+sorban szállítja le csomagokat. A fogadó alkalmazás feladata, hogy csomagokat sorba rendezze
+a bennük megtalálható sorszám alapján. \\
+
+Ahhoz, hogy bővebb információt lehessen kapni az RTP folyam állapotáról periodikusan a 
+felek küldenek egymásnak RTCP csomagokat. Ezek a csomagok szintén UDP felett működnek,
+mivel ugyanazokra a funkcionalitásokra van szükség ebben az esetben is. Fontos megjegyezni
+még azt is, hogy az RTP csomagok mindig páros portra érkeznek, míg az RTCP mindig az eggyel
+nagyobb portot fogja használ így az mindig páratlan lesz.
+
+Fontos, hogy az RTCP csomagoknak számunkra két fő típusa van, amiket jelentéseknek hívnak.
+Ezek a jelentések tartalmazzák az aktuális RTP folyamről alkotott információk halmazát. Egy
+ilyen jelentést mindig a küldő készít és egyet a fogadó. Viszont ez a kettő jelentés nem azonos
+mezőket tartalmaznak, mert a fogadó jelentésben számításba van véve a küldő jelentéseknek 
+a tartalma és ideje. Így van küldő és fogadó jelentés is, amiket a hívásban résztvevő felek 
+mindegyike periodikusan előállít. Ez a periodicitás attól függ, hogy a hálózat mekkora 
+sávszélességgel rendelkezik, ha nagyobb a sávszélesség, akkor több jelentés fog születni és
+jobb képet lehet kapni arról, hogy milyen RTP folyam minősége, míg alacsonyabbnál kevesebb
+RTCP csomag kerül kiküldésre. 
+
+A küldő jelentés tartalmának fontosabb részei:
+
+\begin{itemize}
+	\item SSRC (Synchronization source), amivel jelöli, hogy kitől származik egy a jelentés.
+	\item A jelentés küldésének idejét, ami a küldő órájának pontos ideje. Körülfordulási
+	idő mérésére használható. 
+	\item RTP csomagokban használt időbélyeg. 
+	\item A küldő által elküldött csomagok száma és azok mérete.
+\end{itemize}
+
+Míg a fogadó jelentés az alábbi részekkel rendelkezik:
+
+\begin{itemize}
+	\item SSRC.
+	\item Töredékveszteség, ami az előző küldő és fogadó jelentés óta elvesztett RTP csomagok
+	száma van jelölve.
+	\item Az összes elveszett csomag száma. 
+	\item Legmagasabb kapott sorszám. 
+	\item A csomag küldési időpontjától az érkezés idejéig eltelt idő, ami a jitter. Ez az érték
+	minden fogadó jelentés során újra van számolva a két jelentés között érkezett csomagok 
+	alapján.
+	\item Az utolsó kapott küldő jelentés ideje és az azóta eltelt idő.  
+\end{itemize}
 
 \subsection{SIP}
 
-A SIP (Session Initiation Protcol) egy olyan alkalmazás rétegben működő viszonykezdeményező
-protokoll, amivel létrehozni, módosítani és törölni lehet kapcsolatot felek között. 
-Ezek a kapcsolatok általában az internet telefonálás vagy multimédiás forgalom
-lebonyolítását valósítják meg. 
+A SIP egy olyan alkalmazás rétegben működő viszonykezdeményező protokoll, amivel 
+létrehozni, módosítani és törölni lehet kapcsolatokat felek között. Ezek a kapcsolatok 
+általában az internet telefonálás vagy multimédiás forgalom lebonyolítását valósítják meg. 
 
 A SIP működése során fontos, hogy a felhasználók azonosíthatóak legyenek valamilyen
-paraméter szerint, amihez sok esetben nem megfelelő szimplán az IP cím. Egy 
+paraméter szerint, amihez sok esetben nem elegendő szimplán az IP cím. Egy 
 SIP kliens egyéniségét a SIP URI (Uniform Resource Identifier) fogja megadni, ami
 a  felhasználó nevéből és a SIP szerver által meghatározott tartománynévből áll.
 Ez a cím úgy néz ki, mint egy átlagos email cím azzal a különbséggel, hogy az 
@@ -41,8 +77,9 @@ elején szerepel a \textit{sip:} szó. Egy példa arra, hogyan néz ki egy ilyen
 sip:peter@tartomany.com. Így ha az egyik kliens hívást kezdeményez Péter felé,
 akkor ezzel a címmel pontosan meglehet határozni az elhelyezkedését. 
 
-Működése nagyban hasonlít a HTTP kommunikációhoz, ahol a kliens bizonyos kéréseket
-küld a szerver felé, amire választ kap. A következők a fontosabb SIP kérések típusai: 
+Működése nagyban hasonlít a HTTP (HyperText Transfer Protocol) kommunikációhoz, ahol 
+a kliens bizonyos kéréseket küld a szerver felé, amire választ kap. A következők a 
+fontosabb SIP kérések típusai: 
 
 \begin{itemize}
 	\item \textbf{INVITE}: Új kapcsolat létesítése.
@@ -53,10 +90,11 @@ küld a szerver felé, amire választ kap. A következők a fontosabb SIP kéré
 
 A SIP protokoll szerves része az SDP (Session Description Protocol), amivel a multimédia
 folyamatok kiépítésénél van szükséges. Ugyanis ebben a protokollban lehet megadni,
-hogy milyen média kódlásokat támogatnak a hívásban résztvevő felek és mely
+hogy milyen média kódolásokat támogatnak a hívásban résztvevő felek és mely
 portokon várják a médiaforgalmat. Ezeken az információkon kívül még rengeteg 
 más hasznos információt is lehet közölni ezekben az üzenetekben, viszont a 
-szakdolgozat szempontjából ezek az érdekesebbek. 
+szakdolgozat szempontjából csak a támogatott kódolás és a kapcsolat leírására
+szolgáló paraméter a fontos.
 
 \section{Kubernetes}
 
@@ -69,8 +107,9 @@ Kubernetes fürtöt létrehozhatunk lokálisan a saját szerveren is vagy felhő
 ami lehet publikus, privát vagy hibrid hozzáférésű. Viszont azt figyelembe 
 kell venni, hogy egy Kubernetes fürtöt nem egyszerű kiépíteni lokálisan, 
 szóval ha nem szükséges, akkor lehet használni felhőszolgáltatók Kubernetes 
-motorjai, mint az Amazon AKS, Linode LKE vagy a Google GKE szolgáltatása.
-Ilyenkor egy teljes fürtöt, ami az általunk beállított paramétereket használja.
+motorjait, mint az Amazon AKS, Linode LKE vagy a Google GKE szolgáltatása.
+Ilyenkor az általunk beállított paraméterekkel létrejön egy teljes fürt, amit
+tudunk menedzselni. 
 
 \subsection{Felépítése}
 
@@ -84,9 +123,9 @@ Ilyenkor egy teljes fürtöt, ami az általunk beállított paramétereket haszn
 Egy Kubernetes fürt kettő részből áll egy vezérlő- és egy adatsíkból, ahol a 
 vezérlősíkban szereplő mester csomópontok tudják vezérleni az adatsíkban 
 lévő dolgozó csomópontokat és a fejlesztők vagy üzemeltetők a mester által
-hirdetett API-n keresztül képesek parancsokat kiadni. Míg a dolgozó 
-csomópontokon futó alkalmazáshoz a felhasználók csak az általuk hirdetett 
-Kube-Proxy segítségével tudnak hozzáférni. 
+hirdetett API-n (Application Programming Interface) keresztül képesek parancsokat
+kiadni. Míg a dolgozó csomópontokon futó alkalmazáshoz a felhasználók csak az 
+általuk hirdetett Kube-Proxy segítségével tudnak hozzáférni. 
 
 A kapcsolat mester és dolgozó között az API szerver és a Kubelet kommunikációján
 alapul. Ha a fejlesztő szeretne egy új alkalmazást telepíteni a fürtön, akkor
@@ -107,20 +146,21 @@ elérést. A mester csomópont részei:
 	a fürt konfigurációs beállításait és a fürt állapotát. Fontos az a rész, 
 	hogy ez egy állandó adatbázis, mivel ez a csomóponton fut és nem egy 
 	kapszulában.   
-	\item \textbf{API szerver}: Egy REST API szerver, ami hozzáférést biztosít
-	a fürthöz a fürtön belül és azon kívül is. Egyszerű HTTP üzenetekbe ágyazott
-	JSON konfigurációkkal lehet beállítani, hogy mit csináljon a fürtben. De 
-	a dolgozó csomópontok is ezen keresztül küldenek frissítést az etcd-be. 
+	\item \textbf{API szerver}: Egy REST API (Representational State Transfer API) 
+	szerver, ami hozzáférést biztosít a fürthöz a fürtön belül és azon kívül is. 
+	Egyszerű HTTP üzenetekbe ágyazott JSON (JavaScript Object Notation) konfigurációkkal
+	lehet beállítani, hogy mit csináljon a fürtben. De a dolgozó csomópontok is ezen 
+	keresztül küldenek frissítést az etcd-be. 
 	\item \textbf{Ütemező}: Ez a komponens dönti el, hogy egy új kapszula melyik
 	dolgozó csomóponton legyen létrehozva aszerint, hogy van-e megfelelő erőforrás
 	az adott csomópontot megvalósító szerveren.
-	\item \textbf{Kontroller menedzser}: Egy olyan állandóan futó folyamat ellenőri,
-	hogy a kapszulákból bizonyos esetekben újrainduljanak vagy hogy egy ismétlődő 
-	munkafolyamot időnénként lefusson helyesen. Ezt az API szerverrel kommunikálva
+	\item \textbf{Kontroller menedzser}: Egy olyan állandóan futó folyamat ami ellenőri,
+	hogy a kapszulák bizonyos esetekben újrainduljanak vagy hogy egy ismétlődő 
+	munkafolyamat időnénként lefusson helyesen. Ezt az API szerverrel kommunikálva
 	képes megvalósítani. 
 \end{itemize}
 
-Mint ahogy az ábrán is látszik a fejlesztő vagy üzemeltető alapvetően a \textbf{kubectl}
+Mint ahogy a 2.1-s ábrán is látszik a fejlesztő vagy üzemeltető alapvetően a \textbf{kubectl}
 nevezetű eszközzel képesek kommunikálni az API szerverrel. Ez az eszköz lényegében
 megvalósítja a teljese HTTP kommunikációt az API szerverrel szóval sokkal könnyebben 
 lehet vele lekérdezni információkat vagy új erőforrásokat létrehozni. 
@@ -132,7 +172,6 @@ amik rendelkeznek a 2.1-s ábrán szereplő komponensekkel és képesek futtatni
 valamilyen konténer kezelő alakalmázást, mint például a Docker. Ami régebben az 
 alapértelmezett konténer kezelője volt a Kubernetes-nek, de 2021-ben már nem 
 követeli meg és bármilyen másik konténer kezelőt is be lehet állítani alapértelmezettnek.
-
 A fontosabb elemei az adatsíknak:
 
 \begin{itemize}
@@ -141,13 +180,15 @@ A fontosabb elemei az adatsíknak:
 	konténereinek indításáról, leállításáról és karbantartásáról, amelyek kapszulákba 
 	vannak rendezve a vezérlősík utasítása szerint
 	\item \textbf{Kube-Proxy}: Egy proxy és terheléselosztó megvalósítása, ami biztosítja
-	a szolgáltatás elérhetőségét más hálózatok számára. Így a feladat az, hogy a beérkező
-	forgalmat a megfelelő konténerekhez irányítsa a bejövő kérelem IP címe és 
-	portja alapján. 
+	a szolgáltatás elérhetőségét más hálózatok számára. Így a feladata az, hogy a beérkező
+	forgalmat a megfelelő konténerekhez irányítsa, amit különböző paraméterek szerint képes
+	megvalósítani.
 	\item \textbf{Kapszulák}: A legkisebb menedzselhető egységek amiket lehet telepíteni
 	Kubernetes alatt. Egy kapszula több konténernek a csoportja, amik osztoznak a tárolási
 	és hálózati erőforrásokon és specifikálja, hogy a konténerek hogyan fussanak. 
-	\item \textbf{CNI}: A hálózati interfészeit lehet konfigurálni a konténereknek.
+	\item \textbf{CNI (Container Network Interface)}: A kapszulák hálózati interfészeinek
+	a beállítására lehet használni. Így lehet specifikálni, hogy a kapszulák között 
+	milyen hálózatot használva legyen továbbítva a forgalom. 
 \end{itemize}
 
 \subsection{Erőforrások}
@@ -166,41 +207,44 @@ lényegesebbek.
 	akkor törli azokat vagy, ha túl kevés, akkor újakat hoz létre. Mindazonáltal, 
 	ha egy kapszula maga vagy az egyik konténere hibát eredményez, akkor újraindítja
 	a benne lévő konténer vagy a teljes kapszulát. 
-	\item \textbf{Telepítő (Deployment}): Leírja egy elvárt állapotot, ami alapján a
+	\item \textbf{Telepítő (Deployment}): Leír egy elvárt állapotot, ami alapján a
 	replikációs vezérlő tudja, hogy milyen specifikáció szerint kell az új kapszulákat
-	létrehozni vagy a kapszulák számát. 
+	létrehozni vagy a létrehozandó kapszulák számát. 
 	\item \textbf{DaemonSet}: Biztosítja, hogy az összes vagy néhány csomópont 
 	futtassa egy meghatározott kapszula másolatát. Így, ha egy új dolgozó csomópont 
 	csatlakozik a fürthöz, akkor ez a kapszula automatikusan megjelenik rajta. Tipikusan
 	valamilyen tárolási vagy monitorozási feladatot ellátó kapszulát szokás ilyen
 	módon létrehozni, de a későbbiekben látni fogjuk, hogy az l7mp ugyan ezzel a 
 	módszerrel hozza létre a bejárati pontokat a csomópontokon.
-	\item \textbf{DNS}: Tárolja a fürtben szereplő minden kapszula és szolgáltatás
-	IP címét illetve a hozzájuk kapcsolódó tartomány nevüket is.  
+	\item \textbf{DNS (Domain Name System)}: Tárolja a fürtben szereplő minden kapszula 
+	és szolgáltatás IP címét illetve a hozzájuk kapcsolódó tartomány nevüket is.  
 	\item \textbf{Szolgáltatás}: Egy absztrakt módja az alkalmazást futtató kapszulák
 	kiexponálásának a hálózaton keresztül. Mivel a kapszulák halandóak így nem mindig
 	ugyanazon a címen lesznek elérhetőek a rajtuk futtatott alkalmazások. A megoldás
 	erre, ha egy címke alapján hozzárendeljük őket egy szolgáltatáshoz, ami mindig 
 	elérhető lesz ugyanazon a címen és képes elosztani a forgalmat több kapszula között.
 	A forgalomirányítást a szolgáltatások a Kubernetes DNS szolgáltatása miatt tudják 
-	megvalósítani.  
+	megvalósítani. Mivel minden kapszula rendelkezik egy tartománynévvel és ez a Kubernetes
+	DNS leírójában szerepel egy hozzá tartozó IP címmel.
 	\item \textbf{Bejárat (Ingress gateway)}: Egy olyan API objektum, ami kezeli a 
 	külső hozzáférést különböző szolgáltatásokhoz a fürtön belül. Így a bejövő forgalmat
 	könnyen lehet szűrni illetve típusától tartalmától függően más és más szolgáltatásokhoz
 	lehet irányítani. 
 	\item \textbf{Egyéni erőforrás definíció (Custorm Resource Definition)}: A 
 	Kubernetes API egy olyan kiterjesztése melynek során új fajta erőforrás definíciókat
-	lehet definiálni. 
+	lehet definiálni. Így bővítve a Kurbenetes funkcionalitását.
 	\item \textbf{Pótkocsi (Sidecar)}: Mivel egy kapszula több konténert is tartalmazhat
 	és ezek a konténerek megosztják a hálózatukat így létre lehet hozni egy olyan konténert
 	ami csak a hálózati forgalom kezelésével foglalkozik. Így könnyen lehet szűrni, hogy
-	milyen forgalom juthat csak el az alkalmazást futtató konténerhez. 
+	milyen forgalom juthat csak el az alkalmazást futtató konténerhez. Mivel elsőnek 
+	mindig ezen pótkocsin fog áthaladni a forgalom majd lokális hálózaton átadja az
+	alkalmazásnak. Ezek a pótkocsik általában valamilyen proxyk szoktak lenni. 
 	\item \textbf{RBAC (Role-based access controll)}: Ha több fejlesztő vagy üzemeltető
 	fér hozzá az API szerverhez, akkor egyénenként meglehet mondani, hogy kinek milyen 
 	művelet végrehajtására van joga. Így például korlátozható, hogy ki képes új
-	erőforrásokat létrehozni. De ez nem csak igazi felhasználókra vonatkozik, hanem
-	kapszulákra is. Ezáltal lehet olyan kapszulákat létrehozni, amik képesek a fürtön
-	belül kommunikálni az API szerverrel és erőforrásokat kezelni.  
+	erőforrásokat létrehozni. Viszont a felhasználók mögött sokszor nem egy élő 
+	személy van, hanem egy alkalmazáshoz van hozzárendelve. Így az alkalmazás esetlegesen
+	képes a fürtön belülről erőforrásokat kezelni.
 	\item \textbf{Operátor}: Olyan bővítések, amikkel egyéni erőforrások menedzselése
 	valósítható meg. De emellett különböző eseményeknél lehet bizonyos folyamatokat 
 	elindítani. Példának okáért, ha egy kapszula létrejön, akkor beállíthatjuk, hogy
@@ -218,34 +262,32 @@ lényegesebbek.
 Az l7mp egy kísérleti alkalmazásréteg és több protokollt támogató szolgáltatás- 
 proxy és háló keretrendszer. A hangsúly a több protokoll támogatásán van, amely
 lehetővé teszi, hogy sok szállítási és alkalmazásréteg béli protokollt 
-natívan támogasson és ne csak a szokásos TCP/HTTP protokollokat. Lehetővé teszik 
-emellett még a protokollok közötti konvertálást is így könnyen lehet alkalmazási
-rétegű protokollokat konvertálni szállításiba és vissza is.
+natívan támogasson és ne csak a szokásos TCP/HTTP (Transmission Control Protocol) 
+protokollokat. Lehetővé teszik emellett még a protokollok közötti konvertálást is 
+így könnyen lehet alkalmazási rétegű protokollokat konvertálni szállításiba és vissza is.
 
-Az l7mp, mint a Kubernetes áll egy vezérlő- és adatsíkból. Ahol az adatsíkot 
+Az l7mp, egy vezérlő- és adatsíkból áll, mint a Kubernetes. Ahol az adatsíkot 
 az l7mp proxy valósítja meg. Míg a vezérlőt egy operátor, ami képes kezelni 
 az l7mp proxy példányokat. 
 
-Ha egy másik szoftverhez kellene hasonlítanom az l7mp-t akkor az az Istio 
-lenne, ami egy népszerű szolgáltatás háló az Envoy-l kombinálva. Azért 
-hasonlítanám leginkább ehhez, mert az l7mp proxy nagyon hasonlóan működik az
-Envoy-hoz képest. Szóval, aki ezeket a rendszereket jobban ismeri az 
-könnyen eligazodik az l7mp keretrendszeren is.\\
+Ha egy másik szoftverhez kellene hasonlítani az l7mp-t, akkor leginkább az 
+Envoy-hoz lehetne, hiszen felépítésében nagyon hasonló elemeket használ, mint
+az Envoy. Így akinek van valamilyen tapasztalata az Envoy-l az könnyen kiismeri
+magát az l7mp-vel is.  \\
 
 Szeretném megemlíteni, hogy Dr. Rétvári Gábor Ferenc vezetésével a nyári
 gyakorlati időm alatt és jelenlegi munkámként ennek a szoftvernek a tesztelésével 
-illetve fejlesztésével foglalkozom, így viszonylag közel áll hozzám a használata.
-Ez azért fontos a szakdolgozat szempontjából, mert jelenleg csak a felhasználói névtérben
-képes működni, ami okozhat teljesítménybeli problémákat, amik a későbbiekben 
-esetlegesen javítva lesznek és akkor már jobb eredményeket lehet generálni. 
+illetve fejlesztésével foglalkozom. 
 
 \subsection{L7mp, mint proxy}
 
-Egy olyan programozható proxy, ami nagyon hasonlóan működik, mint az Envoy, ami 
+Az l7mp egy olyan programozható proxy, ami nagyon hasonlóan működik, mint az Envoy, ami 
 egy széleskörűen használt leginkább alkalmazási réteget támogató proxy. A különbség
 az l7mp és az Envoy között, hogy az l7mp a szállítási réteg protokolljait 
-támogatja jobban. Emellett tetszőleges számú végpontot tud egymással összekötni, 
-amik között könnyen lehet egyik protokollból a másikba váltani. 
+támogatja jobban míg az Envoy inkább az alkalmazásréteg protokolljait képes jobban kezelni.
+Emellett az l7mp képes protokollok közötti átalakítást végezni, ami sok esetben nagyon
+jól tud jönni. Ez a funkcionalitás az architektúra leírása után fog jobban 
+megmutatkozni.
 
 A proxy egy magas szintű keretrendszerben íródott, ezért nagyon egyszerűen 
 lehet új funkciókkal bővíteni. Ez a keretrendszer a Node.js, ami egy JavaScript
@@ -259,13 +301,24 @@ A lassúság kiküszöbölésére jelenleg vannak munkálatok, amik elsősorban 
 célozzák meg hogy a csomagok feldolgozása nem a felhasználói névtérben kerüljenek
 végrehajtásra, hanem kernel szinten. Így a csomagoknak nem kell fájlleírókon 
 keresztül eljutnia az l7mp-hez, hanem az l7mp konfigurálása folyamán lehetne
-olyan iptables szabályokat létrehozni, amik megoldják a csomagok továbbítását
+olyan \textit{iptables} szabályokat létrehozni, amik megoldják a csomagok továbbítását
 anélkül, hogy írni vagy olvasni kellene a fajleírókat. Az iptables egy olyan 
 kernel szintű program, amely lehetővé teszi a csomagok feldolgozását és továbbítását
 a kernelben. \\
 
-Az l7mp, mint önálló proxy használható szimplán Node-l, mivel elérhető az NPM
-csomagkezelőben és emellett Docker képfájllal is rendelkezik. 
+Az l7mp proxy használható szimplán Node.js-l indítva, mivel elérhető az NPM (Node 
+Package Manager) tárolóban. A következő paranccsal indítható el: 
+
+\begin{lstlisting}
+	node l7mp-proxy.js -c config/l7mp-minimal.yaml -l warn -s
+\end{lstlisting}
+
+Ami a minimális l7mp konfigurációval és a figyelmezetési naplózási szinten fogja
+elindítani az l7mp proxyt. A minimális konfiguráció létre fog hozni egy REST API
+szervert, amin keresztül a későbbiekben újabb l7mp beállításokat lehet megadni.
+
+Ezen felül a Docker-t is támogatja, ami alapértelmezetten a fenti parancsot fogja
+egy konténerben futtatni.
 
 \subsubsection{Felépítése}
 
@@ -282,9 +335,9 @@ felsorolásra és kifejtésre kerülnek alább:
 	\item \textbf{Figyelő (Listener)}: Definiálni lehet vele egy cím és port párost, hogy
 	adott protokollal rendelkező csomagokra figyeljen és dolgozza fel őket. A feldolgozás
 	alatt azt a folyamatot kell érteni, hogy meghatározza mely fürthöz kerüljön a csomag,
-	szűri hogy a bejövő csomagok fejlécében szerepel-e valamilyen meghatározott érték és 
-	ezeket a fejléc mezőket módosítani is lehet. Ez különösen hasznos funkció, akkor 
-	amikor JSONSocket vagy WebSocket forgalmat kell kezelni. 
+	szűri a bejövő csomagokat valamilyen paraméter alapján, ha lehet. Ez általában 
+	a csomagok fejlécében szereplő információk, vagy a munkamentben megtalálható bármilyen
+	érték alapján történhet. 
 	\item \textbf{Fürt (Cluster)}: A végpontok egy gyűjteménye, ami képes forgalmat elosztani
 	közöttük. Az elosztás történhet nagyon egyszerűen, amikor mindig egy lista élén álló
 	végpont kapja a forgalmat, de történhet HashRing módszerrel is. Amikor egy kulcs szerint
@@ -299,12 +352,13 @@ felsorolásra és kifejtésre kerülnek alább:
 	\item \textbf{Útvonal (Route)}: Meghatározza a célt, ami általában egy fürt. Az 
 	útvonalak mindig a szabályokon belül vannak, hiszen a szabályok határozzák meg a célt.
 	De ezen felül még be lehet azt is állítani, hogy a bejövő csomagok milyen útvonalon 
-	jussanak el a fürtig és milyen vissza. Így a bejövő és kimenő forgalmat teljesen 
+	jussanak el a fürtig és milyenen vissza. Így a bejövő és kimenő forgalmat teljesen 
 	más útvonalon lehet irányítani.
 \end{itemize}
 
-Ezekkel az elemekkel és az egyszerűségük miatt rendkívül egyszerűen lehet konfigurálni
-az l7mp-t. 
+A Munkamenet kivételével ezeket az elemeket egy jól definiált API leírás alapján 
+könnyedén lehet konfigurálni. Így az l7mp proxy egyszerű HTTP POST üzenetekkel 
+beállítható.
 
 \subsubsection{Programozása}
 
@@ -312,65 +366,65 @@ Az l7mp programozása történhet konfigurációs fájlból és REST API hívás
 egyaránt. Viszont az l7mp indításához szükség van egy alapkonfigurációra, mivel
 anélkül nem fog létrejönni a kontroller figyelő, ami biztosítja az API 
 láthatóságát. Az alábbi kódrészleten látható, hogyan lehet egy ilyen induló konfigurációt
-létrehozni. 
+létrehozni YAML (YAML Ain't Markup Language) fájlal.
 
 \begin{lstlisting}
-	admin:
-      log_level: info
-      log_file: stdout
-      access_log_path: /tmp/admin_access.log
-	listeners:
-      - name: controller-listener
-		spec: { protocol: HTTP, port: 1234 }
-		rules:
-		  - action:
-			   route:
-			     destination:
-		           name: l7mp-controller
-		           spec: { protocol: L7mpController }
+admin:
+  log_level: info
+  log_file: stdout
+  access_log_path: /tmp/admin_access.log
+listeners:
+- name: controller-listener
+	spec: { protocol: HTTP, port: 1234 }
+	rules:
+    - action:
+        route:
+          destination:
+            name: l7mp-controller
+            spec: { protocol: L7mpController }
 \end{lstlisting}
 
 A konfigurációt részről részre kifejtem. Az első része, az \textit{admin}, ahol
 a naplózás szintjét és helyét lehet meghatározni. A következő szintek vannak:
 silly, verbose, info, notice, warn, error, silent. Amik ebben a sorrendben
 egyre kevesebb információt naplóznak. A silly kiírja a beérkező csomagok tartalmát
-is, míg az info már csak munkafolyamat mélységig működik.
+is, míg az info már csak munkafolyamat leírásáig működik.
 
 Az utána következő részben létre jön a controller-listener, ami helyi hálózaton az 
 1234 porton hirdeti a REST API pontot, amin keresztül később új konfigurációkat lehet 
-konfigurálni. Ehhez egy olyan protokoll van használva, ami nem egy igazi protokoll
-csak ezzel van jelezve, hogy hozza létre API pontot. 
+megadni. Ehhez egy olyan fürt van használva, amelyhez nem tartozik semmilyen definiált
+végpont. Ebben a fürtben egy automatikusan létrejövő API szerepel, amihez beérkeznek 
+a figyelőn keresztül a HTTP kérések. 
 
-Ez az API megvalósítja a teljes CRUD-t mindent komponensre, amivel tudunk létrehozni, 
-olvasni, frissíteni és törölni komponenseket. Minden komponenshez tartozik egy útvonal, 
-ami így tevődik össze, ha a fenti példát nézzük: http://127.0.0.1:1234/api/v1/listeners.
-Ha erre a címre egy POST üzenetben YAML vagy JSON konfigurációt küldünk, akkor az
-létre fog jönni a proxy-n belül. Ami még egy hasznos funkció ebben a megvalósításban
-az a rekurzív lekérés, aminek során egy GET üzenettel és az URI paraméterekben a 
-\textbf{recursive=true} paraméter beállításával a figyelők esetében részletesen 
-kiíratásra kerül minden benne lévő objektum. Az API teljes dokumentációja 
-megtalálható a következő oldalon: https://l7mp.io/openapi/. \\
+Ez az API megvalósítja a teljes CRUD-t (Create, Read, Update, Delete) mindent komponensre, 
+amivel tudunk létrehozni, olvasni, frissíteni és törölni komponenseket. Minden komponenshez
+tartozik egy útvonal, ami így tevődik össze, ha a fenti példát nézzük: http://127.0.0.1:1234/api/v1/listeners. Ha erre a címre egy POST üzenetben YAML vagy 
+JSON konfigurációt küldünk, akkor az létre fog jönni a proxyn belül. Ami még egy 
+hasznos funkció ebben a megvalósításban az a rekurzív lekérés, aminek során egy GET 
+üzenettel és az URI paraméterekben a \textbf{recursive=true} beállításával az összes
+figyelő definíciója a bennük lévő többi objektummal együtt részletesen megkapható. Az API 
+teljes dokumentációja megtalálható a következő oldalon: https://l7mp.io/openapi/. \\
 
 A következőkben látható lesz egy példa, ami pont az API-n keresztüli programozást
 hivatott bemutatni. 
 
 \begin{lstlisting}
-	curl -iX POST --header 'Content-Type:text/x-yaml' --data-binary @- <<EOF  http://localhost:1234/api/v1/listeners
-	listener:
-	  spec:
-	    protocol: WebSocket
-	    port: 2000
-	  rules:
-	    - action:
-	        route:
-	          destination:
-	            spec:
-  	              protocol: UDP
-	              port: 3000
-	            endpoints:
-	              - spec:
-	                  address: 127.0.0.1
-	EOF
+curl -iX POST --header 'Content-Type:text/x-yaml' --data-binary @- <<EOF  http://localhost:1234/api/v1/listeners
+listener:
+  spec:
+  protocol: WebSocket
+  port: 2000
+rules:
+ - action:
+     route:
+       destination:
+         spec:
+           protocol: UDP
+           port: 3000
+         endpoints:
+           - spec:
+               address: 127.0.0.1
+EOF
 \end{lstlisting}
 
 A fenti hívásban látható, hogy létrehozunk egy figyelőt, ami a 127.0.0.1:2000-s
@@ -389,37 +443,40 @@ konténerek, amik rendelkeznek egy olyan API interfésszel, amin keresztül lehe
 őket programozni. Így a fürtön belül könnyen lehet olyan szolgáltatásokat 
 igénybe venni, mint a szolgáltatás felderítés, terhelés elosztás és felügyelhetőség.
 Ezeken kívül még rengeteg más funkcióval szokott rendelkezni egy szolgáltatás háló,
-de ezeket lehet mondani a legnépszerűbbeknek. 
+de ezeket lehet mondani a legnépszerűbbeknek.
 
-A pótkocsi proxy-n kívül szokott még lenni egy operátor is a fürtben, ami figyeli 
-minden egyes szolgáltatás állapot és értesül arról, ha egy új jön létre vagy törlődik egy.
+A megvalósításához minden mikroszolgáltatásnak azaz kapszulának rendelkeznie kell 
+egy pótkocsival, ami egy adott proxyt fog futattni. Ez a konténer lesz minden esetben
+a belépési pont az alkalmazáshoz. Ezeket a proxykat valahogyan dinamikusan kell tudni
+konfigurálni, amit egy operárot segítéségével lehet megtenni. A használt proxyknak 
+rendelkezni kell egy olyan interfésszel, amin keresztül lehet őket konfigurálni. 
+Az l7mp szolgáltatás háló esetében ezek a proxyk egyértelműen az l7mp sajátja lesz,
+aminél az elző részben láttuk hogyan lehet egy API interfészt definiálni, amin 
+keresztül POST hívásokkal lehet új beállításokat eszközölni.
 
-Az l7mp esetében a proxy-k használat egyértelműen az l7mp proxy lesz, de ahhoz, hogy ezeket
-könnyebben lehessen a fürtben állítani létre lett hozva három CRD, amiknek köszönhetően 
-az operátor könnyedén tudja, hogy milyen beállításokat kell végrehajtania a pótkocsikon. 
-
-Ezek a CRD-k egy-egy l7mp objektumnak felelnek meg. Mivel a VirtualService segítségével
-figyelőket lehet létrehozni, míg a Target fürt specifikációkat tartalmaz és a Rule 
-egyértelműen a szabályoknak felel meg. 
+De ezeket a beállításokat valamilyen módon közölni kell az operátorral, amihez 
+szükség van egyéni erőforrásokra. Az l7mp esetében ezek az erőforrások sorra a 
+VirtualService, Target és Rule. Ezekben lehet olyan beállításokat megadni, amiket
+később az l7mp operátora képes leképezni az l7mp proxyk számára érthető konfigurációra.
 
 \subsubsection{Virtuális szolgáltatás - VirtualService}
 
 Egy virtuális szolgáltatás az absztrakt megvalósítása egy szerveroldali foglalatnak. 
-Ahhoz, hogy létre tudja hozni ezeket a foglalatokat létezni kell egy megfelelő Kubernetes
-szolgáltatásnak ami szolgáltatni fogja a végpontokat/kapszulákat a virtuális szolgáltatásnak.
-Ezeket a kapszulákat az alapértelmezett Kubernetes címkézéssel hivatkozik. 
+Ami azt jelenti, hogy a benne definiált figyelő a meghatározott kapszulák pótkocsijaiban 
+létrefog jönni és kezelni tudja hozzá beérkező forgalmat. 
 
-A virtuális szolgáltatásban meghatározott definíciót fogja az operátor beprogramozni a 
-megfelelő pótkocsikban, ahol a proxy-k találhatóak. Egy ilyen definíciónak két főbb része
-van mindig. Az első a \textbf{selector}, amiben meglehet mondani, hogy mely címkékkel
-rendelkező kapszulák rendelkezzenek a meghatározott konfigurációval. Míg a másodikban 
-a figyelő beállításait lehet megadni. 
+Egy ilyen erőforrás két fő részből áll, az egyik a kapszulák kiválasztásáért felel míg
+a másik azért, hogy milyen definíció kerüljön alkalmazásra a kijelölt kapszulákban.
+A kiválasztás mindig valamilyen címke alapján történik, amivel rendelkezik a kapszula. 
+Ezt viszont többször lehet használni egy definíción belül, mert meglehet vele határotni,
+hogy a figyelő mely kapszulákon jöjjön létre és azt is, hogy a végpontok mely kapszulák 
+legyenek. 
 
-Ezenfelül fontos még az a tényező is, hogyha a figyelőn belül definiálásra kerül egy
-még nem létező cél, akkor az operátor automatikusan létrehozza anélkül, hogy egy 
-külön fájlban kellene definiálnunk. Ugyanez érvényes a szabályokra is. De szabályt 
-és célt is lehet létrehozni külön konfigurációs fájlból, viszont ismerni kell 
-a fürtben definiált nevét, ami általában igen hosszú.
+A másik fontos része maga a figyelő definiciója, ami nagyon hasonló, mint az l7mp proxy
+esetében, de itt már vannak Kubernetes specifikus elemek is, mint a \textit{selector},
+amivel a kapszulák kiválasztása történik meg. De ilyen az is, hogy egy Kubernetes 
+erőforrásra név szerint lehet hivatkozni, amit majd az operátor feloldva fog az l7mp
+proxy konténereknek átadni.
 
 \subsubsection{Target - Cél}
 
@@ -436,7 +493,7 @@ definíciója.
 Ebben a definícióban lehet megadni, hogy a milyen protokollú csomagokat fogad, végpontokat
 és a terheléselosztás beállításait. A végpontok kiválasztása szintén egy szelektorral
 történik, ami a Kubernetes erőforrások címkéi alapján választ. A másik fontos beállítása
-a terheléseloszlás, ami alapértelmezett esetben, mindig a nyilván tartott kapszulák 
+a terheléselosztás, ami alapértelmezett esetben, mindig a nyilván tartott kapszulák 
 közül az elsőnek fogja irányítani a csomagokat. Viszont be lehet állítani úgy is, hogy
 egy a csomag fejlécében lévő mező alapján irányítsa a csomagokat. Ez a megoldás a
 HashRing megoldást, használja amivel elérhető, hogy egy kulcs alapján mindig ugyan az
@@ -444,11 +501,12 @@ a végpont kapja meg a csomagokat.
 
 \subsubsection{Rule - Szabály}
 
-Szabályokkal lehet összekötni figyelőket fürtökkel. De ebben az esetben lehet különálló
+Szabályokkal lehet összekötni figyelőket a fürtökkel. De ebben az esetben lehet különálló
 CRD-ben szabályokat létrehozni és azokat többször felhasználni. Így átláthatóbbá és 
-kontrollálhatóbbá válik a szolgáltatás háló használat. 
+kontrollálhatóbbá válik a szolgáltatás háló használata. 
 
 Használatukkal lehet szűrni a csomagokat forráscímük, fejlécük és még nagyon sok más 
 paraméter szerint. JSON predicate objektumokkal lehet szűrni az csomagokat, amivel 
-így komplex könnyen lehet több érték kombinációjára keresni. Ha egy csomag 
-megfelel minden kitételnek, akkor a definiált művelet szerint fog tovább haladni a csomag. 
+könnyen lehet komplex szűrési feltételeket maghatározni kölönböző paraméterek alapján. Ha 
+egy csomag megfelel minden kitételnek, akkor a definiált művelet szerint fog tovább 
+haladni a csomag. 

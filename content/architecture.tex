@@ -18,7 +18,7 @@ Ezt a fürtöt a BME által szolgáltatott szervereken építettem ki, mi szám 
 \end{figure}
 
 Az ábrán szereplő szervereket kettő részre lehet szétbontani, ahol az egyik
-konkréten a Kubernetes fürt a másik pedig a forgalom generálására használatos.
+konkrétan a Kubernetes fürt a másik pedig a forgalom generálására használatos.
 Az előbbibe tartozik a Rhea, mint mester csomópont és dolgozó csomópontok közé 
 a Dione és a Titan. Majd értelemszerűen az utóbbiba tartozik a Tethys. 
 
@@ -51,10 +51,10 @@ szerverek között.
 A címben említett architektúra írja le, hogy a fürtön belül milyen Kubernetes
 erőforrások találhatóak meg és azok, hogyan vannak egymással összekötve. A következő
 ábrát kifejtve lehet ezt legjobban elmagyarázni. Fontos megjegyezni, hogy erre 
-a rengeteg átalakításra azért van szükség, mert a kamailio nem legfrissebb
+a rengeteg átalakításra azért van szükség, mert a Kamailio legfrissebb
 stabil verziója nem tud WebSocket-n keresztül vezérlőcsomagokat küldeni és az rtpengine-nek
-az a verziója, amivel a redis-t ilyen módon lehet használni nem támogatja szintúgy
-a WebSocket-t.
+az a verziója, amivel a Redis-t ilyen módon lehet használni nem támogatja szintúgy
+a WebSocket-t. Viszont szükség van a WebSocket-re, ami a későbbiekben kifejtésre kerül.
 
 \begin{figure}[!ht]
 	\centering
@@ -105,7 +105,7 @@ keyspace-ket (kulcshelyeket) használ. Azért van szükség arra, hogy kulcshely
 használva az adatbázisban, mert erre fellehet iratkozni. Szóval a két rtpengine kapszula
 feliratkozik ugyanarra a kulcshelyre, ahova mind a két kapszula fogja írni a beérkező hívásaikat.
 Így, ha az egyik kapott egy hívást az létrehoz egy rekordot az adott kulcshelyen, amiről a 
-Redis értesíti a másik kapszulát és elküldni annak ezeket az információkat, ami majd létrehozza
+Redis értesíti a másik kapszulát és elküldi annak ezeket az információkat, ami majd létrehozza
 az adott hívást és kinyitja az hozzá szükséges portokat.  
 
 De ez a funkció ebben a formában nem szerepel az rtpengine-ben. A hivatalos verzióban csak úgy 
@@ -115,8 +115,9 @@ nem túl szerencsés megoldás, mivel a kapszulák bármikor törlődhetnek és 
 létre. Ezért kellett találni egy megoldást, amit egy bizony Oded Arbell pull request-je (ajánlása)
 jelentett. Ugyanis szerette volna, ha lehet skálázni az rtpengine példányokat anélkül, hogy 
 tudnánk a létező többinek a címét is. Ezt majdnem teljesen jól megoldotta, viszont egy olyan 
-problémába ütközött, hogy SRTP esetén nem minden hívást képes felépíteni az újonnan létrejött
-rtpengine. Így nem olvasztották be a fő kódbázisba, ezért nem tudom a hivatalos rtpengine-t használni.
+problémába ütközött, hogy SRTP (Secure Real-time Transport Protocol) esetén nem minden hívást képes 
+felépíteni az újonnan létrejött rtpengine. Így nem olvasztották be a fő kódbázisba, ezért nem tudom a 
+hivatalos rtpengine-t használni.
 
 Viszont itt még nem oldódott meg teljesen a probléma, ugyanis ez a verziója az rtpengine-nek csak
 skálázásra működött így, ha kettő példány fut egymás mellett, nevezzük őket \textbf{A}, 

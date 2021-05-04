@@ -52,7 +52,7 @@ lehet létrehozni és azokat hozzáadni különböző telepítő definíciókhoz
 A következő kódrészletben látható, hogy Kubernetes-n belül ezt a konténert hogyan kell 
 létrehozni és elindítani benne a kontrollert. 
 
-\begin{lstlisting}
+\begin{lstlisting}[caption=Kubernetes konténer specifikációja, label=lst:kubeSpec]
 ...
 spec:
   volumes:
@@ -107,7 +107,7 @@ A kontrollerhez alább látható YAML definíció létrehozásával lehet olyan 
 adni, amikkel nagyjából bármilyen művelet eltud látni az l7mp által specifikált 
 erőforrásokon.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption=RBAC létrehozása, label=lst:rbac]
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -131,10 +131,10 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 \end{lstlisting}
 
-A \textit{ClusterRole} segítségével lehet névtértől függetlenü jogokat biztosítani,
+A \textit{ClusterRole} segítségével lehet névtértől függetlenül jogokat biztosítani,
 amik ebben az esetben az l7mp által specifikált egyéni erőforrásokra vonatkoznak. 
 Ezeket az erőforrásokat az \textit{apiGroups} illetve a \textit{resources} listával
-lehet megadni. Majd a \textit{verbs} listában meghatárzott műveletekre kap 
+lehet megadni. Majd a \textit{verbs} listában meghatározott műveletekre kap 
 jogok a kontroller. Így képes adott erőforrás állapotát lekérni, listázni, figyelni,
 erőforrásokat létrehozni, frissíteni, kiegészíteni és törölni. 
 
@@ -149,7 +149,7 @@ API objektumot a kontrollerben, amivel egyéni erőforrás definíciókat lehet 
 és törölni a fürtben. Ezt a következő sor használatával lehet létrehozni: 
 \textit{api = client.CustomObjectsApi()}. \\
 
-Így most már szabadon lehet az l7mp objektumait létrehozni és törölni a konrollerből is, 
+Így most már szabadon lehet az l7mp objektumait létrehozni és törölni a kontrollerből is, 
 ami az előzőleg létrehozott \textit{api} objektum \textit{create\_namespaced\_custom\_object()}
 illetve a \textit{delete\_namespaced\_custom\_object()} segítségével valósítható meg. Az elsőnek
 említett függvény az alább felsorolt paramétereket várja.
@@ -172,7 +172,7 @@ Ha egy hívás beérkezik a kontrollerhez, akkor kettő virtuális szolgáltatá
 szabály fog létrejönni. A szolgáltatások mindig az l7mp-ingress-n fognak beállítódni, 
 ugyanis ezek nyitják ki a rtpengine által meghatározott portokat a kliensek számára
 a fürtön. A két szabály pedig az rtpengine kapszulák melletti l7mp proxy-ban 
-fog létrejönni, ahol a már előre definiált szabálylistához adódak hozzá. 
+fog létrejönni, ahol a már előre definiált szabálylistához adódnak hozzá. 
 
 Az így létrehozott erőforrásoknak a neveit tárolni kell, mivel a hívás vége után ezeket
 a létrehozott erőforrásokat törölni kell mindig, ahhoz pedig szükséges az erőforrás 
@@ -185,7 +185,7 @@ során megadott argumentumokat és feldolgozza az konfigurációs fájlban megad
 paramétereket. Az argumentumok beolvasását a \textit{argparse} könyvár használatával
 oldottam meg, mivel egy könnyel használható és bővíthető. Így a későbbiekben, ha 
 több argumentum átadására van szükség nem lesz nagy feladat a megvalósítása. Másfelől
-a konfigurációs fájl feldologzásához is létezik egy könyvtár, amit \textit{configparser}-nek
+a konfigurációs fájl feldolgozásához is létezik egy könyvtár, amit \textit{configparser}-nek
 hívnak és a Microsoft Windows INI fájljaihoz hasonló konfigurációkat képes beolvasni. Beolvasás
 után feloldásra kerülnek az olyan paraméterek értékei, amik tartalmazhatnak tartomány neveket
 is. Erre azért van szükség, mert létrehozott foglalatokkal csak konkrét IP címekre lehet 
@@ -197,12 +197,12 @@ A naplózás egy kulcsfontosságú része a kontrollernek, mivel fejlesztéskor 
 során az stdout-ra kiírt események nagyban segítik a problémák keresését illetve azok 
 megoldását. Naplózáshoz a \textit{logging} nevezetű könyvtárat használom, amiatt mert 
 sok más könyvtár is ezt használja így, ha azok is valamit naplóznak, akkor az egyben 
-látható lesz. Ininicializálása során megadható, hogy milyen szinten naplózza az eseményeket 
+látható lesz. Inicializálása során megadható, hogy milyen szinten naplózza az eseményeket 
 és az is, hogy milyen formátumba. Ezért a kontroller egy naplóbejegyzése az alább látható 
 módon néz ki. Ami a másodpercre pontos időből, a naplózás szintjéből illetve magából az 
 üzenetből áll.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption=Naplózás formátuma, label=lst:logging]
 15:41:55 [INFO] Started!
 15:41:55 [INFO] Configuration file loaded!
 \end{lstlisting}
@@ -216,7 +216,7 @@ beállítani és a megfelelő foglattal visszatérni, hogy azt több helyen lehe
 
 A legegyszerűbb ebben az esetben az UDP foglalat megalkotása. Azért ez a legegyszerűbb,
 mert ennél nem kell figyelembe venni a célját, mint a TCP esetében. Egy UDP foglalat 
-léterhozához szükség van a lokális címre és portra, amikhez a foglalatot hozzá kell 
+létrehozáshoz szükség van a lokális címre és portra, amikhez a foglalatot hozzá kell 
 kötni. A hozzákötés után, ha ezen a foglalaton keresztül történik csomagtovábbítás, 
 akkor a megadott cím és port lesz a forrás cím és port. Emellett beállításra is
 kerül egy időtúllépés paraméter is, ami 10 másodperc lesz. Ez azt jelenti, hogy
@@ -225,7 +225,7 @@ egy kivételt és visszalép. Így használható egy olyan ciklusban, ami idők�
 valamilyen más feladat ellátását is megtudja valósítani. \\
 
 Aztán van a TCP foglalat, aminél már figyelembe kell venni azt, hogy a WebSocket
-protkollt használó kliens számára lesz gyártva vagy szimpla TCP kommunikációhoz 
+protokollt használó kliens számára lesz gyártva vagy szimpla TCP kommunikációhoz 
 használják. Ugyanis, ha önmagában kerül felhasználásra, akkor hozzáköti magát
 az adott lokális címhez és porthoz és lényegében ugyan úgy kerül felhasználásra,
 mint UDP esetben. Viszont, ha WebSocket kliens számára van létrehozva, akkor ezt
@@ -233,16 +233,16 @@ nem teszi meg, de ehelyett csatlakozik az rtpengine-hez az adott címen. Azt, ho
 miért van szükség a WebSocket számára egy TCP foglalatra azt a következő részben 
 fejtem ki bővebben. De a csatlakozás az rtpengine-hez azért szükséges ebben az
 esetben, mert másképp a kliens nem tudja TCP-nél jellemző kézfogás folyamatot
-teljseíteni az rtpengine-l. \\
+teljesíteni az rtpengine-l. \\
 
 Végül pedig van a WebSocket verzió, amikor egy WebSocket foglalat kerül létrehozásra.
 De ennek a létrehozására nem az általában használt python könyvtárat a \textit{socket}-t
 fogja használni, hanem a \textit{websocket} könyvtárnak a \textit{create\_connection()}
 függvényét. Ezzel a függvény egy olyan foglalattal tér vissza, aminél az elküldött 
 üzenetek rendelkezni fognak a létrehozáskor beállított fejlécekkel. A következő 
-függvény az, ami a kontrolleren belül létrehozza a WebSocket foglaltot. 
+függvény az, ami a kontrolleren belül létrehozza a WebSocket foglalatot. 
 
-\begin{lstlisting}[language=python]
+\begin{lstlisting}[language=python, caption=WebSocket foglalat létrehozása, label=lst:wssock]
 def create_ws_socket(sock, header):
 	return create_connection(
 		f'ws://{config["rtpe_address"]}:{config["rtpe_port"]}',
@@ -257,8 +257,8 @@ A következő listában sorrendben olvashatóak, hogy mely argumentum mit állí
 pont azt.
 
 \begin{itemize}
-	\item Az rtpengine meghírdetett WebSocket URL-jét (Uniform Resource Locator) kapja 
-	meg. Fontos, hogy ezt kapja, mivel az rtpengine egyszere több féle protokollon keresztül tud 
+	\item Az rtpengine meghirdetett WebSocket URL-jét (Uniform Resource Locator) kapja 
+	meg. Fontos, hogy ezt kapja, mivel az rtpengine egyszerre többféle protokollon keresztül tud 
 	vezérlőparancsokat fogadni.
 	\item Alprotokollokat is lehet használni WebSocket esetén, ami azért fontos, mert
 	az rtpengine csak azokat a WebSocket csomagokat képes feldolgozni, amik rendelkeznek
@@ -269,9 +269,9 @@ pont azt.
 	rendelkezzen. Ezért van szükség arra, hogy a TCP foglalat megalkotása során
 	figyelembe vegyük azt, hogy WebSocket kliens számára hozzuk létre vagy csak úgy
 	általánosan.
-	\item Mehlehet adni egyéni fejléceket is, amikben bármi tárolható egy adott
+	\item Meg lehet adni egyéni fejléceket is, amikben bármi tárolható egy adott
 	méretig. Ha létrejön egy hívás, akkor itt beállítódott hívás azonosítója alapján
-	fogja a mellette lévő l7mp proxy eldöneni, hogy mely rtpengine kapszula kapja
+	fogja a mellette lévő l7mp proxy eldönteni, hogy mely rtpengine kapszula kapja
 	meg az üzeneteket.
 \end{itemize}
 
@@ -290,7 +290,7 @@ fog bekerülni ebbe a listába, egy hívó fél adataival és egy a hívott fél
 Egy erőforrás létrehozása során elsőnek ebben a listában kell ellenőrizni azt, hogy
 ilyen hívásazonosítóval már létezik-e erőforrás, ha nem létezik 0csak akkor lehet létrehozni. 
 Erre azért van szükség, mert a Kamailio rendelkezik egy válaszidővel, ami ha lejár
-akkor az utljára kiküldött üzenetet megismétli. De ebben az esetben könnyen előfordulhat,
+akkor az utoljára kiküldött üzenetet megismétli. De ebben az esetben könnyen előfordulhat,
 hogy később küldi vissza a kontroller az üzenetet, mint ez az időkeret és ilyenkor 
 a duplikáltan küldött üzeneteket elveti a kontroller.
 
@@ -301,7 +301,7 @@ erre adott válaszban mindig a megfelelő portok fognak szerepelni. A portokra a
 szükség, mert az API kliens objektumok által létrehozott erőforrásokban ezek használva
 vannak. Alább látható, hogy egy API kliens objektum miként kerül létrehozásra.
 
-\begin{lstlisting}[language=python]
+\begin{lstlisting}[language=python, caption=Kubernetes API kliens objektum létrehozása, label=lst:kubeAPI]
 kubernetes_apis.append(
 	Client(
 		call_id=call_id,
@@ -334,7 +334,7 @@ függvényét, ami az adott híváshoz kapcsolódó összes erőforrást töröl
 
 A parancsok feldolgozása kétféle módon történhet, lehet az átlagos foglalatokkal, ami 
 a TCP és UDP csomagok kezelését jelenti illetve lehet a WebSocket protokoll segítéségével 
-is. Az előzőeg említett feldolgozás lehetővé teszi, hogy mind TCP és UDP
+is. Az előzőleg említett feldolgozás lehetővé teszi, hogy mind TCP és UDP
 foglalatok használatával működjön, mert ezek a foglalatok küldés és fogadás szempontjából
 teljesen ugyanazokat a függvényeket valósítják meg. \\
 
@@ -342,24 +342,24 @@ Az említett eljáráshoz tartozó függvény két foglalatot vár el argumentum
 a \textit{sock} az a foglalat lesz amelyik a kliensektől várja a bejövő forgalmat és az 
 \textit{rtpe\_sock} lesz, amelyen keresztül kommunikálni fog a kontroller az rtpnengine-el. 
 Szóval a sock-n beérkező adat tárolásra kerül abban a formában, amelyben érkezik szóval 
-egy egyszerű karakterláncként és a feldolgott verziója is, amikor karakterlánc bencode 
+egy egyszerű karakterláncként és a feldolgozott verziója is, amikor karakterlánc bencode 
 által kódolt része feloldásra és szótárba írásra kerül. Ez a feldolgozott változat hasznos 
 akkor, amikor az erőforrásokat kell létrehozni, míg a nyers beérkezett üzenet továbbküldésre 
 kerül az rtpengine felé, hiszen azon nem kell változtatni semmilyen paramétert.
 
-Ha az rtpengine válaszolt az adott parancsra és ez a parancs nem tartalmazott semilyen 
+Ha az rtpengine válaszolt az adott parancsra és ez a parancs nem tartalmazott semmilyen 
 SDP üzenetet, akkor egyszerűen visszaküldésre kerül a kliensnek. De ha a parancs egy offer
 vagy answer üzenet volt, akkor az rtpengine által adott válaszban szereplő SDP üzenetben
 módosítani kell a kapcsolat kiépítéséhez szükséges paraméterben szereplő IP címet. Ugyanis
-ez a cím minden eseetben 127.0.0.1 lesz, ami nem jó az olyan SIP klienseknek, mint a Linphone.
-A szóban forgó címet kell lecsérlni a dolgozó csomópont IP címére. De az rtpengine 
+ez a cím minden esetben 127.0.0.1 lesz, ami nem jó az olyan SIP klienseknek, mint a Linphone.
+A szóban forgó címet kell lecserélni a dolgozó csomópont IP címére. De az rtpengine 
 válasza után még vizsgálni kell azt is, hogy milyen parancs érkezett be a kontrollerhez. 
 Ha egy \textit{delete} üzenet érkezett, akkor a benne szereplő hívásazonosítóhoz tartozó
-kubernetes erőforrásokat mindenképpen törölni kell, hogy véletlenül sem maradjon nyitva
+Kubernetes erőforrásokat mindenképpen törölni kell, hogy véletlenül sem maradjon nyitva
 olyan port a fürtön, ami nincs használatban. A másik ilyen fontos üzenet az \textit{answer}.
-Azért kell az ilyen parancssal rendelkező üzenetekre jobban figyelni, mint az \textit{offer}-re,
+Azért kell az ilyen paranccsal rendelkező üzenetekre jobban figyelni, mint az \textit{offer}-re,
 mert csak ennek a megékezése után lehet a megfelelő erőforrásokat létrehozni és értesíteni
 a klienseket arról, hogy megkezdhetik médiaforgalom adását. Ha már az offer során 
-létrehozzásra kerülnek ezek az erőforrások, akkor könnyen előfordulhat, hogy egy üres híváshoz
+létrehozásra kerülnek ezek az erőforrások, akkor könnyen előfordulhat, hogy egy üres híváshoz
 lefoglalt portok kerülnek beállításra az l7mp erőforrások számára, ami azt eredményezi, hogy
 a hívás egyik résztvevője nem tud semmilyen forgalmat küldeni az rtpengine felé.

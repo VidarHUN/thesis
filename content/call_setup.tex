@@ -111,14 +111,14 @@ hanganyag egy másik formátumba való átalakítása történik. Ezt jelenleg a
 csak hanggal tudja megvalósítani. 
 
 Alapvetően elérhető ez a funkció, de ki is kapcsolható teljesen. Ugyanakkor az, hogy 
-elérhető az rtpengine nem avatkozik bele a hívott felek közötti kodek megegyezésbe, 
-így ha nincs közös kodek-je a két félnek, akkor a hívás sikertelen lesz.
+elérhető az rtpengine nem avatkozik bele a hívott felek közötti kódolás megegyezésbe, 
+így ha nincs közös kódolása a két félnek, akkor a hívás sikertelen lesz.
 
 A transzkódlást az ng vezérlőprotokoll \textit{transcoding} vagy \textit{ptime} beállításával
 lehet az rtpengine tudtára adni. Így, ha a két félnek nincs közös kodekje, de az rtpengine
 mind a kettő számára képes egy olyat nyújtani, amit elfogad, akkor a hívás sikeresen kiépül.
 
-Ha aktív transzkódolás van, akkor az SDP-ből kikerül minden olyan kodek, amit nem támogatnak
+Ha aktív transzkódolás van, akkor az SDP-ből kikerül minden olyan kódolási eljárás, amit nem támogatnak
 a kliensek. Emellett ezt nem lehet kernel szinten továbbítani, ezért mindenképpen a 
 felhasználói térben lesznek ezek a csomagok feldolgozva.
 
@@ -149,8 +149,8 @@ emeltem ki.
 \begin{itemize}
 	\item \textbf{ping}: Ellenőrizhető, hogy az rtpengine elérhető-e. Egyetlen helyes 
 	válasz van rá, az pedig a \textbf{pong}.
-	\item \textbf{offer}: A hívó fél adatit rögzíti.
-	\item \textbf{answer}: A hívott fél adatit rögzíti. 
+	\item \textbf{offer}: A hívó fél adatait rögzíti.
+	\item \textbf{answer}: A hívott fél adatait rögzíti. 
 	\item \textbf{delete}: Egy adott azonosítóval rendelkező hívást lehet törölni.
 	\item \textbf{query}: Egy hívás részleteit lehet lekérdezni. 
 	\item \textbf{statistics}: Egy adott azonosítóval rendelkező hívásról lehet statisztikát
@@ -159,10 +159,7 @@ emeltem ki.
 
 \subsection{Beállítás}
 
-Elsőnek az rtpengine-t kell beállítani, amihez a következő konfigurációt 
-használom: 
-
-\begin{lstlisting}
+\begin{lstlisting}[caption=rtpengine konfigurációja, label=lst:confRtpe]
 	[rtpengine]
 	interface=192.168.1.106
 	foreground=true
@@ -220,44 +217,41 @@ Az normál architektúrához a már említett VirtualBox-l létrehoztam négy vi
 amik Ubuntu 20.04 operációs rendszer használnak. Ezek közül egyre telepítésre került 
 a Kamailio, egyre az rtpengine és kettőre egy-egy Linphone kliens. A klienseknek azért
 van szüksége két különböző virtuális gépre, mert Linphone-ból nem lehet kettőt
-párhuzamosan futtatni egy géppen.
+párhuzamosan futtatni egy gépen.
 
-A Kamailio beállítása során egy a publikus github tárolóban található konfigurációt
+A Kamailio beállítása során egy a publikus Github tárolóban található konfigurációt
 használtam, mivel abban beállításra került az rtpengine használata. Így nekem 
-csak a modul inicializásánál kellett megadnom az rtpengine címét és annak portját. 
-Viszont az rtpengine beállítása teljes mértékben azonos az rtpengine bemutatására
-szolgáló fejezetben megadott konfigurációval azzal a különbéggel, hogy más IP
-címek szerepel benne.
+csak a modul inicializáció során kellett megadnom az rtpengine címét és annak portját. 
+Viszont az rtpengine beállítása teljes mértékben azonos a \ref{lst:confRtpe} megadott konfigurációval azzal a különbséggel, hogy más IP címek szerepelnek benne.
 
 Amit még a Kamailio-val kellett tenni, hogy két felhasználókat kellett regisztrálni
 különben nem lehetne a két kliens között hívást kezdeményezni. Az ehhez használt parancs
-alább látható, ahol az első paraméter a felhasználó neve majd az azutáni a felhasználó
-jelszava.
+az \ref{lst:addUserKamailio} látható, ahol az első paraméter a felhasználó neve majd az azutáni a felhasználó jelszava.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption=Felhasználó hozzáadása Kamailio-hoz, label=lst:addUserKamailio]
 kamctl add A 123
 \end{lstlisting}
 
 Abban az esetben, ha a Kamailio-t futtató szerver IP címe 192.168.99.102, akkor az 
 így létrejött felhasználó azonosítója a következő lesz: sip:A@192.168.99.102. Ezzel a
-címmel lehet a Linphone kliensekben regisztálni ezt a felhasználót. 
+címmel lehet a Linphone kliensekben regisztrálni ezt a felhasználót. 
 
 De hogyan is kell beállítani a Linphone klienseket? Erre add választ a következő 
 pár sor. 
 
-\begin{lstlisting}
+\begin{lstlisting}[caption=Linphone beállítása, label=lst:setupLinphone]
 register sip:A@192.168.99.102 192.168.99.102 123
 soundcard use files
 play /home/user/input.wan
 \end{lstlisting}
 
 Az első sorral kerül regisztrálásra a felhasználó, ahol az első argumentum adja meg a 
-felhasználó azonosítóját, második a tarmony címét és a végül a jeszó kerül átadásra. 
-Eztután, ha újraindításra kerül a Linphone, akkor automatikusan megpróbálja a definált
+felhasználó azonosítóját, második a tartomány címét és a végül a jelszó kerül átadásra. 
+Ezután, ha újraindításra kerül a Linphone, akkor automatikusan megpróbálja a definiált
 felhasználót regisztrálni. 
 
 A következő sor azt adja meg, hogy ne használjon semmilyen hangkártyát és csak a 
-harmadik sorban specifikált fájlt játsza le a hívásban részvevő feleknek.  \\
+harmadik sorban specifikált fájlt játssza le a hívásban részvevő feleknek.  \\
 
 \begin{figure}[!ht]
 	\centering

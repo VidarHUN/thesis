@@ -29,7 +29,7 @@ még azt is, hogy az RTP csomagok mindig páros portra érkeznek, míg az RTCP m
 nagyobb portot fogja használ így az mindig páratlan lesz.
 
 Fontos, hogy az RTCP csomagoknak számunkra két fő típusa van, amiket jelentéseknek hívnak.
-Ezek a jelentések tartalmazzák az aktuális RTP folyamről alkotott információk halmazát. Egy
+Ezek a jelentések tartalmazzák az aktuális RTP folyamról alkotott információk halmazát. Egy
 ilyen jelentést mindig a küldő készít és egyet a fogadó. Viszont ez a kettő jelentés nem azonos
 mezőket tartalmaznak, mert a fogadó jelentésben számításba van véve a küldő jelentéseknek 
 a tartalma és ideje. Így van küldő és fogadó jelentés is, amiket a hívásban résztvevő felek 
@@ -38,7 +38,8 @@ sávszélességgel rendelkezik, ha nagyobb a sávszélesség, akkor több jelent
 jobb képet lehet kapni arról, hogy milyen RTP folyam minősége, míg alacsonyabbnál kevesebb
 RTCP csomag kerül kiküldésre. 
 
-A küldő jelentés tartalmának fontosabb részei:
+A \cite{RFC3550} leírásában szereplő RTCP csomagok leírása alapján a fontosabb részei a
+küldő és fogadó jelentésnek. Kezdve a küldőével: 
 
 \begin{itemize}
 	\item SSRC (Synchronization source), amivel jelöli, hogy kitől származik egy a jelentés.
@@ -78,8 +79,8 @@ sip:peter@tartomany.com. Így ha az egyik kliens hívást kezdeményez Péter fe
 akkor ezzel a címmel pontosan meglehet határozni az elhelyezkedését. 
 
 Működése nagyban hasonlít a HTTP (HyperText Transfer Protocol) kommunikációhoz, ahol 
-a kliens bizonyos kéréseket küld a szerver felé, amire választ kap. A következők a 
-fontosabb SIP kérések típusai: 
+a kliens bizonyos kéréseket küld a szerver felé, amire választ kap. A \cite{RFC3261}-ben
+olvasható több parancs közül a szakdolgozat szempontjából a következők fontosabbak: 
 
 \begin{itemize}
 	\item \textbf{INVITE}: Új kapcsolat létesítése.
@@ -104,12 +105,12 @@ kapcsolatos. A Google fejlesztette eredetileg, de jelenleg a Cloud Native
 Computing Foundation - CNCF vette át a karbantartását. 
 
 Kubernetes fürtöt létrehozhatunk lokálisan a saját szerveren is vagy felhőben,
-ami lehet publikus, privát vagy hibrid hozzáférésű. Viszont azt figyelembe 
+ami lehet publikus, privát vagy hibrid hozzáférésű is. Viszont azt figyelembe 
 kell venni, hogy egy Kubernetes fürtöt nem egyszerű kiépíteni lokálisan, 
 szóval ha nem szükséges, akkor lehet használni felhőszolgáltatók Kubernetes 
 motorjait, mint az Amazon AKS, Linode LKE vagy a Google GKE szolgáltatása.
 Ilyenkor az általunk beállított paraméterekkel létrejön egy teljes fürt, amit
-tudunk menedzselni. 
+tudunk menedzselni.
 
 \subsection{Felépítése}
 
@@ -117,7 +118,7 @@ tudunk menedzselni.
 	\centering
 	\includegraphics[width=1\textwidth, keepaspectratio]{figures/k8s_architecture.png}
 	\caption{Kubernetes fürt felépítése}
-	\label{fig:HVSpaces}
+	\label{fig:achitecture}
 \end{figure}
 
 Egy Kubernetes fürt kettő részből áll egy vezérlő- és egy adatsíkból, ahol a 
@@ -136,7 +137,7 @@ tudja meg a fejlesztő, hogy amit csinált az létrejött.
 \subsubsection{Vezérlősík}
 
 A mester csomópont mindig a fő vezérlő egysége a fürtnek, mivel kezeli a 
-munkafolyamatokat és irányítja a kommunikációt fürtön belül. A 2.1-s ábrán
+munkafolyamatokat és irányítja a kommunikációt fürtön belül. A \ref{fig:achitecture}-s ábrán
 látható vezérlősík tartalmazhat  több mester csomópontot is a felsorolt 
 komponensekkel, amivel lehet biztosítani a fejlesztők számára a folytonos 
 elérést. A mester csomópont részei: 
@@ -160,7 +161,7 @@ elérést. A mester csomópont részei:
 	képes megvalósítani. 
 \end{itemize}
 
-Mint ahogy a 2.1-s ábrán is látszik a fejlesztő vagy üzemeltető alapvetően a \textbf{kubectl}
+Mint ahogy a \ref{fig:achitecture}-s ábrán is látszik a fejlesztő vagy üzemeltető alapvetően a \textbf{kubectl}
 nevezetű eszközzel képesek kommunikálni az API szerverrel. Ez az eszköz lényegében
 megvalósítja a teljese HTTP kommunikációt az API szerverrel szóval sokkal könnyebben 
 lehet vele lekérdezni információkat vagy új erőforrásokat létrehozni. 
@@ -168,7 +169,7 @@ lehet vele lekérdezni információkat vagy új erőforrásokat létrehozni.
 \subsubsection{Adatsík}
 
 Az adatsíkon futnak az úgynevezett dolgozók, amik igazából különálló szerverek,
-amik rendelkeznek a 2.1-s ábrán szereplő komponensekkel és képesek futtatni 
+amik rendelkeznek a \ref{fig:achitecture}-s ábrán szereplő komponensekkel és képesek futtatni 
 valamilyen konténer kezelő alakalmázást, mint például a Docker. Ami régebben az 
 alapértelmezett konténer kezelője volt a Kubernetes-nek, de 2021-ben már nem 
 követeli meg és bármilyen másik konténer kezelőt is be lehet állítani alapértelmezettnek.
@@ -193,7 +194,7 @@ A fontosabb elemei az adatsíknak:
 
 \subsection{Erőforrások}
 
-A fentebb leírt architektúra csak az alapjai a Kubernetesnek, viszont ezen kívül
+A \ref{fig:achitecture} leírt architektúra csak az alapjai a Kubernetesnek, viszont ezen kívül
 még rengeteg olyan erőforrással is rendelkezik, amik lehetővé teszik a konténerek
 menedzselésének egy új szintjét.
 
@@ -307,17 +308,17 @@ kernel szintű program, amely lehetővé teszi a csomagok feldolgozását és to
 a kernelben. \\
 
 Az l7mp proxy használható szimplán Node.js-l indítva, mivel elérhető az NPM (Node 
-Package Manager) tárolóban. A következő paranccsal indítható el: 
+Package Manager) tárolóban. Az indítása a \ref{lst:nodeL7mp} paranccsal történik: 
 
-\begin{lstlisting}
+\begin{lstlisting}[caption=L7mp indítása Node.js segítségével, label=lst:nodeL7mp]
 	node l7mp-proxy.js -c config/l7mp-minimal.yaml -l warn -s
 \end{lstlisting}
 
-Ami a minimális l7mp konfigurációval és a figyelmezetési naplózási szinten fogja
+Ami a minimális l7mp konfigurációval és a figyelmeztetési naplózási szinten fogja
 elindítani az l7mp proxyt. A minimális konfiguráció létre fog hozni egy REST API
 szervert, amin keresztül a későbbiekben újabb l7mp beállításokat lehet megadni.
 
-Ezen felül a Docker-t is támogatja, ami alapértelmezetten a fenti parancsot fogja
+Ezen felül a Docker-t is támogatja, ami alapértelmezetten a \ref{lst:nodeL7mp} parancsot fogja
 egy konténerben futtatni.
 
 \subsubsection{Felépítése}
@@ -336,7 +337,7 @@ felsorolásra és kifejtésre kerülnek alább:
 	adott protokollal rendelkező csomagokra figyeljen és dolgozza fel őket. A feldolgozás
 	alatt azt a folyamatot kell érteni, hogy meghatározza mely fürthöz kerüljön a csomag,
 	szűri a bejövő csomagokat valamilyen paraméter alapján, ha lehet. Ez általában 
-	a csomagok fejlécében szereplő információk, vagy a munkamentben megtalálható bármilyen
+	a csomagok fejlécében szereplő információk, vagy a munkamenetben megtalálható bármilyen
 	érték alapján történhet. 
 	\item \textbf{Fürt (Cluster)}: A végpontok egy gyűjteménye, ami képes forgalmat elosztani
 	közöttük. Az elosztás történhet nagyon egyszerűen, amikor mindig egy lista élén álló
@@ -365,10 +366,10 @@ beállítható.
 Az l7mp programozása történhet konfigurációs fájlból és REST API hívásokon keresztül
 egyaránt. Viszont az l7mp indításához szükség van egy alapkonfigurációra, mivel
 anélkül nem fog létrejönni a kontroller figyelő, ami biztosítja az API 
-láthatóságát. Az alábbi kódrészleten látható, hogyan lehet egy ilyen induló konfigurációt
+láthatóságát. A \ref{lst:minl7mp} kódrészleten látható, hogyan lehet egy ilyen induló konfigurációt
 létrehozni YAML (YAML Ain't Markup Language) fájlal.
 
-\begin{lstlisting}
+\begin{lstlisting}[caption=L7mp minimális konfiguráció, label=lst:minl7mp]
 admin:
   log_level: info
   log_file: stdout
@@ -398,17 +399,18 @@ a figyelőn keresztül a HTTP kérések.
 
 Ez az API megvalósítja a teljes CRUD-t (Create, Read, Update, Delete) mindent komponensre, 
 amivel tudunk létrehozni, olvasni, frissíteni és törölni komponenseket. Minden komponenshez
-tartozik egy útvonal, ami így tevődik össze, ha a fenti példát nézzük: http://127.0.0.1:1234/api/v1/listeners. Ha erre a címre egy POST üzenetben YAML vagy 
+tartozik egy útvonal, ami így tevődik össze, ha a \ref{lst:minl7mp} példát nézzük: http://127.0.0.1:1234/api/v1/listeners.
+Ha erre a címre egy POST üzenetben YAML vagy 
 JSON konfigurációt küldünk, akkor az létre fog jönni a proxyn belül. Ami még egy 
 hasznos funkció ebben a megvalósításban az a rekurzív lekérés, aminek során egy GET 
 üzenettel és az URI paraméterekben a \textbf{recursive=true} beállításával az összes
-figyelő definíciója a bennük lévő többi objektummal együtt részletesen megkapható. Az API 
-teljes dokumentációja megtalálható a következő oldalon: https://l7mp.io/openapi/. \\
+figyelő definíciója a bennük lévő többi objektummal együtt részletesen megkapható. Kétféle 
+API leírás létezik az l7mp-hez egy az önálló proxyhoz \cite{proxy} és egy olyan, amit a 
+Kubernetes operátor tud használni \cite{kubeProxy}. Azért létezik kétféle API leírás,
+mert az elsőnek létrehozott nem volt teljesen kompatibilis a Kubernetes-sel így 
+keletkezett még egy. Jövőbeni tervek között szerepel, hogy csak egy legyen.
 
-A következőkben látható lesz egy példa, ami pont az API-n keresztüli programozást
-hivatott bemutatni. 
-
-\begin{lstlisting}
+\begin{lstlisting}[caption=L7mp konfigurálása API-n keresztül, label=lst:confL7mpAPI]
 curl -iX POST --header 'Content-Type:text/x-yaml' --data-binary @- <<EOF  http://localhost:1234/api/v1/listeners
 listener:
   spec:
@@ -427,7 +429,7 @@ rules:
 EOF
 \end{lstlisting}
 
-A fenti hívásban látható, hogy létrehozunk egy figyelőt, ami a 127.0.0.1:2000-s
+A \ref{lst:confL7mpAPI} hívásban látható, hogy létrehozunk egy figyelőt, ami a 127.0.0.1:2000-s
 címen fog WebSocket csomagokat várni, majd azokat UDP-re konvertálva továbbküldeni 
 a 127.0.0.1:3000-s címre.
 
@@ -446,12 +448,12 @@ Ezeken kívül még rengeteg más funkcióval szokott rendelkezni egy szolgálta
 de ezeket lehet mondani a legnépszerűbbeknek.
 
 A megvalósításához minden mikroszolgáltatásnak azaz kapszulának rendelkeznie kell 
-egy pótkocsival, ami egy adott proxyt fog futattni. Ez a konténer lesz minden esetben
+egy pótkocsival, ami egy adott proxyt fog futtatni. Ez a konténer lesz minden esetben
 a belépési pont az alkalmazáshoz. Ezeket a proxykat valahogyan dinamikusan kell tudni
-konfigurálni, amit egy operárot segítéségével lehet megtenni. A használt proxyknak 
+konfigurálni, amit egy operátort segítéségével lehet megtenni. A használt proxyknak 
 rendelkezni kell egy olyan interfésszel, amin keresztül lehet őket konfigurálni. 
 Az l7mp szolgáltatás háló esetében ezek a proxyk egyértelműen az l7mp sajátja lesz,
-aminél az elző részben láttuk hogyan lehet egy API interfészt definiálni, amin 
+aminél az \ref{lst:confL7mpAPI} részben láttuk hogyan lehet egy API interfészt definiálni, amin 
 keresztül POST hívásokkal lehet új beállításokat eszközölni.
 
 De ezeket a beállításokat valamilyen módon közölni kell az operátorral, amihez 
@@ -468,11 +470,11 @@ létrefog jönni és kezelni tudja hozzá beérkező forgalmat.
 Egy ilyen erőforrás két fő részből áll, az egyik a kapszulák kiválasztásáért felel míg
 a másik azért, hogy milyen definíció kerüljön alkalmazásra a kijelölt kapszulákban.
 A kiválasztás mindig valamilyen címke alapján történik, amivel rendelkezik a kapszula. 
-Ezt viszont többször lehet használni egy definíción belül, mert meglehet vele határotni,
+Ezt viszont többször lehet használni egy definíción belül, mert meglehet vele határozni,
 hogy a figyelő mely kapszulákon jöjjön létre és azt is, hogy a végpontok mely kapszulák 
 legyenek. 
 
-A másik fontos része maga a figyelő definiciója, ami nagyon hasonló, mint az l7mp proxy
+A másik fontos része maga a figyelő definíciója, ami nagyon hasonló, mint az l7mp proxy
 esetében, de itt már vannak Kubernetes specifikus elemek is, mint a \textit{selector},
 amivel a kapszulák kiválasztása történik meg. De ilyen az is, hogy egy Kubernetes 
 erőforrásra név szerint lehet hivatkozni, amit majd az operátor feloldva fog az l7mp
@@ -507,6 +509,6 @@ kontrollálhatóbbá válik a szolgáltatás háló használata.
 
 Használatukkal lehet szűrni a csomagokat forráscímük, fejlécük és még nagyon sok más 
 paraméter szerint. JSON predicate objektumokkal lehet szűrni az csomagokat, amivel 
-könnyen lehet komplex szűrési feltételeket maghatározni kölönböző paraméterek alapján. Ha 
+könnyen lehet komplex szűrési feltételeket meghatározni különböző paraméterek alapján. Ha 
 egy csomag megfelel minden kitételnek, akkor a definiált művelet szerint fog tovább 
 haladni a csomag. 

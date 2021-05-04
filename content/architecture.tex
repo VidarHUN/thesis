@@ -39,11 +39,11 @@ sebességének, amibe nehéz beleütközni.
 
 Ahhoz, hogy az előzőleg leírt hálózat elkülönítés működjön a Kuberspray programot 
 használtam, mert ennél könnyedén lehetett a telepítés során kettő különböző interfészt
-beállítani. A kuberspray programmal Kubernetes fürtöket lehet telepíteni szimplán
+beállítani. A kuberspray \cite{kubespray} programmal Kubernetes fürtöket lehet telepíteni szimplán
 szerverekre. A különlegessége az, hogy Ansible-t használ erre a célra. Szóval elég
 a mester szerver számára lehetővé tenni, hogy működjön az ssh a többi szerverrel és
 egyetlen konfigurációs fájl indításával képes minden szükséges szoftvert feltelepíteni
-és azokat beállítani. Az Ansible-l nagyjából bármilyen folyamatot lehet automatizálni a
+és azokat beállítani. Az Ansible \cite{ansible} nagyjából bármilyen folyamatot tud automatizálni a
 szerverek között. 
 
 \section{Kubernetes architektúra}
@@ -112,8 +112,8 @@ De ez a funkció ebben a formában nem szerepel az rtpengine-ben. A hivatalos ve
 működik, ha minden rtpengine példány látja egymást a hálózaton és már létrejöttükkor tudják
 egymás címét és, hogy melyik példány melyik kulcshelyet használja. Ez Kubernetes hálózatban
 nem túl szerencsés megoldás, mivel a kapszulák bármikor törlődhetnek és más címmel jöhetnek 
-létre. Ezért kellett találni egy megoldást, amit egy bizony Oded Arbell pull request-je (ajánlása)
-jelentett. Ugyanis szerette volna, ha lehet skálázni az rtpengine példányokat anélkül, hogy 
+létre. Ezért kellett találni egy megoldást, amit egy bizony Oded Arbel pull request-je (ajánlása)
+\cite{oded} jelentett. Ugyanis szerette volna, ha lehet skálázni az rtpengine példányokat anélkül, hogy 
 tudnánk a létező többinek a címét is. Ezt majdnem teljesen jól megoldotta, viszont egy olyan 
 problémába ütközött, hogy SRTP (Secure Real-time Transport Protocol) esetén nem minden hívást képes 
 felépíteni az újonnan létrejött rtpengine. Így nem olvasztották be a fő kódbázisba, ezért nem tudom a 

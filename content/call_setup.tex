@@ -36,7 +36,7 @@ Az rtpengine egy Sipwise  által fejlesztett a Kamailio-hoz szánt RTP
 proxy, ami nem csak forgalmat képes irányítani, hanem a beérkező csomagokat transzformálni is.
 Emellett olyan funkciókkal is rendelkezik, amikkel tudjuk a hívások minőségét monitorozni, 
 rendelkezésre állóságát és biztonságát növelni. A következő funkciókat érdemes 
-jobban kifejteni: 
+jobban kifejteni a \cite{rtpengine} közül: 
 
 \begin{itemize}
 	\item Tud IPv4 és IPv6 címeket kezelni és közöttük média forgalmat továbbítani. 
@@ -143,7 +143,7 @@ verzió miatt, ami az architektúra fejezetben kiderül, hogy miért nem.
 
 Minden ilyen üzenet két részből áll. Egy sütiből, ami ebben az esetben azonosítóként
 funkciónál és egy bencode szótárból, ami legalább egy parancsot tartalmaz az 
-alábbiak közül. A felsorolás nem teljes, csak a téma szempontjából fontosokat 
+alábbiak közül. A felsorolás nem teljes \cite{rtpengineng}, csak a téma szempontjából fontosokat 
 emeltem ki.
 
 \begin{itemize}
@@ -194,7 +194,9 @@ az adatbázisba olyan táblákat tárol, mint regisztrált felhasználók és ak
 ezen felül még sok mást is. 
 
 Ezenkívül az általam használt beállításokat a \textit{kamailio.cfg} fájlban lehet megadni,
-ami három részből áll. 
+ami három részből áll. A használt dokumentációból \cite{kamailio} jól látszik, hogy ennek
+fájlnak a szerkesztése nagyon sok szempontból emlékeztet egy programozási nyelvre 
+C szerű elemekkel.  
 
 Az első a \textbf{globális paraméterek}, ahol leginkább környezeti változókat lehet 
 definiálni, amikkel lehet kontrollálni, hogy a konfiguráció mely része fusson le illetve

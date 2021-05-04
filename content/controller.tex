@@ -86,10 +86,10 @@ a beérkező üzenetek feldolgozása.
 
 \subsection{Kubernetes API}
 
-Ahogy a Használt eszközök bemutatása fejezetben is lehet olvasni a Kubernetes
+Ahogy a használt eszközök bemutatása fejezetben is lehet olvasni a Kubernetes
 fürtnek parancsokat a Kube API-n keresztül lehet adni. Ezért kellett egy olyan
 módszert találni, amivel a kontroller képes kommunikálni a Kubernetes API-val 
-egy kapszulából. Ehhez használtam egy olyan könyvtárat, amivel
+egy kapszulából. Ehhez használtam egy olyan könyvtárat \cite{pythonKubeAPI}, amivel
 könnyen megvalósítható az API-val való kommunikáció. Mindemellett nagyon jól
 van dokumentálva ez a könyvtár, így viszonylag egyszerűen használható.
 
@@ -182,10 +182,10 @@ neve.
 
 A kontroller indítása után az első feladata az a kódnak, hogy beolvassa az indítás
 során megadott argumentumokat és feldolgozza az konfigurációs fájlban megadott 
-paramétereket. Az argumentumok beolvasását a \textit{argparse} könyvár használatával
+paramétereket. Az argumentumok beolvasását a \textit{argparse} \cite{argparse} könyvár használatával
 oldottam meg, mivel egy könnyel használható és bővíthető. Így a későbbiekben, ha 
 több argumentum átadására van szükség nem lesz nagy feladat a megvalósítása. Másfelől
-a konfigurációs fájl feldolgozásához is létezik egy könyvtár, amit \textit{configparser}-nek
+a konfigurációs fájl feldolgozásához is létezik egy könyvtár, amit \textit{configparser}-nek \cite{configparser}
 hívnak és a Microsoft Windows INI fájljaihoz hasonló konfigurációkat képes beolvasni. Beolvasás
 után feloldásra kerülnek az olyan paraméterek értékei, amik tartalmazhatnak tartomány neveket
 is. Erre azért van szükség, mert létrehozott foglalatokkal csak konkrét IP címekre lehet 
@@ -195,7 +195,7 @@ nagy mértékben megkönnyebbül és átláthatóbb lesz a kód is. \\
 
 A naplózás egy kulcsfontosságú része a kontrollernek, mivel fejlesztéskor vagy használata
 során az stdout-ra kiírt események nagyban segítik a problémák keresését illetve azok 
-megoldását. Naplózáshoz a \textit{logging} nevezetű könyvtárat használom, amiatt mert 
+megoldását. Naplózáshoz a \textit{logging} \cite{logging} nevezetű könyvtárat használom, amiatt mert 
 sok más könyvtár is ezt használja így, ha azok is valamit naplóznak, akkor az egyben 
 látható lesz. Inicializálása során megadható, hogy milyen szinten naplózza az eseményeket 
 és az is, hogy milyen formátumba. Ezért a kontroller egy naplóbejegyzése az alább látható 
@@ -237,7 +237,7 @@ teljesíteni az rtpengine-l. \\
 
 Végül pedig van a WebSocket verzió, amikor egy WebSocket foglalat kerül létrehozásra.
 De ennek a létrehozására nem az általában használt python könyvtárat a \textit{socket}-t
-fogja használni, hanem a \textit{websocket} könyvtárnak a \textit{create\_connection()}
+fogja használni, hanem a \textit{websocket} \cite{websocket} könyvtárnak a \textit{create\_connection()}
 függvényét. Ezzel a függvény egy olyan foglalattal tér vissza, aminél az elküldött 
 üzenetek rendelkezni fognak a létrehozáskor beállított fejlécekkel. A következő 
 függvény az, ami a kontrolleren belül létrehozza a WebSocket foglalatot. 
@@ -288,7 +288,7 @@ fog bekerülni ebbe a listába, egy hívó fél adataival és egy a hívott fél
 és törlésnél ez a kettő kerül törlésre a hívásazonosító alapján. 
 
 Egy erőforrás létrehozása során elsőnek ebben a listában kell ellenőrizni azt, hogy
-ilyen hívásazonosítóval már létezik-e erőforrás, ha nem létezik 0csak akkor lehet létrehozni. 
+ilyen hívásazonosítóval már létezik-e erőforrás, ha nem létezik csak akkor lehet létrehozni. 
 Erre azért van szükség, mert a Kamailio rendelkezik egy válaszidővel, ami ha lejár
 akkor az utoljára kiküldött üzenetet megismétli. De ebben az esetben könnyen előfordulhat,
 hogy később küldi vissza a kontroller az üzenetet, mint ez az időkeret és ilyenkor 

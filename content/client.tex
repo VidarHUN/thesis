@@ -25,7 +25,7 @@ működése és célja, a kliens használata és annak felépítése.
 Elsőnek az FFmpeg-t szeretném bemutatni, mert ezt az eszközt többen ismerhetik,
 mint az rtpsend-t. 
 
-Az FFmpeg egy nyílt forráskódú szoftver, amely különböző könyvtárak felhasználásával
+Az FFmpeg \cite{ffmpeg} egy nyílt forráskódú szoftver, amely különböző könyvtárak felhasználásával
 képes videó, hang és egyéb multimédiás adatfolyamok kezelésére. Így olyan feladatokat
 lehet vele ellátni többek között, mint kódolás, dekódolás, transzformálás és 
 adatfolyam sugárázása. Így egy olyan feladat ellátása, hogy adott hangfájl sugárzása a 
@@ -88,7 +88,7 @@ tartalmazza részletesen, hogy a paraméterei mit csinálnak.
 
 \subsection{rtpsend}
 
-Az rtpsend teljesen eltér az FFmpeg-től, hiszen itt nincs semmilyen hang vagy videó
+Az rtpsend \cite{rtpsend} teljesen eltér az FFmpeg-től, hiszen itt nincs semmilyen hang vagy videó
 feldolgozás, átalakítás vagy bármi más. Itt egyszerűen csak egy RTP folyam visszajátszása
 történik, amit az \textit{rtpdump} eszközzel lehet felvenni. Ez a két szoftver egy 
 eszköztárba tartozik, aminek a neve \textit{rtptools}, amit Henning Schulzrinne
@@ -156,7 +156,7 @@ a kliensnek indítania.
 
 Első próbálkozásnál a szálkezeléssel próbálkoztam, de hamar rá kellett jönnöm,
 hogy az csak abban az esetben hasznos, ha python kódot kell konkurensen 
-használni. Ezért átváltottam a \textit{subprocess} modulra, amivel külső alkalmazásokat
+használni. Ezért átváltottam a \textit{subprocess} \cite{subprocess} modulra, amivel külső alkalmazásokat
 lehet párhuzamosan használni.
 
 Ahhoz, hogy ezzel a modullal létre lehessen hozni egy folyamatot, ahhoz a \textit{Popen}

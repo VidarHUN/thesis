@@ -1,3 +1,101 @@
 %----------------------------------------------------------------------------   
-\chapter{Mérések és kapott eredmények értékelése}
+\chapter{Mérések}
 %---------------------------------------------------------------------------- 
+
+A VoIP hívás monitorozásra vonatkozó mutatók a hívásfolyam médiaútvonalának bármely 
+csomópontján mérhetőek. Alapvetően számítással és összesítéssel történő elemzésre 
+használják, és néha valós idejű teljesítménykövetésre és javításra is. \\
+
+Ebben a fejezetben ismertetésre kerülnek a használt mutatók, tesztek menete és
+azok eredményeinek összehasonlítása.
+
+\section{Mutatók}
+
+A következő mutatók kiszámolhatóak az RTCP csomagok alapján vagy maga az rtpengine
+biztosítja számunkra a hívás végeztével.
+
+\subsection{MOS és R-Faktor}
+
+VoIP hívások minőségének mérésre két elterjedt mértékegység van az R-Faktor (osztályozási faktor)
+és a MOS (Mean Opinion Score). MOS értéket gyakrabban lehet látni, viszont az R-Faktor szükséges
+ahhoz, hogy kilehessen számolni a MOS-t. Az R-Faktor egy olyan mutató, ami a késleltetés, jitter és
+csomagvesztés mutatókból kerül kiszámításra. Az értéke egy 50-90 közötti szám, ahol 
+az 50 rossz minőséget, míg a 90 kiválót jelent. 
+
+A MOS a hang, videó és audiovizuális minőséget kifejező mértékegység az 
+ITU-T P.800.1 szerint. A hallgatás, a beszéd vagy a párbeszéd minőségére utal, 
+függetlenül attól, hogy szubjektív vagy objektív modellekből származnak-e. Ez a
+mértékegység egy egytől ötig terjedő skálán mozog, ahol a legalacsonyabb a legrosszabb
+és legmagasabb a legjobb minőség.
+
+\begin{itemize}
+	\item Nagyon jó: 4,3 -5,
+	\item Rossz: 3,1 -3,6,
+	\item Nem ajánlott 2,6 - 3,1
+	\item Nagyon rossz: 1 - 2,6.
+\end{itemize}
+
+A \ref{eqMos} képletben lehet látni, a MOS kiszámítását, ahol az \textit{R} paraméter 
+az R-Faktor.
+
+\begin{equation} \label{eqMos}
+\text{MOS} = (((R-60) \cdot (100-R) \cdot 0,000007R) + 0,035R + 1)
+\end{equation}
+
+\subsection{Késleltetés}
+
+Ez azaz idő, ami alatt a csomag egyik klienstől eljut a másikig ezredmásodpercben (ms). 
+
+\subsection{Körülfordulási idő}
+
+Az idő ami szükséges a csomagoknak, míg egyik klienstől eljut a másikig és vissza. SIP
+hívások esetében ez azaz idő, amíg egy tranzakció tart, ami azt jelenti, hogy az elküldött
+csomagra mennyi idő múlva érkezik egy nyugta. A szakdolgozat további részeben RTT (Round Trip Time)
+fogja jelölni az angol neve után. 
+
+Mérése ennek is ezredmásodpercben történik, mivel időről beszélünk, ezért minél magasabb ez a
+szám annál rosszabb a hívás minősége. Az audiotartalom esetében a felső határ 150 ms, ami felett
+már nagyon gyenge minőségű a hívás. Befolyásolhatja ezt a számot többek között, a kliensek 
+közötti távolság, összeköttetés minősége és sávszélesség. A mérések során ezek mind nem fognak
+változtatni az RTT idején, mert a szerverek "egymás mellett" vannak nagy sebességű kábelekkel
+összekötve. Ami befolyásolni fogja, azaz a csomag útjában lévő proxyk mennyisége és azok feldolgozó
+képessége. 
+
+Fontos, hogy késleltetést nem lehet vele megbízhatóan mérni általános környezetben, mivel a hívó
+felek között más útvonalak jelenhetnek meg, ami aszimmetrikus RTT eredményez. 
+
+Viszont az rtpengine ezt a számot nem adja meg konkrétan, szóval egy egyszerű számítást
+el kell rajta végezni, hogy a valós RTT-t megkapjuk.
+
+\begin{equation}
+\text{RTT} = \frac{\text{rtpegnine} \rightarrow \text{RTT}}{1000} + \text{rtpengine} \rightarrow \text{jitter} \cdot 2 + 10
+\label{calcrtt}
+\end{equation}
+
+\subsection{Csomagvesztés}
+
+Azon csomagok száma melyek nem jutottak el a céljukig. Szóval egyik klienstől a másikig. Ez különböző
+indokok miatt történhet. A következő felsorolás nem teljes \cite{measure}
+
+\begin{itemize}
+	\item Nem elegendő sávszélesség. 
+	\item Túlterhelés miatt nem képesek a felek feldolgozni a csomagokat.
+	\item Tűzfalak, proxyk eldobják a csomagokat. 
+\end{itemize}
+
+\subsection{Jitter}
+
+A kapott csomagok késleltetésének változása a folyam során. Méréséhez a csomagok küldési intervallumát
+kell összehasonlítani a kapottak intervallumával. Szóval, ha két csomagot kiküldésre kerül 30 ms 
+különbséggel és a kapott csomag 50 ms különbséggel érkezik, akkor a jitter 20 ms. Ennél a mutatónál is
+az előnyös, ha minél kisebb, mivel már egy kicsi jitter és könnyen ronthat a hívás minőségén. 
+Amik okozhatják:
+
+\begin{itemize}
+	\item A keret nagyobb, mint a jitter puffer mérete. 
+	\item Algoritmusok késleltethetik az interfészeken beérkező csomagokat. 
+	\item A kommunikáció közben lévő hálózati eszközök, proxyk feldolgozó képessége. 
+\end{itemize}
+
+Javítani úgy lehet ezen a számon, ha az alkalmazások használnak jitter puffert, ami elfogja a
+beérkező csomagokat és azokat egyenletesen adja tovább feldolgozásra. 

@@ -4,7 +4,7 @@
 
 A kontrollernek két fő feladata van egy hívás felépítése során. Az egyik, hogy
 a vezérlőprotokoll üzeneteit feldolgozza illetve továbbítsa az rtpengine
-felé. A másik pedig a híváshoz szükséges l7mp beállításokat hivatott 
+felé. A másik pedig a híváshoz szükséges L7mp beállításokat hivatott 
 megvalósítani.
 
 Ehhez készítettem egy python szkriptet, ami ezeket a feladatokat képes ellátni
@@ -12,9 +12,9 @@ különböző protokollokat támogatva. Azért a python lett választva a megval
 mert ezt a nyelvet viszonylag jól ismerem illetve nagyon jó Kubernetes 
 támogatottsága van. Így könnyen és gyorsan lehetett haladni az írásával. \\
 
-Fontos megjegyezni, hogy a kontroller nem csak l7mp környezetben való használtra lett
+Fontos megjegyezni, hogy a kontroller nem csak L7mp környezetben való használtra lett
 tervezve, hanem Envoy-l is. Így vannak olyan megvalósítások, amik csak Envoy
-vagy l7mp környezetben nyernek értelmet. 
+vagy L7mp környezetben nyernek értelmet. 
 
 \section{Használata}
 
@@ -34,12 +34,12 @@ az alábbi felsorolásban olvashatóak.
 	szolgáltatás neve vagy IP címe. 
 	\item \textbf{envoy\_port}: Envoy menedzsment szolgáltatás portja. 
 	\item \textbf{local\_address}: Lehet állítani, hogy az üzenetek küldése során milyen
-	lokális címről küldje. Ez l7mp környezetben a '127.0.0.1' míg Envoy esetében '0.0.0.0'.
+	lokális címről küldje. Ez L7mp környezetben a '127.0.0.1' míg Envoy esetében '0.0.0.0'.
 	\item \textbf{local\_port}: Meghatározható, hogy a kimenő parancsok mely portról
 	induljanak el. 
-	\item \textbf{sidecar\_type}: Használt proxy típusa állítható be, ami lehet l7mp és envoy is.
+	\item \textbf{sidecar\_type}: Használt proxy típusa állítható be, ami lehet L7mp és envoy is.
 	\item \textbf{without\_jsonsocket}: A fejlesztés során több fajta architektúrát kipróbáltam
-	és ennek paraméternek a beállításával lehet váltani a létrehozandó l7mp erőforrások között. 
+	és ennek paraméternek a beállításával lehet váltani a létrehozandó L7mp erőforrások között. 
 	\item \textbf{ingress\_address}: A Kubernetes dolgozó csomópontjának az IP címe adható meg.
 	Azért van erre szükség, mert később ez a cím fog bekerülni a klienseknek válaszolt SDP
 	üzenetekbe. 
@@ -104,7 +104,7 @@ erőforrásokhoz. Szabályozni lehet ezzel azt is, hogy egy adott erőforráshoz
 csak olvasási joggal rendelkezik a szkript így biztonságosabbá tehető a használata.
 
 A kontrollerhez alább látható YAML definíció létrehozásával lehet olyan jogokat
-adni, amikkel nagyjából bármilyen művelet eltud látni az l7mp által specifikált 
+adni, amikkel nagyjából bármilyen művelet eltud látni az L7mp által specifikált 
 erőforrásokon.
 
 \begin{lstlisting}[caption=RBAC létrehozása, label=lst:rbac]
@@ -132,7 +132,7 @@ roleRef:
 \end{lstlisting}
 
 A \textit{ClusterRole} segítségével lehet névtértől függetlenül jogokat biztosítani,
-amik ebben az esetben az l7mp által specifikált egyéni erőforrásokra vonatkoznak. 
+amik ebben az esetben az L7mp által specifikált egyéni erőforrásokra vonatkoznak. 
 Ezeket az erőforrásokat az \textit{apiGroups} illetve a \textit{resources} listával
 lehet megadni. Majd a \textit{verbs} listában meghatározott műveletekre kap 
 jogok a kontroller. Így képes adott erőforrás állapotát lekérni, listázni, figyelni,
@@ -149,7 +149,7 @@ API objektumot a kontrollerben, amivel egyéni erőforrás definíciókat lehet 
 és törölni a fürtben. Ezt a következő sor használatával lehet létrehozni: 
 \textit{api = client.CustomObjectsApi()}. \\
 
-Így most már szabadon lehet az l7mp objektumait létrehozni és törölni a kontrollerből is, 
+Így most már szabadon lehet az L7mp objektumait létrehozni és törölni a kontrollerből is, 
 ami az előzőleg létrehozott \textit{api} objektum \textit{create\_namespaced\_custom\_object()}
 illetve a \textit{delete\_namespaced\_custom\_object()} segítségével valósítható meg. Az elsőnek
 említett függvény az alább felsorolt paramétereket várja.
@@ -171,7 +171,7 @@ akkor csak a szükséges fájlt beolvassa a kontroller és módosítja a szüks�
 Ha egy hívás beérkezik a kontrollerhez, akkor kettő virtuális szolgáltatás és kettő
 szabály fog létrejönni. A szolgáltatások mindig az l7mp-ingress-n fognak beállítódni, 
 ugyanis ezek nyitják ki a rtpengine által meghatározott portokat a kliensek számára
-a fürtön. A két szabály pedig az rtpengine kapszulák melletti l7mp proxy-ban 
+a fürtön. A két szabály pedig az rtpengine kapszulák melletti L7mp proxy-ban 
 fog létrejönni, ahol a már előre definiált szabálylistához adódnak hozzá. 
 
 Az így létrehozott erőforrásoknak a neveit tárolni kell, mivel a hívás vége után ezeket
@@ -271,7 +271,7 @@ pont azt.
 	általánosan.
 	\item Meg lehet adni egyéni fejléceket is, amikben bármi tárolható egy adott
 	méretig. Ha létrejön egy hívás, akkor itt beállítódott hívás azonosítója alapján
-	fogja a mellette lévő l7mp proxy eldönteni, hogy mely rtpengine kapszula kapja
+	fogja a mellette lévő L7mp proxy eldönteni, hogy mely rtpengine kapszula kapja
 	meg az üzeneteket.
 \end{itemize}
 
@@ -361,5 +361,5 @@ Azért kell az ilyen paranccsal rendelkező üzenetekre jobban figyelni, mint az
 mert csak ennek a megékezése után lehet a megfelelő erőforrásokat létrehozni és értesíteni
 a klienseket arról, hogy megkezdhetik médiaforgalom adását. Ha már az offer során 
 létrehozásra kerülnek ezek az erőforrások, akkor könnyen előfordulhat, hogy egy üres híváshoz
-lefoglalt portok kerülnek beállításra az l7mp erőforrások számára, ami azt eredményezi, hogy
+lefoglalt portok kerülnek beállításra az L7mp erőforrások számára, ami azt eredményezi, hogy
 a hívás egyik résztvevője nem tud semmilyen forgalmat küldeni az rtpengine felé.

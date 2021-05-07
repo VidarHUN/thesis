@@ -216,7 +216,7 @@ amiket a Kubernetes segítségével lehet létrehozni.
 	futtassa egy meghatározott kapszula másolatát. Így, ha egy új dolgozó csomópont 
 	csatlakozik a fürthöz, akkor ez a kapszula automatikusan megjelenik rajta. Tipikusan
 	valamilyen tárolási vagy monitorozási feladatot ellátó kapszulát szokás ilyen
-	módon létrehozni, de a későbbiekben látni fogjuk, hogy az l7mp ugyan ezzel a 
+	módon létrehozni, de a későbbiekben látni fogjuk, hogy az L7mp ugyan ezzel a 
 	módszerrel hozza létre a bejárati pontokat a csomópontokon.
 	\item \textbf{DNS (Domain Name System)}: Tárolja a fürtben szereplő minden kapszula 
 	és szolgáltatás IP címét illetve a hozzájuk kapcsolódó tartomány nevüket is.  
@@ -261,21 +261,21 @@ amiket a Kubernetes segítségével lehet létrehozni.
 
 \section{L7mp}
 
-Az l7mp egy kísérleti alkalmazásréteg és több protokollt támogató szolgáltatás- 
+Az L7mp egy kísérleti alkalmazásréteg és több protokollt támogató szolgáltatás- 
 proxy és háló keretrendszer. A hangsúly a több protokoll támogatásán van, amely
 lehetővé teszi, hogy sok szállítási és alkalmazásréteg béli protokollt 
 natívan támogasson és ne csak a szokásos TCP/HTTP (Transmission Control Protocol) 
 protokollokat. Lehetővé teszik emellett még a protokollok közötti konvertálást is 
 így könnyen lehet alkalmazási rétegű protokollokat konvertálni szállításiba és vissza is.
 
-Az l7mp, egy vezérlő- és adatsíkból áll, mint a Kubernetes. Ahol az adatsíkot 
-az l7mp proxy valósítja meg. Míg a vezérlőt egy operátor, ami képes kezelni 
-az l7mp proxy példányokat. 
+Az L7mp, egy vezérlő- és adatsíkból áll, mint a Kubernetes. Ahol az adatsíkot 
+az L7mp proxy valósítja meg. Míg a vezérlőt egy operátor, ami képes kezelni 
+az L7mp proxy példányokat. 
 
-Ha egy másik szoftverhez kellene hasonlítani az l7mp-t, akkor leginkább az 
+Ha egy másik szoftverhez kellene hasonlítani az L7mp-t, akkor leginkább az 
 Envoy-hoz lehetne, hiszen felépítésében nagyon hasonló elemeket használ, mint
 az Envoy. Így akinek van valamilyen tapasztalata az Envoy-l az könnyen kiismeri
-magát az l7mp-vel is.  \\
+magát az L7mp-vel is.  \\
 
 Szeretném megemlíteni, hogy Dr. Rétvári Gábor Ferenc vezetésével a nyári
 gyakorlati időm alatt és jelenlegi munkámként ennek a szoftvernek a tesztelésével 
@@ -283,11 +283,11 @@ illetve fejlesztésével foglalkozom.
 
 \subsection{L7mp, mint proxy}
 
-Az l7mp egy olyan programozható proxy, ami nagyon hasonlóan működik, mint az Envoy, ami 
+Az L7mp egy olyan programozható proxy, ami nagyon hasonlóan működik, mint az Envoy, ami 
 egy széleskörűen használt leginkább alkalmazási réteget támogató proxy. A különbség
-az l7mp és az Envoy között, hogy az l7mp a szállítási réteg protokolljait 
+az L7mp és az Envoy között, hogy az L7mp a szállítási réteg protokolljait 
 támogatja jobban míg az Envoy inkább az alkalmazásréteg protokolljait képes jobban kezelni.
-Emellett az l7mp képes protokollok közötti átalakítást végezni, ami sok esetben nagyon
+Emellett az L7mp képes protokollok közötti átalakítást végezni, ami sok esetben nagyon
 jól tud jönni. Ez a funkcionalitás az architektúra leírása után fog jobban 
 megmutatkozni.
 
@@ -297,35 +297,35 @@ futtató környezet a Google Chrome V8-s JavaScript motorjára építve. Ez szer
 választás a már említett egyszerű bővíthetőség miatt, de  amiatt is, hogy
 könnyen lehet vele aszinkron módon programozni. Így nincsenek blokkoló műveletek,
 amiket külön szálon kellene futtatni. De behozza azt a hátrányt is, hogy a 
-JavaScript miatt lassabb az l7mp, mint az Envoy, ami C++-ban van írva. 
+JavaScript miatt lassabb az L7mp, mint az Envoy, ami C++-ban van írva. 
 
 A lassúság kiküszöbölésére jelenleg vannak munkálatok, amik elsősorban azt 
 célozzák meg hogy a csomagok feldolgozása nem a felhasználói névtérben kerüljenek
 végrehajtásra, hanem kernel szinten. Így a csomagoknak nem kell fájlleírókon 
-keresztül eljutnia az l7mp-hez, hanem az l7mp konfigurálása folyamán lehetne
+keresztül eljutnia az L7mp-hez, hanem az L7mp konfigurálása folyamán lehetne
 olyan \textit{iptables} szabályokat létrehozni, amik megoldják a csomagok továbbítását
 anélkül, hogy írni vagy olvasni kellene a fajleírókat. Az iptables egy olyan 
 kernel szintű program, amely lehetővé teszi a csomagok feldolgozását és továbbítását
 a kernelben. \\
 
-Az l7mp proxy használható szimplán Node.js-l indítva, mivel elérhető az NPM (Node 
+Az L7mp proxy használható szimplán Node.js-l indítva, mivel elérhető az NPM (Node 
 Package Manager) tárolóban. Az indítása a \ref{lst:nodeL7mp} paranccsal történik: 
 
 \begin{lstlisting}[caption=L7mp indítása Node.js segítségével, label=lst:nodeL7mp]
 	node l7mp-proxy.js -c config/l7mp-minimal.yaml -l warn -s
 \end{lstlisting}
 
-Ami a minimális l7mp konfigurációval és a figyelmeztetési naplózási szinten fogja
-elindítani az l7mp proxyt. A minimális konfiguráció létre fog hozni egy REST API
-szervert, amin keresztül a későbbiekben újabb l7mp beállításokat lehet megadni.
+Ami a minimális L7mp konfigurációval és a figyelmeztetési naplózási szinten fogja
+elindítani az L7mp proxyt. A minimális konfiguráció létre fog hozni egy REST API
+szervert, amin keresztül a későbbiekben újabb L7mp beállításokat lehet megadni.
 
 Ezen felül a Docker-t is támogatja, ami alapértelmezetten a \ref{lst:nodeL7mp} parancsot fogja
 egy konténerben futtatni.
 
 \subsubsection{Felépítése}
 
-Mivel az l7mp tervezése során az Envoy volt a minta, így főbb elemei között szerepelnek
-ugyanolyan vagy hasonló elemek. A legfontosabb építőkockái az l7mp-nek 
+Mivel az L7mp tervezése során az Envoy volt a minta, így főbb elemei között szerepelnek
+ugyanolyan vagy hasonló elemek. A legfontosabb építőkockái az L7mp-nek 
 felsorolásra és kifejtésre kerülnek alább: 
 
 \begin{itemize}
@@ -359,18 +359,18 @@ felsorolásra és kifejtésre kerülnek alább:
 \end{itemize}
 
 A Munkamenet kivételével ezeket az elemeket egy jól definiált API leírás alapján 
-könnyedén lehet konfigurálni. Így az l7mp proxy egyszerű HTTP POST üzenetekkel 
+könnyedén lehet konfigurálni. Így az L7mp proxy egyszerű HTTP POST üzenetekkel 
 beállítható.
 
 \subsubsection{Programozása}
 
-Az l7mp programozása történhet konfigurációs fájlból és REST API hívásokon keresztül
-egyaránt. Viszont az l7mp indításához szükség van egy alapkonfigurációra, mivel
+Az L7mp programozása történhet konfigurációs fájlból és REST API hívásokon keresztül
+egyaránt. Viszont az L7mp indításához szükség van egy alapkonfigurációra, mivel
 anélkül nem fog létrejönni a kontroller figyelő, ami biztosítja az API 
-láthatóságát. A \ref{lst:minl7mp} kódrészleten látható, hogyan lehet egy ilyen induló konfigurációt
+láthatóságát. A \ref{lst:minL7mp} kódrészleten látható, hogyan lehet egy ilyen induló konfigurációt
 létrehozni YAML (YAML Ain't Markup Language) fájlal.
 
-\begin{lstlisting}[caption=L7mp minimális konfiguráció, label=lst:minl7mp]
+\begin{lstlisting}[caption=L7mp minimális konfiguráció, label=lst:minL7mp]
 admin:
   log_level: info
   log_file: stdout
@@ -400,13 +400,13 @@ a figyelőn keresztül a HTTP kérések.
 
 Ez az API megvalósítja a teljes CRUD-t (Create, Read, Update, Delete) mindent komponensre, 
 amivel tudunk létrehozni, olvasni, frissíteni és törölni komponenseket. Minden komponenshez
-tartozik egy útvonal, ami így tevődik össze, ha a \ref{lst:minl7mp} példát nézzük: http://127.0.0.1:1234/api/v1/listeners.
+tartozik egy útvonal, ami így tevődik össze, ha a \ref{lst:minL7mp} példát nézzük: http://127.0.0.1:1234/api/v1/listeners.
 Ha erre a címre egy POST üzenetben YAML vagy 
 JSON konfigurációt küldünk, akkor az létre fog jönni a proxyn belül. Ami még egy 
 hasznos funkció ebben a megvalósításban az a rekurzív lekérés, aminek során egy GET 
 üzenettel és az URI paraméterekben a \textbf{recursive=true} beállításával az összes
 figyelő definíciója a bennük lévő többi objektummal együtt részletesen megkapható. Kétféle 
-API leírás létezik az l7mp-hez egy az önálló proxyhoz \cite{proxy} és egy olyan, amit a 
+API leírás létezik az L7mp-hez egy az önálló proxyhoz \cite{proxy} és egy olyan, amit a 
 Kubernetes operátor tud használni \cite{kubeProxy}. Azért létezik kétféle API leírás,
 mert az elsőnek létrehozott nem volt teljesen kompatibilis a Kubernetes-sel így 
 keletkezett még egy. Jövőbeni tervek között szerepel, hogy csak egy legyen.
@@ -434,7 +434,7 @@ A \ref{lst:confL7mpAPI} hívásban látható, hogy létrehozunk egy figyelőt, a
 címen fog WebSocket csomagokat várni, majd azokat UDP-re konvertálva továbbküldeni 
 a 127.0.0.1:3000-s címre.
 
-Ezen a példán látszik igazán, hogy milyen egyszerű az l7mp-vel a protokoll konverzió,
+Ezen a példán látszik igazán, hogy milyen egyszerű az L7mp-vel a protokoll konverzió,
 mert ilyen rövid beállítással kettő nagyon különböző protokoll között lehet 
 átalakítást végezni.
 
@@ -453,14 +453,14 @@ egy pótkocsival, ami egy adott proxyt fog futtatni. Ez a konténer lesz minden 
 a belépési pont az alkalmazáshoz. Ezeket a proxykat valahogyan dinamikusan kell tudni
 konfigurálni, amit egy operátort segítéségével lehet megtenni. A használt proxyknak 
 rendelkezni kell egy olyan interfésszel, amin keresztül lehet őket konfigurálni. 
-Az l7mp szolgáltatás háló esetében ezek a proxyk egyértelműen az l7mp sajátja lesz,
+Az L7mp szolgáltatás háló esetében ezek a proxyk egyértelműen az L7mp sajátja lesz,
 aminél az \ref{lst:confL7mpAPI} részben láttuk hogyan lehet egy API interfészt definiálni, amin 
 keresztül POST hívásokkal lehet új beállításokat eszközölni.
 
 De ezeket a beállításokat valamilyen módon közölni kell az operátorral, amihez 
-szükség van egyéni erőforrásokra. Az l7mp esetében ezek az erőforrások sorra a 
+szükség van egyéni erőforrásokra. Az L7mp esetében ezek az erőforrások sorra a 
 VirtualService, Target és Rule. Ezekben lehet olyan beállításokat megadni, amiket
-később az l7mp operátora képes leképezni az l7mp proxyk számára érthető konfigurációra.
+később az L7mp operátora képes leképezni az L7mp proxyk számára érthető konfigurációra.
 
 \subsubsection{Virtuális szolgáltatás - VirtualService}
 
@@ -475,10 +475,10 @@ Ezt viszont többször lehet használni egy definíción belül, mert meglehet v
 hogy a figyelő mely kapszulákon jöjjön létre és azt is, hogy a végpontok mely kapszulák 
 legyenek. 
 
-A másik fontos része maga a figyelő definíciója, ami nagyon hasonló, mint az l7mp proxy
+A másik fontos része maga a figyelő definíciója, ami nagyon hasonló, mint az L7mp proxy
 esetében, de itt már vannak Kubernetes specifikus elemek is, mint a \textit{selector},
 amivel a kapszulák kiválasztása történik meg. De ilyen az is, hogy egy Kubernetes 
-erőforrásra név szerint lehet hivatkozni, amit majd az operátor feloldva fog az l7mp
+erőforrásra név szerint lehet hivatkozni, amit majd az operátor feloldva fog az L7mp
 proxy konténereknek átadni.
 
 \subsubsection{Target - Cél}

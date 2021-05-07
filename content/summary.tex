@@ -1,0 +1,34 @@
+%----------------------------------------------------------------------------   
+\chapter{Összefoglalás}
+%----------------------------------------------------------------------------
+
+A szakdolgozat megvalósítása során rengeteg új ismerettel lettem gazdagabb, 
+amiket tudok majd kamatoztatni későbbi munkáim során. Emellett sikerült 
+egy komplex architektúrát megalkotni, amivel Kubernetes alatt lehet 
+VoIP hívásokat kezelni. Így sokkal magabiztosabb tudásom lett Kubernetes és 
+Python terén is. 
+
+Dr. Rétvári Gáborral terveink között szerepel ennek a projektnek a továbbvitele, 
+ami során új funkciókkal kerülne kibővítésre és sokkal nagyobb teljesítményt 
+lehetne elérni. 
+
+Terveink között szerepel, hogy az L7mp-t tudjuk a kernel névtérben futtatni vagy 
+a szolgáltatáshálóban lecserélni az L7mp-t Envoy-ra, ami sokkal nagyobb teljesítményre
+képes. Így valószínűleg sokkal több hívást lehetne párhuzamosan kiszolgálni jelentősebb
+minőségbeli romlás nélkül. 
+
+Szeretnénk a kontrollert oly módon megvalósítani, hogy a külvilág számára elérhető
+legyen és úgy viselkedjen, mint egy SIP szerver. Így a SIP szerver és az rtpengine 
+között sokkal kevesebb komponens lenne, amin keresztül kommunikálni tudnak egymással. 
+Ami lehetségesen megoldaná azt a problémát, hogy adott terhelés mellett a Kamailio
+már nem tud kommunikálni az rtpengine-l.
+
+Amit még lehet módosítani a rendszeren azaz rtpengine olyan szintű fejlesztése, ami 
+lehetővé teszi számunkra azt, hogy Kubernetes kompatibilisen tudjon futni. Ez azt jelenti,
+hogy több rtpengine kapszula esetén mindig csak egy kapszula proxyja lenne felkonfigurálva
+a híváshoz szükséges szabályokkal. Viszont, ha használt rtpengine kapszula valami miatt 
+megszűnik, akkor képes legyen egy olyan értesítést adni valamelyik komponensnek ami 
+felkonfigurálja a második rtpengine kapszulát is. \\
+
+Összesítve ez egy nagyon izgalmas téma, amit szívesen folytatnék és fejlesztenék 
+a mesterképzés során. 

@@ -14,7 +14,7 @@ Ezt a fürtöt a BME által szolgáltatott szervereken építettem ki, mi szám 
 	\centering
 	\includegraphics[width=1\textwidth, keepaspectratio]{figures/servers.png}
 	\caption{Szerverek összeköttetése}
-	\label{fig:HVSpaces}
+	\label{fig:servers}
 \end{figure}
 
 Az ábrán szereplő szervereket kettő részre lehet szétbontani, ahol az egyik
@@ -69,7 +69,7 @@ Mint látszik a hálózatba való belépés az l7mp-ingress kapun történik, ah
 statikusan konfigurálva van egy figyelő, ami a dolgozó csomópont 22222 UDP portján
 vár minden az rtpengine-nek szánt vezérlőüzenetet. De látszik, hogy a kontroller szolgáltatás
 a 2000-s WebSocket porton várja az üzeneteket. Ezért az l7mp-ingress ezen figyelőjének 
-tudnia kell UDP csomagokat WebSocket-re átalakítani. Ez az l7mp-nek köszönhetően nagyon
+tudnia kell UDP csomagokat WebSocket-re átalakítani. Ez az L7mp-nek köszönhetően nagyon
 egyszerűen megvalósítható volt ugyanis, elég csak egy UDP figyelőt létrehozni majd azt 
 egy WebSocket fürthöz irányítani, aminek a végpontja a kontroller szolgáltatás. 
 
@@ -90,7 +90,7 @@ várja azokat az üzeneteket, amiket el kell küldenie az rtpengine felé.
 
 De visszatérve arra, hogy a kontrollerre miért is van szükség. A kontrollernek két fő feladata
 van. Az első, hogy a hívásokhoz szükséges CRD-ket létrehozza és törölje, így az operátor tudni fogja,
-hogy milyen beállításokat kell alkalmaznia az l7mp proxy pótkocsikban. Aztán van a másik feladata,
+hogy milyen beállításokat kell alkalmaznia az L7mp proxy pótkocsikban. Aztán van a másik feladata,
 amivel a kimenő üzeneteket kell átírni annak megfelelően, hogy a dolgozó csomópont
 címe legyen benne és ne 127.0.0.1, mert az rtpengine mindig ezt a címet fogja beletenni
 a módosított SDP üzenetekbe. 

@@ -60,12 +60,12 @@ küszöbölni a munkám során:
 
 Amit szeretnék elérni, hogy az RTP proxy képes legyen Kubernetes rendszer alatt 
 működni. Így megoldható lenne a fentebb említett problémák nagy része. De 
-ehhez szükséges használni egy olyan szolgáltatáshálót, mint az l7mp. Ugyanis 
+ehhez szükséges használni egy olyan szolgáltatáshálót, mint az L7mp. Ugyanis 
 valahogyan kezelni kell a folyamatos UDP (User Datagram Protocol) forgalmat, amire
 a jelenlegi szolgáltatáshálók közül kevesen képesek.
 
-Ezenfelül kell egy kontroller, ami képes lesz hidat képezni az l7mp és az RTP 
-proxy között. Erre azért van szükség, mert az l7mp nem képes automatikusan 
+Ezenfelül kell egy kontroller, ami képes lesz hidat képezni az L7mp és az RTP 
+proxy között. Erre azért van szükség, mert az L7mp nem képes automatikusan 
 létrehozni a megfelelő forgalmi szabályokat. Ilyen szabályok szükségesek ahhoz, 
 hogy egy hívás alatt a forgalom mindig ugyanahhoz az RTP proxyhoz érkezzen és 
 ne összevissza a többi példány között.  

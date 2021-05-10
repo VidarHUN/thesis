@@ -8,11 +8,46 @@
 %----------------------------------------------------------------------------
 \chapter*{Kivonat}\addcontentsline{toc}{chapter}{Kivonat}
 
-A technika jelenlegi állása szerint nincs olyan szolgáltatás, amely képes lenne a hagyományos telekommunikációs alkalmazásokat skálázható, mikroszolgáltatás alapú környezetbe implementálni. Pedig ezek az elosztott rendszerek rendelkeznek minden olyan adottsággal, ami szükséges ahhoz, hogy megbízhatóan és jó minőségben lehessen hangot átjuttatni rajta. Mindemellett dinamikusan lehet skálázni a feldolgozó egységek számát és az üzemeltetéssel kapcsolatos feladatok is jelentősen csökkenthetőek.
+A telekommunikációs alkalmazások többségében hagyományos szervereken vannak
+használva. Mivel ezek az alkalmazások általában nagy mennyiségű klienst szolgálnak 
+ki így ezeknek a szervereknek a skálázása, karbantartása rengeteg munkát igényel,
+mert nem lehet olyan egyszerűen egy szervert elvenni vagy hozzáadni anélkül, hogy
+ezt a felhasználók valamilyen módon ne vegyék észre. Emellett a rosszul skálázott 
+alkalmazások könnyen plusz költséget jelenthetnek az üzemeltető cég számára, mivel 
+felülskálázás esetén fölöslegesen vettek meg vagy foglaltak le adott mennyiségű 
+szervert. Vagy alul skálázás esetén a felhasználók nem kapják meg az elvárt minőséget
+így nagy eséllyel egy konkurens cégre váltanak. 
 
-Ami eddig problémát jelentett ezeknél a mikroszolgáltatás alapú rendszereknél, az egy megfelelő proxy hiánya volt. Ugyanis ezeket a rendszereket manapság különböző webalkalmazások megvalósítására használják leginkább, szóval nem igen volt fontos, hogy képesek legyenek a ma meglévő proxy-k a telekommunikációs alkalmazásokhoz szükséges protokollok szerint irányítani a forgalmat. Viszont az l7mp szolgáltatás háló segítségével megvalósítható egy olyan rendszer, ami a bejövő hívások alapján képes dinamikusan konfigurálni az l7mp-t és ezáltal a bejövő forgalmat a megfelelő rtpengine-hez irányítani. De ehhez kell egy kontroller, ami képes bejövő kontroll üzenetek alapján a szükséges beállításokat automatikusan elvégezni l7mp és az rtpengine oldalon is.
+Erre egy jó megoldás lehetne, ha ezeket az alkalmazásokat sikerülne megvalósítani
+felhős Kurbernetes környezetben. Így biztosítva azt, hogy a karbantartások és
+skálázások a felhasználók számára teljesen transzparensen történjenek.
 
-A dolgozatomban igyekszem bemutatni egy általam írt kontrollert, aminek segítségével megvalósítható a fent említett rendszer és elemezhetőek a hívás minőségével kapcsolatos adatok.
+Eddig ez nem volt teljes mértékben megvalósítható, viszont az L7mp proxy és 
+szolgáltatásháló segítségével dinamikusan lehet a felhasználók számára portokat
+nyitni a Kubernetes fürtön és transzformálni a beérkezett csomagok protokollját 
+más protokollra. Az így létrehozott VoIP (Voice over IP) rendszer, azért nem volt eddig megvalósítható, mert nem létezett egy olyan
+proxy és szolgáltatásháló, ami képes lett volna UDP (User Datagram Protocol) 
+csomagokat érdemben továbbítani. Maga az UDP azért egy lényeges protokoll, mert a 
+VoIP rendszerekben RTP (Real-time Transport Protocol) és 
+RTCP (RTP Control Protocol) protokollú csomagokkal történik a videó- és 
+hangtovábbítás, amik UDP-t használnak. \\
+
+A félév során az volt a feladatom, hogy készítsek egy olyan L7mp proxyt és 
+szolgáltatáshálót használó architektúrát és alkalmazást, amely képes demonstrálni
+a szükséges komponenseket ahhoz, hogy a jövőben lehessen felhőben VoIP 
+alkalmazásokat használni. Ehhez fejlesztettem egy kontrollert, ami az rtpengine
+RTP proxyt képes irányítani az rtpengine vezérlőprotokollján keresztül egy
+Kubernetes fürtben. Ez a kontroller képes a beérkező vezérlőüzenetek alapján 
+L7mp szolgáltatáshálóban létrehozni a megfelelő erőforrásokat illetve az üzenetekben
+szereplő információt is képes módosítani. 
+
+A teszteléshez fejlesztésre került egy kezdetleges VoIP kliens, ami képes az 
+rtpengine vezérlőprotokollján kommunikálni a Kubernetes fürtben lévő kontrollerrel, 
+majd az így kiépült kapcsolaton médiaforgalmat generálni. Ezzel a klienssel 
+erőforrástól függően tetszőleges számú teszt hívást lehet létrehozni. 
+
+Végül az így létrehozott rendszert teszteltem minél magasabb számú hívással és a 
+VoIP specifikus mutatók alapján kiértékeltem a rendszer által nyújtott lehetőségeket. 
 
 \vfill
 \selectenglish
@@ -23,11 +58,47 @@ A dolgozatomban igyekszem bemutatni egy általam írt kontrollert, aminek segít
 %----------------------------------------------------------------------------
 \chapter*{Abstract}\addcontentsline{toc}{chapter}{Abstract}
 
-According to the current state of the technology, no service can implement traditional telecommunications applications in a scalable, microservice-based environment. Yet these distributed systems have all the features needed to deliver reliable and high-quality sound. However, the number of processing units could be dynamically scaled and operational tasks could be significantly reduced.
+Most telecommunications applications are used on traditional servers. Because these 
+applications usually serve a large number of clients
+so scaling and maintaining these servers requires a lot of work,
+because you can’t so easily take away or add a server without the users noticed in
+any way. In addition, the poorly scaled
+applications can easily be an added cost to the operating company because
+in the case of overscaling, a given quantity was unnecessarily bought or reserved
+server. Or scaling below will prevent users from getting the quality they expect
+so there is a good chance they will switch to a competing company.
 
-The problem with these microservice-based systems so far has been the lack of a proper proxy. This is because the implementation of these systems is mostly web applications, so today's proxies don't have to be able to use the protocols required for telecommunications applications in terms of traffic control. However, the l7mp service mesh can be used to implement such a system, which can dynamically configure l7mp, based on incoming calls and thereby direct incoming traffic to the appropriate rtpengine. But this requires a controller that can automatically make the necessary settings based on incoming control messages on both the l7mp and rtpengine sides.
+A good solution to this could be to implement these applications
+in a cloud Kurbernetes environment. Thus ensuring that the maintenance and
+scaling should be completely transparent to users.
 
-In my dissertation, I try to present a controller written by me, which can be used to implement the above-mentioned system and the data that can be analyzed, and the quality of the call.
+So far, this has not been fully feasible, but with the L7mp proxy and
+service mesh can be used to dynamically provide users with ports
+open on the Kubernetes cluster and transform the protocol of received packets to
+other protocol. The VoIP (Voice over IP) system thus created has not been feasible so far 
+because there was no one
+proxy and service mesh that could have been UDP (User Datagram Protocol)
+forward substantial packets. UDP itself is an essential protocol because
+In VoIP systems RTP (Real-time Transport Protocol) and
+RTCP (RTP Control Protocol) packets are used for video and
+audio transmission which are using UDP.
+
+During the semester, my job was to create an L7mp proxy and
+a service mesh architecture and application that can demonstrate
+the necessary components to enable cloud VoIP in the future
+applications. To do this, I developed a controller which can controll rtpengine
+through it's control protocol within the Kubernetes cluster.
+This controller is capable of creating the appropriate L7mp resources based on the 
+incoming control messages and modify them if it's needed.
+
+For testing, a rudimentary VoIP client has been developed that is capable of
+communicate with the controller in the Kubernetes cluster on the rtpengine control 
+protocol,
+then generate media traffic on the connection thus established. With this client
+depending on the computing resources, any number of test calls can be created.
+
+Finally, I tested the system created in this way with as many calls as possible and 
+I evaluated the possibilities provided by the system based on VoIP-specific indicators. 
 
 \vfill
 \selectthesislanguage

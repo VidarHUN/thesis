@@ -1,0 +1,834 @@
+%----------------------------------------------------------------------------   
+\chapter{Használt eszközök bemutatása}
+%---------------------------------------------------------------------------- 
+
+\section{Médiasík protokollok}
+
+\subsection{RTP \& RTCP}
+
+Az RTP protokoll használatával valós időben lehet hang, videó vagy egyéb multimédiás 
+információkat szállítani egy-egy felhasználó között. A valós idejű továbbítás mellett
+információkat szolgáltat arról, hogy a csomag tartalma milyen kódolást használ, 
+sorszámozza a csomagokat, ellátja őket időbélyeggel és lehetővé teszi szállítási folyamat
+monitorozását. Az alkalmazások általában UDP felett használják az RTP-t így ki lehet
+használni az UDP által nyújtott előnyöket. Ez viszont nem azt jelenti, hogy az RTP
+csak UDP-vel tud működni, mert elméletileg minden UDP-hez hasonló protokoll tudja kezelni
+az RTP-t.
+
+Fontos megjegyezni, hogy az RTP nem szolgáltat semmilyen mechanizmust, ami biztosítaná,
+hogy a csomagok időben megérkeznek így QoS-t (Quality of Service) sem garantál. Ezen kívül
+az RTP nem garantálja, hogy a csomagok egyáltalán megérkeznek, nem akadályozza meg, hogy a 
+csomag soron kívül érkezzenek és nem ellenőrzi, hogy a használt hálózat megbízható és az
+sorban szállítja le csomagokat. A fogadó alkalmazás feladata, hogy csomagokat sorba rendezze
+a bennük megtalálható sorszám alapján. \\
+
+Ahhoz, hogy bővebb információt lehessen kapni az RTP folyam állapotáról periodikusan a 
+felek küldenek egymásnak RTCP csomagokat. Ezek a csomagok szintén UDP felett működnek,
+mivel ugyanazokra a funkcionalitásokra van szükség ebben az esetben is. Fontos megjegyezni
+még azt is, hogy az RTP csomagok mindig páros portra érkeznek, míg az RTCP mindig az eggyel
+nagyobb portot fogja használ így az mindig páratlan lesz.
+
+Fontos, hogy az RTCP csomagoknak számunkra két fő típusa van, amiket jelentéseknek hívnak.
+Ezek a jelentések tartalmazzák az aktuális RTP folyamról alkotott információk halmazát. Egy
+ilyen jelentést mindig a küldő készít és egyet a fogadó. Viszont ez a kettő jelentés nem azonos
+mezőket tartalmaznak, mert a fogadó jelentésben számításba van véve a küldő jelentéseknek 
+a tartalma és ideje. Így van küldő és fogadó jelentés is, amiket a hívásban résztvevő felek 
+mindegyike periodikusan előállít. Ez a periodicitás attól függ, hogy a hálózat mekkora 
+sávszélességgel rendelkezik, ha nagyobb a sávszélesség, akkor több jelentés fog születni és
+jobb képet lehet kapni arról, hogy milyen RTP folyam minősége, míg alacsonyabbnál kevesebb
+RTCP csomag kerül kiküldésre. 
+
+A \cite{RFC3550} leírásában szereplő RTCP csomagok leírása alapján a fontosabb részei a
+küldő és fogadó jelentésnek. Kezdve a küldőével: 
+
+\begin{itemize}
+	\item SSRC (Synchronization source), amivel jelöli, hogy kitől származik egy a jelentés.
+	\item A jelentés küldésének idejét, ami a küldő órájának pontos ideje. Körülfordulási
+	idő mérésére használható. 
+	\item RTP csomagokban használt időbélyeg. 
+	\item A küldő által elküldött csomagok száma és azok mérete.
+\end{itemize}
+
+Míg a fogadó jelentés az alábbi részekkel rendelkezik:
+
+\begin{itemize}
+	\item SSRC.
+	\item Töredékveszteség, ami az előző küldő és fogadó jelentés óta elvesztett RTP csomagok
+	száma van jelölve.
+	\item Az összes elveszett csomag száma. 
+	\item Legmagasabb kapott sorszám. 
+	\item A csomag küldési időpontjától az érkezés idejéig eltelt idő, ami a jitter. Ez az érték
+	minden fogadó jelentés során újra van számolva a két jelentés között érkezett csomagok 
+	alapján.
+	\item Az utolsó kapott küldő jelentés ideje és az azóta eltelt idő.  
+\end{itemize}
+
+\subsection{SIP}
+
+A SIP egy olyan alkalmazás rétegben működő viszonykezdeményező protokoll, amivel 
+létrehozni, módosítani és törölni lehet kapcsolatokat felek között. Ezek a kapcsolatok 
+általában az internet telefonálás vagy multimédiás forgalom lebonyolítását valósítják meg. 
+
+A SIP működése során fontos, hogy a felhasználók azonosíthatóak legyenek valamilyen
+paraméter szerint, amihez sok esetben nem elegendő szimplán az IP cím. Egy 
+SIP kliens egyéniségét a SIP URI (Uniform Resource Identifier) fogja megadni, ami
+a  felhasználó nevéből és a SIP szerver által meghatározott tartománynévből áll.
+Ez a cím úgy néz ki, mint egy átlagos email cím azzal a különbséggel, hogy az 
+elején szerepel a \textit{sip:} szó. Egy példa arra, hogyan néz ki egy ilyen cím: 
+sip:peter@tartomany.com. Így ha az egyik kliens hívást kezdeményez Péter felé,
+akkor ezzel a címmel pontosan meglehet határozni az elhelyezkedését. 
+
+Működése nagyban hasonlít a HTTP (HyperText Transfer Protocol) kommunikációhoz, ahol 
+a kliens bizonyos kéréseket küld a szerver felé, amire választ kap. A \cite{RFC3261}-ben
+olvasható több parancs közül a szakdolgozat szempontjából a következők fontosabbak: 
+
+\begin{itemize}
+	\item \textbf{INVITE}: Új kapcsolat létesítése.
+	\item \textbf{ACK}: INVITE üzenet elfogadását jelzi. 
+	\item \textbf{BYE}: Kapcsolat befejezése. 
+	\item \textbf{REGISTER}: Felhasználó regisztrálása a SIP szerverre. 
+\end{itemize}
+
+A SIP protokoll szerves része az SDP (Session Description Protocol), amivel a multimédia
+folyamatok kiépítésénél van szükséges. Ugyanis ebben a protokollban lehet megadni,
+hogy milyen média kódolásokat támogatnak a hívásban résztvevő felek és mely
+portokon várják a médiaforgalmat. Ezeken az információkon kívül még rengeteg 
+más hasznos információt is lehet közölni ezekben az üzenetekben, viszont a 
+szakdolgozat szempontjából csak a támogatott kódolás és a kapcsolat leírására
+szolgáló paraméter a fontos.
+
+\section{Kubernetes}
+
+A Kubernetes egy nyílt forráskódú konténer kezelő platform, amivel automatizálni
+lehet a legtöbb feladatot, ami a fejlesztés, karbantartás vagy skálázással 
+kapcsolatos. A Google fejlesztette eredetileg, de jelenleg a Cloud Native
+Computing Foundation - CNCF vette át a karbantartását. 
+
+Kubernetes fürtöt létrehozhatunk lokálisan a saját szerveren is vagy felhőben,
+ami lehet publikus, privát vagy hibrid hozzáférésű is. Viszont azt figyelembe 
+kell venni, hogy egy Kubernetes fürtöt nem egyszerű kiépíteni lokálisan, 
+szóval ha nem szükséges, akkor lehet használni felhőszolgáltatók Kubernetes 
+motorjait, mint az Amazon AKS, Linode LKE vagy a Google GKE szolgáltatása.
+Ilyenkor az általunk beállított paraméterekkel létrejön egy teljes fürt, amit
+tudunk menedzselni.
+
+\subsection{Felépítése}
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=1\textwidth, keepaspectratio]{figures/k8s_architecture.png}
+	\caption{Kubernetes fürt felépítése}
+	\label{fig:achitecture}
+\end{figure}
+
+Egy Kubernetes fürt kettő részből áll egy vezérlő- és egy adatsíkból, ahol a 
+vezérlősíkban szereplő mester csomópontok tudják vezérleni az adatsíkban 
+lévő dolgozó csomópontokat és a fejlesztők vagy üzemeltetők a mester által
+hirdetett API-n (Application Programming Interface) keresztül képesek parancsokat
+kiadni. Míg a dolgozó csomópontokon futó alkalmazáshoz a felhasználók csak az 
+általuk hirdetett Kube-Proxy segítségével tudnak hozzáférni. 
+
+A kapcsolat mester és dolgozó között az API szerver és a Kubelet kommunikációján
+alapul. Ha a fejlesztő szeretne egy új alkalmazást telepíteni a fürtön, akkor
+szól az API szervernek, ami majd kiadja a megfelelő parancsokat a Kubelet-nek 
+és majd az fogja a konténereket létrehozni. Amiről az API szervert értesítve 
+tudja meg a fejlesztő, hogy amit csinált az létrejött.
+
+\subsubsection{Vezérlősík}
+
+A mester csomópont mindig a fő vezérlő egysége a fürtnek, mivel kezeli a 
+munkafolyamatokat és irányítja a kommunikációt fürtön belül. A \ref{fig:achitecture}-s ábrán
+látható vezérlősík tartalmazhat  több mester csomópontot is a felsorolt 
+komponensekkel, amivel lehet biztosítani a fejlesztők számára a folytonos 
+elérést. A mester csomópont részei: 
+
+\begin{itemize}
+	\item \textbf{etcd}: Egy állandó kulcs-érték alapú adatbázis, ami tárolja 
+	a fürt konfigurációs beállításait és a fürt állapotát. Fontos az a rész, 
+	hogy ez egy állandó adatbázis, mivel ez a csomóponton fut és nem egy 
+	kapszulában.   
+	\item \textbf{API szerver}: Egy REST API (Representational State Transfer API) 
+	szerver, ami hozzáférést biztosít a fürthöz a fürtön belül és azon kívül is. 
+	Egyszerű HTTP üzenetekbe ágyazott JSON (JavaScript Object Notation) konfigurációkkal
+	lehet beállítani, hogy mit csináljon a fürtben. De a dolgozó csomópontok is ezen 
+	keresztül küldenek frissítést az etcd-be. 
+	\item \textbf{Ütemező}: Ez a komponens dönti el, hogy egy új kapszula melyik
+	dolgozó csomóponton legyen létrehozva aszerint, hogy van-e megfelelő erőforrás
+	az adott csomópontot megvalósító szerveren.
+	\item \textbf{Kontroller menedzser}: Egy olyan állandóan futó folyamat ami ellenőri,
+	hogy a kapszulák bizonyos esetekben újrainduljanak vagy hogy egy ismétlődő 
+	munkafolyamat időnénként lefusson helyesen. Ezt az API szerverrel kommunikálva
+	képes megvalósítani. 
+\end{itemize}
+
+Mint ahogy a \ref{fig:achitecture}-s ábrán is látszik a fejlesztő vagy üzemeltető alapvetően a \textbf{kubectl}
+nevezetű eszközzel képesek kommunikálni az API szerverrel. Ez az eszköz lényegében
+megvalósítja a teljese HTTP kommunikációt az API szerverrel szóval sokkal könnyebben 
+lehet vele lekérdezni információkat vagy új erőforrásokat létrehozni. 
+
+\subsubsection{Adatsík}
+
+Az adatsíkon futnak az úgynevezett dolgozók, amik igazából különálló szerverek,
+amik rendelkeznek a \ref{fig:achitecture}-s ábrán szereplő komponensekkel és képesek futtatni 
+valamilyen konténer kezelő alakalmázást, mint például a Docker. Ami régebben az 
+alapértelmezett konténer kezelője volt a Kubernetes-nek, de 2021-ben már nem 
+követeli meg és bármilyen másik konténer kezelőt is be lehet állítani alapértelmezettnek.
+A fontosabb elemei az adatsíknak:
+
+\begin{itemize}
+	\item \textbf{Kubelet}: Felelős az egyes csomópontok futási állapotáért biztosítva, 
+	hogy a csomóponton lévő összes konténer egészséges legyen. Gondoskodik az alkalmazás
+	konténereinek indításáról, leállításáról és karbantartásáról, amelyek kapszulákba 
+	vannak rendezve a vezérlősík utasítása szerint
+	\item \textbf{Kube-Proxy}: Egy proxy és terheléselosztó megvalósítása, ami biztosítja
+	a szolgáltatás elérhetőségét más hálózatok számára. Így a feladata az, hogy a beérkező
+	forgalmat a megfelelő konténerekhez irányítsa, amit különböző paraméterek szerint képes
+	megvalósítani.
+	\item \textbf{Kapszulák}: A legkisebb menedzselhető egységek amiket lehet telepíteni
+	Kubernetes alatt. Egy kapszula több konténernek a csoportja, amik osztoznak a tárolási
+	és hálózati erőforrásokon és specifikálja, hogy a konténerek hogyan fussanak. 
+	\item \textbf{CNI (Container Network Interface)}: A kapszulák hálózati interfészeinek
+	a beállítására lehet használni. Így lehet specifikálni, hogy a kapszulák között 
+	milyen hálózatot használva legyen továbbítva a forgalom. 
+\end{itemize}
+
+\subsection{Erőforrások}
+
+A \ref{fig:achitecture} leírt architektúra csak az alapjai a Kubernetesnek, viszont ezen kívül
+még rengeteg olyan erőforrással is rendelkezik, amik lehetővé teszik a konténerek
+menedzselésének egy új szintjét.
+
+A következőkben leírom, hogy a projekt szempontjából mely erőforrások lesznek még
+lényegesebbek. Viszont rengeteg olyan erőforrásról lehet többet olvasni \cite{kubeAPI}
+amiket a Kubernetes segítségével lehet létrehozni.   
+
+\begin{itemize}
+	\item \textbf{Replikációs vezérlő}: Biztosítja, hogy egy meghatározott számú 
+	kapszula replika fusson egyszerre, amivel biztosítja az alkalmazás magas szintű
+	elérhetőségét. Ami azt eredményezi, ha túl sok kapszula fut, de nem kellene nekik,
+	akkor törli azokat vagy, ha túl kevés, akkor újakat hoz létre. Mindazonáltal, 
+	ha egy kapszula maga vagy az egyik konténere hibát eredményez, akkor újraindítja
+	a benne lévő konténer vagy a teljes kapszulát. 
+	\item \textbf{Telepítő (Deployment}): Leír egy elvárt állapotot, ami alapján a
+	replikációs vezérlő tudja, hogy milyen specifikáció szerint kell az új kapszulákat
+	létrehozni vagy a létrehozandó kapszulák számát. 
+	\item \textbf{DaemonSet}: Biztosítja, hogy az összes vagy néhány csomópont 
+	futtassa egy meghatározott kapszula másolatát. Így, ha egy új dolgozó csomópont 
+	csatlakozik a fürthöz, akkor ez a kapszula automatikusan megjelenik rajta. Tipikusan
+	valamilyen tárolási vagy monitorozási feladatot ellátó kapszulát szokás ilyen
+	módon létrehozni, de a későbbiekben látni fogjuk, hogy az L7mp ugyan ezzel a 
+	módszerrel hozza létre a bejárati pontokat a csomópontokon.
+	\item \textbf{DNS (Domain Name System)}: Tárolja a fürtben szereplő minden kapszula 
+	és szolgáltatás IP címét illetve a hozzájuk kapcsolódó tartomány nevüket is.  
+	\item \textbf{Szolgáltatás}: Egy absztrakt módja az alkalmazást futtató kapszulák
+	kiexponálásának a hálózaton keresztül. Mivel a kapszulák halandóak így nem mindig
+	ugyanazon a címen lesznek elérhetőek a rajtuk futtatott alkalmazások. A megoldás
+	erre, ha egy címke alapján hozzárendeljük őket egy szolgáltatáshoz, ami mindig 
+	elérhető lesz ugyanazon a címen és képes elosztani a forgalmat több kapszula között.
+	A forgalomirányítást a szolgáltatások a Kubernetes DNS szolgáltatása miatt tudják 
+	megvalósítani. Mivel minden kapszula rendelkezik egy tartománynévvel és ez a Kubernetes
+	DNS leírójában szerepel egy hozzá tartozó IP címmel.
+	\item \textbf{Bejárat (Ingress gateway)}: Egy olyan API objektum, ami kezeli a 
+	külső hozzáférést különböző szolgáltatásokhoz a fürtön belül. Így a bejövő forgalmat
+	könnyen lehet szűrni illetve típusától tartalmától függően más és más szolgáltatásokhoz
+	lehet irányítani. 
+	\item \textbf{Egyéni erőforrás definíció (Custorm Resource Definition)}: A 
+	Kubernetes API egy olyan kiterjesztése melynek során új fajta erőforrás definíciókat
+	lehet definiálni. Így bővítve a Kurbenetes funkcionalitását.
+	\item \textbf{Pótkocsi (Sidecar)}: Mivel egy kapszula több konténert is tartalmazhat
+	és ezek a konténerek megosztják a hálózatukat így létre lehet hozni egy olyan konténert
+	ami csak a hálózati forgalom kezelésével foglalkozik. Így könnyen lehet szűrni, hogy
+	milyen forgalom juthat csak el az alkalmazást futtató konténerhez. Mivel elsőnek 
+	mindig ezen pótkocsin fog áthaladni a forgalom majd lokális hálózaton átadja az
+	alkalmazásnak. Ezek a pótkocsik általában valamilyen proxyk szoktak lenni. 
+	\item \textbf{RBAC (Role-based access controll)}: Ha több fejlesztő vagy üzemeltető
+	fér hozzá az API szerverhez, akkor egyénenként meglehet mondani, hogy kinek milyen 
+	művelet végrehajtására van joga. Így például korlátozható, hogy ki képes új
+	erőforrásokat létrehozni. Viszont a felhasználók mögött sokszor nem egy élő 
+	személy van, hanem egy alkalmazáshoz van hozzárendelve. Így az alkalmazás esetlegesen
+	képes a fürtön belülről erőforrásokat kezelni.
+	\item \textbf{Operátor}: Olyan bővítések, amikkel egyéni erőforrások menedzselése
+	valósítható meg. De emellett különböző eseményeknél lehet bizonyos folyamatokat 
+	elindítani. Példának okáért, ha egy kapszula létrejön, akkor beállíthatjuk, hogy
+	rendelkezzen mindig egy adott címkével.
+	\item \textbf{Szolgáltatás háló (Service Mesh)}: Meghatározza, hogy a fürt 
+	különböző részei hogyan kommunikáljanak egymással. Ezt általában a pótkocsikkal és 
+	egy operátorral valósítják meg. A pótkocsik fognak rendelkezni azokkal a beállításokkal,
+	hogy milyen a mellettük futó konténer milyen forgalmat fogadhat és az operátor 
+	fog arról gondoskodni, hogy a résztvevő kapszulák pótkocsijai mindig a megfelelő
+	beállításokkal jöjjenek létre.
+\end{itemize}
+
+\section{L7mp}
+
+Az L7mp egy kísérleti alkalmazásréteg és több protokollt támogató szolgáltatás- 
+proxy és háló keretrendszer. A hangsúly a több protokoll támogatásán van, amely
+lehetővé teszi, hogy sok szállítási és alkalmazásréteg béli protokollt 
+natívan támogasson és ne csak a szokásos TCP/HTTP (Transmission Control Protocol) 
+protokollokat. Lehetővé teszik emellett még a protokollok közötti konvertálást is 
+így könnyen lehet alkalmazási rétegű protokollokat konvertálni szállításiba és vissza is.
+
+Az L7mp, egy vezérlő- és adatsíkból áll, mint a Kubernetes. Ahol az adatsíkot 
+az L7mp proxy valósítja meg. Míg a vezérlőt egy operátor, ami képes kezelni 
+az L7mp proxy példányokat. 
+
+Ha egy másik szoftverhez kellene hasonlítani az L7mp-t, akkor leginkább az 
+Envoy-hoz lehetne, hiszen felépítésében nagyon hasonló elemeket használ, mint
+az Envoy. Így akinek van valamilyen tapasztalata az Envoy-l az könnyen kiismeri
+magát az L7mp-vel is.  \\
+
+Szeretném megemlíteni, hogy Dr. Rétvári Gábor Ferenc vezetésével a nyári
+gyakorlati időm alatt és jelenlegi munkámként ennek a szoftvernek a tesztelésével 
+illetve fejlesztésével foglalkozom. 
+
+\subsection{L7mp, mint proxy}
+
+Az L7mp egy olyan programozható proxy, ami nagyon hasonlóan működik, mint az Envoy, ami 
+egy széleskörűen használt leginkább alkalmazási réteget támogató proxy. A különbség
+az L7mp és az Envoy között, hogy az L7mp a szállítási réteg protokolljait 
+támogatja jobban míg az Envoy inkább az alkalmazásréteg protokolljait képes jobban kezelni.
+Emellett az L7mp képes protokollok közötti átalakítást végezni, ami sok esetben nagyon
+jól tud jönni. Ez a funkcionalitás az architektúra leírása után fog jobban 
+megmutatkozni.
+
+A proxy egy magas szintű keretrendszerben íródott, ezért nagyon egyszerűen 
+lehet új funkciókkal bővíteni. Ez a keretrendszer a Node.js, ami egy JavaScript
+futtató környezet a Google Chrome V8-s JavaScript motorjára építve. Ez szerencsés 
+választás a már említett egyszerű bővíthetőség miatt, de  amiatt is, hogy
+könnyen lehet vele aszinkron módon programozni. Így nincsenek blokkoló műveletek,
+amiket külön szálon kellene futtatni. De behozza azt a hátrányt is, hogy a 
+JavaScript miatt lassabb az L7mp, mint az Envoy, ami C++-ban van írva. 
+
+A lassúság kiküszöbölésére jelenleg vannak munkálatok, amik elsősorban azt 
+célozzák meg hogy a csomagok feldolgozása nem a felhasználói névtérben kerüljenek
+végrehajtásra, hanem kernel szinten. Így a csomagoknak nem kell fájlleírókon 
+keresztül eljutnia az L7mp-hez, hanem az L7mp konfigurálása folyamán lehetne
+olyan \textit{iptables} szabályokat létrehozni, amik megoldják a csomagok továbbítását
+anélkül, hogy írni vagy olvasni kellene a fajleírókat. Az iptables egy olyan 
+kernel szintű program, amely lehetővé teszi a csomagok feldolgozását és továbbítását
+a kernelben. \\
+
+Az L7mp proxy használható szimplán Node.js-l indítva, mivel elérhető az NPM (Node 
+Package Manager) tárolóban. Az indítása a \ref{lst:nodeL7mp} paranccsal történik: 
+
+\begin{lstlisting}[caption=L7mp indítása Node.js segítségével, label=lst:nodeL7mp]
+node l7mp-proxy.js -c config/l7mp-minimal.yaml -l warn -s
+\end{lstlisting}
+
+Ami a minimális L7mp konfigurációval és a figyelmeztetési naplózási szinten fogja
+elindítani az L7mp proxyt. A minimális konfiguráció létre fog hozni egy REST API
+szervert, amin keresztül a későbbiekben újabb L7mp beállításokat lehet megadni.
+
+Ezen felül a Docker-t is támogatja, ami alapértelmezetten a \ref{lst:nodeL7mp} parancsot fogja
+egy konténerben futtatni.
+
+\subsubsection{Felépítése}
+
+Mivel az L7mp tervezése során az Envoy volt a minta, így főbb elemei között szerepelnek
+ugyanolyan vagy hasonló elemek. A legfontosabb építőkockái az L7mp-nek 
+felsorolásra és kifejtésre kerülnek alább: 
+
+\begin{itemize}
+	\item \textbf{Munkamenet (Session)}: Munkameneteket nem lehet manuálisan létrehozni,
+	mivel ezek akkor generálódnak, amikor egy figyelő forgalmat kap és azt 
+	továbbítja valamerre. Egy munkamenet információkat tartalmaz a csomagok típusáról,
+	forrás címéről és céljáról. Emellett a munkamenet objektum felelős azért is, hogy a
+	a benne lévő objektumok tudják, hogy a hozzájuk beérkező csomagokat fel kell dolgozniuk. 
+	\item \textbf{Figyelő (Listener)}: Definiálni lehet vele egy cím és port párost, hogy
+	adott protokollal rendelkező csomagokra figyeljen és dolgozza fel őket. A feldolgozás
+	alatt azt a folyamatot kell érteni, hogy meghatározza mely fürthöz kerüljön a csomag,
+	szűri a bejövő csomagokat valamilyen paraméter alapján, ha lehet. Ez általában 
+	a csomagok fejlécében szereplő információk, vagy a munkamenetben megtalálható bármilyen
+	érték alapján történhet. 
+	\item \textbf{Fürt (Cluster)}: A végpontok egy gyűjteménye, ami képes forgalmat elosztani
+	közöttük. Az elosztás történhet nagyon egyszerűen, amikor mindig egy lista élén álló
+	végpont kapja a forgalmat, de történhet HashRing módszerrel is. Amikor egy kulcs szerint
+	történik a végpont kiválasztása. Ez egy hasznos funkció, mivel így fix kulcs mellett,
+	minden csomag ugyanahhoz végponthoz fog kerülni. 
+	\item \textbf{Végpont (Endpoint)}: A csomag végállomása, ami lehet a már a csomagokat
+	feldolgozó alkalmazás vagy egy másik figyelő is. Így egész komplex folyamatokat 
+	lehet kiépíteni, ha szükség van rá. 
+	\item \textbf{Szabály (Rule)}: Szabályokat a figyelőkben lehet létrehozni, amikkel
+	belehet állítani, hogy mi legyen a célja a beérkező csomagoknak vagy meglehet vele azt
+	is határozni, hogy a fejléc mely paraméterét mire módosítsa. 
+	\item \textbf{Útvonal (Route)}: Meghatározza a célt, ami általában egy fürt. Az 
+	útvonalak mindig a szabályokon belül vannak, hiszen a szabályok határozzák meg a célt.
+	De ezen felül még be lehet azt is állítani, hogy a bejövő csomagok milyen útvonalon 
+	jussanak el a fürtig és milyenen vissza. Így a bejövő és kimenő forgalmat teljesen 
+	más útvonalon lehet irányítani.
+\end{itemize}
+
+A Munkamenet kivételével ezeket az elemeket egy jól definiált API leírás alapján 
+könnyedén lehet konfigurálni. Így az L7mp proxy egyszerű HTTP POST üzenetekkel 
+beállítható.
+
+\subsubsection{Programozása}
+
+Az L7mp programozása történhet konfigurációs fájlból és REST API hívásokon keresztül
+egyaránt. Viszont az L7mp indításához szükség van egy alapkonfigurációra, mivel
+anélkül nem fog létrejönni a kontroller figyelő, ami biztosítja az API 
+láthatóságát. A \ref{lst:minL7mp} kódrészleten látható, hogyan lehet egy ilyen induló konfigurációt
+létrehozni YAML (YAML Ain't Markup Language) fájlal.
+
+\begin{lstlisting}[caption=L7mp minimális konfiguráció, label=lst:minL7mp]
+admin:
+log_level: info
+log_file: stdout
+access_log_path: /tmp/admin_access.log
+listeners:
+- name: controller-listener
+spec: { protocol: HTTP, port: 1234 }
+rules:
+- action:
+route:
+destination:
+name: l7mp-controller
+spec: { protocol: L7mpController }
+\end{lstlisting}
+
+A konfigurációt részről részre kifejtem. Az első része, az \textit{admin}, ahol
+a naplózás szintjét és helyét lehet meghatározni. A következő szintek vannak:
+silly, verbose, info, notice, warn, error, silent. Amik ebben a sorrendben
+egyre kevesebb információt naplóznak. A silly kiírja a beérkező csomagok tartalmát
+is, míg az info már csak munkafolyamat leírásáig működik.
+
+Az utána következő részben létre jön a controller-listener, ami helyi hálózaton az 
+1234 porton hirdeti a REST API pontot, amin keresztül később új konfigurációkat lehet 
+megadni. Ehhez egy olyan fürt van használva, amelyhez nem tartozik semmilyen definiált
+végpont. Ebben a fürtben egy automatikusan létrejövő API szerepel, amihez beérkeznek 
+a figyelőn keresztül a HTTP kérések. 
+
+Ez az API megvalósítja a teljes CRUD-t (Create, Read, Update, Delete) mindent komponensre, 
+amivel tudunk létrehozni, olvasni, frissíteni és törölni komponenseket. Minden komponenshez
+tartozik egy útvonal, ami így tevődik össze, ha a \ref{lst:minL7mp} példát nézzük: http://127.0.0.1:1234/api/v1/listeners.
+Ha erre a címre egy POST üzenetben YAML vagy 
+JSON konfigurációt küldünk, akkor az létre fog jönni a proxyn belül. Ami még egy 
+hasznos funkció ebben a megvalósításban az a rekurzív lekérés, aminek során egy GET 
+üzenettel és az URI paraméterekben a \textbf{recursive=true} beállításával az összes
+figyelő definíciója a bennük lévő többi objektummal együtt részletesen megkapható. Kétféle 
+API leírás létezik az L7mp-hez egy az önálló proxyhoz \cite{proxy} és egy olyan, amit a 
+Kubernetes operátor tud használni \cite{kubeProxy}. Azért létezik kétféle API leírás,
+mert az elsőnek létrehozott nem volt teljesen kompatibilis a Kubernetes-sel így 
+keletkezett még egy. Jövőbeni tervek között szerepel, hogy csak egy legyen.
+
+\begin{lstlisting}[caption=L7mp konfigurálása API-n keresztül, label=lst:confL7mpAPI]
+curl -iX POST --header 'Content-Type:text/x-yaml' --data-binary @- <<EOF  http://localhost:1234/api/v1/listeners
+listener:
+spec:
+protocol: WebSocket
+port: 2000
+rules:
+- action:
+route:
+destination:
+spec:
+protocol: UDP
+port: 3000
+endpoints:
+- spec:
+address: 127.0.0.1
+EOF
+\end{lstlisting}
+
+A \ref{lst:confL7mpAPI} hívásban látható, hogy létrehozunk egy figyelőt, ami a 127.0.0.1:2000-s
+címen fog WebSocket csomagokat várni, majd azokat UDP-re konvertálva továbbküldeni 
+a 127.0.0.1:3000-s címre.
+
+Ezen a példán látszik igazán, hogy milyen egyszerű az L7mp-vel a protokoll konverzió,
+mert ilyen rövid beállítással kettő nagyon különböző protokoll között lehet 
+átalakítást végezni.
+
+\subsection{L7mp, mint szolgáltatás háló}
+
+A szolgáltatásháló egy olyan keretrendszert foglal magában, amivel a különböző 
+mikroszolgáltatások közötti kommunikációt lehet meghatározni. Ezek a szolgáltatások 
+konténerek, amik rendelkeznek egy olyan API interfésszel, amin keresztül lehet 
+őket programozni. Így a fürtön belül könnyen lehet olyan szolgáltatásokat 
+igénybe venni, mint a szolgáltatás felderítés, terhelés elosztás és felügyelhetőség.
+Ezeken kívül még rengeteg más funkcióval szokott rendelkezni egy szolgáltatás háló,
+de ezeket lehet mondani a legnépszerűbbeknek.
+
+A megvalósításához minden mikroszolgáltatásnak azaz kapszulának rendelkeznie kell 
+egy pótkocsival, ami egy adott proxyt fog futtatni. Ez a konténer lesz minden esetben
+a belépési pont az alkalmazáshoz. Ezeket a proxykat valahogyan dinamikusan kell tudni
+konfigurálni, amit egy operátort segítéségével lehet megtenni. A használt proxyknak 
+rendelkezni kell egy olyan interfésszel, amin keresztül lehet őket konfigurálni. 
+Az L7mp szolgáltatás háló esetében ezek a proxyk egyértelműen az L7mp sajátja lesz,
+aminél az \ref{lst:confL7mpAPI} részben láttuk hogyan lehet egy API interfészt definiálni, amin 
+keresztül POST hívásokkal lehet új beállításokat eszközölni.
+
+De ezeket a beállításokat valamilyen módon közölni kell az operátorral, amihez 
+szükség van egyéni erőforrásokra. Az L7mp esetében ezek az erőforrások sorra a 
+VirtualService, Target és Rule. Ezekben lehet olyan beállításokat megadni, amiket
+később az L7mp operátora képes leképezni az L7mp proxyk számára érthető konfigurációra.
+
+\subsubsection{Virtuális szolgáltatás - VirtualService}
+
+Egy virtuális szolgáltatás az absztrakt megvalósítása egy szerveroldali foglalatnak. 
+Ami azt jelenti, hogy a benne definiált figyelő a meghatározott kapszulák pótkocsijaiban 
+létrefog jönni és kezelni tudja hozzá beérkező forgalmat. 
+
+Egy ilyen erőforrás két fő részből áll, az egyik a kapszulák kiválasztásáért felel míg
+a másik azért, hogy milyen definíció kerüljön alkalmazásra a kijelölt kapszulákban.
+A kiválasztás mindig valamilyen címke alapján történik, amivel rendelkezik a kapszula. 
+Ezt viszont többször lehet használni egy definíción belül, mert meglehet vele határozni,
+hogy a figyelő mely kapszulákon jöjjön létre és azt is, hogy a végpontok mely kapszulák 
+legyenek. 
+
+A másik fontos része maga a figyelő definíciója, ami nagyon hasonló, mint az L7mp proxy
+esetében, de itt már vannak Kubernetes specifikus elemek is, mint a \textit{selector},
+amivel a kapszulák kiválasztása történik meg. De ilyen az is, hogy egy Kubernetes 
+erőforrásra név szerint lehet hivatkozni, amit majd az operátor feloldva fog az L7mp
+proxy konténereknek átadni.
+
+\subsubsection{Target - Cél}
+
+Egy cél definiálásával a kliens oldali foglalatokat lehet meghatározni. Ezeken 
+a címeken várja az alkalmazás vagy egy másik figyelő a forgalmat. Mivel egy cél 
+lényegében egy fürtöt valósít meg, így ez is a végpontokat tárolja, azzal a különbséggel,
+hogy célnál a végpontok a kapszulák, szolgáltatások vagy virtuális szolgáltatások is 
+lehetnek. 
+
+A felépítése hasonlóan néz, ki mint a virtuális szolgáltatásoknak szóval van egy 
+szelektor, hogy mely pótkocsikon legyen elérhető az adott fürt. Illetve a fürt
+definíciója. 
+
+Ebben a definícióban lehet megadni, hogy a milyen protokollú csomagokat fogad, végpontokat
+és a terheléselosztás beállításait. A végpontok kiválasztása szintén egy szelektorral
+történik, ami a Kubernetes erőforrások címkéi alapján választ. A másik fontos beállítása
+a terheléselosztás, ami alapértelmezett esetben, mindig a nyilván tartott kapszulák 
+közül az elsőnek fogja irányítani a csomagokat. Viszont be lehet állítani úgy is, hogy
+egy a csomag fejlécében lévő mező alapján irányítsa a csomagokat. Ez a megoldás a
+HashRing megoldást, használja amivel elérhető, hogy egy kulcs alapján mindig ugyan az
+a végpont kapja meg a csomagokat. 
+
+\subsubsection{Rule - Szabály}
+
+Szabályokkal lehet összekötni figyelőket a fürtökkel. De ebben az esetben lehet különálló
+CRD-ben szabályokat létrehozni és azokat többször felhasználni. Így átláthatóbbá és 
+kontrollálhatóbbá válik a szolgáltatás háló használata. 
+
+Használatukkal lehet szűrni a csomagokat forráscímük, fejlécük és még nagyon sok más 
+paraméter szerint. JSON predicate objektumokkal lehet szűrni az csomagokat, amivel 
+könnyen lehet komplex szűrési feltételeket meghatározni különböző paraméterek alapján. Ha 
+egy csomag megfelel minden kitételnek, akkor a definiált művelet szerint fog tovább 
+haladni a csomag. 
+
+\section{rtpengine}
+
+Az rtpengine egy Sipwise  által fejlesztett a Kamailio-hoz szánt RTP 
+proxy, ami nem csak forgalmat képes irányítani, hanem a beérkező csomagokat transzformálni is.
+Emellett olyan funkciókkal is rendelkezik, amikkel tudjuk a hívások minőségét monitorozni, 
+rendelkezésre állóságát és biztonságát növelni. A következő funkciókat érdemes 
+jobban kifejteni a \cite{rtpengine} közül: 
+
+\begin{itemize}
+	\item Tud IPv4 és IPv6 címeket kezelni és közöttük média forgalmat továbbítani. 
+	\item Állítható port tartomány. 
+	\item Több interfész használata. 
+	\item Kernel szintű csomagtovábbítás a kisebb késleltetés és processzor használat miatt.
+	\item HTTP, HTTPS és WebSocket interfész támogatottság.
+	\item Médiafolyamok felvétele. 
+	\item Híváshoz szükséges statisztikák számítása.
+	\item Transzkódolás és újracsomagolás.
+	\item SDP csomagok teljesen újraírása. 
+\end{itemize}
+
+\subsection{Kernel és felhasználói tér}
+
+Az rtpengine alapvetően a felhasználói térben működik így ilyenkor mindent ott csinál, ami
+magasabb késeltetést és processzor használatot igényel. Az oka ennek, hogy mikor egy csomag
+érkezik a hálózati interfészre az áthalad a kernelen a fájlleíróig. Ha odajutott egy 
+csomag, akkor a hozzá kapcsolódó folyamatot értesíti, ami ebben az esetben az rtpengine, hogy
+van mit leolvasni onnét. Ennek során a csomag átkerül a kernelből a felhasználói térbe és 
+ami egy nagyon drága művelet. Ha feldolgozásra került a csomag, akkor ugyanezen az útvonalon
+fog kimenni. Ez azért nagy probléma, mert az RTP protokoll UDP-t használ és így rengeteg 
+kis csomag érkezik folyamatosan, ami nagy terhelést jelent a szerver számára. 
+
+Ezzel szemben, ha használjuk a megfelelő modult, akkor a beérkező csomagok nem kerülnek át a 
+felhasználói térbe így kevesebb erőforrás kerül felhasználásra. Ezt úgy éri el az rtpengine,
+hogy egy hívás kiépítése során \textbf{iptables} szabályokat hoz létre, amikben definiálja, hogy
+adott portra érkező forgalom hova legyen továbbítva. 
+
+Az \textbf{iptables} egy olyan eszköz, amivel a linux kernelben lehet létrehozni 
+táblákat szabályokkal, amik IP szinten képesek szűrni a forgalmat. 
+
+%A választás azért erre a proxy-ra esett, mert folyamatos támogatottsága van, sok helyen 
+%használják illetve sok olyan funkcióval rendelkezik, ami a projekt szempontjából fontos.
+
+%Ilyen és legszükségesebb funkciója a Redis támogatottsága, amivel egyes hívásokhoz 
+%lehet minden szükséges adatot elmenteni és ezen adatok alapján más rtpengine példányok 
+%tudják frissíteni a hívásaikat. Így, ha egy az egyik szerver megáll és nem tudja tovább
+%kezelni a hívásokat, akkor egy terhelés elosztó áttudja irányítani az összes hívást 
+%más szerverekhez, amik ezáltal rendelkeznek a híváshoz szükséges információkkal. 
+%
+%A Redis támogatottság már létezett, viszont csak akkor, ha az rtpengine konfigurálásánál
+%pontosan ismerjük az összes többi rtpengine címét. Alapesetben ezek az információk 
+%rendelkezésre állnak, viszont Kubernetes környezetben ezek mind változékonyak. Sosem 
+%tudjuk pontosan megjósolni, hogy egy kapszula, ami egy rtpengine szervert futtat milyen
+%címmel fog létrejönni. 
+%
+%Ezt a problémát orvosolta részben Oded Arbell, aki egy Pull Request keretein belül 
+%benyújtott egy nulla tudású Redis skálázhatóság funkciót. Mint a neve is utal rá 
+%ezzel a megoldással úgy lehet az infrastruktúrába új rtpengine szervereket felvenni, 
+%hogy nem kell ismerni a többi résztvevő szerver címét. De ez még mindig csak részben 
+%oldotta meg a problémát ugyanis ha van két rtpengine szerverünk, akkor az egyikhez 
+%beérkező hívásnál csak azon a szerveren fognak kinyílni a megfelelő portok, amire a 
+%hívás beérkezett. Így, ha ez a szerver leáll, akkor a másik nem tudja kezelni a forgalmat,
+%mert nincs nyitva egyik szükséges portja sem. 
+%
+%Megoldásképpen egy kicsit bele kellett nyúlnom ebbe a kódba és beállítani, hogy frissítésnél
+%nyisson ki minden olyan portot, ami a hívás információi között szerepel. Így elértem 
+%egy olyan fajta redundanciát, amivel a fentebb leírt váltás jól működik. \\
+%
+%Amit még érdemes megemlíteni, hogy az rtpengine képes kettő különböző módban működni.
+%Tud simán a felhasználói névtérben futni, amikor a transzkódolást és az adatok 
+%továbbítását is ott végzi el és tudja a kernel névteret is használni, amikor a 
+%továbbítást a kernel névtérben végzi. Így processzor erőforrást lehet spórolni, mert
+%nem kell a szervernek azt a drága műveletet minden csomagnál elvégeznie, hogy 
+%a kernel névtérből felhasználóiba teszi át a csomagokat. 
+
+\subsection{Transzkódolás}
+
+Transzkódolás alatt azt a folyamatot értjük, amikor egy adott formátumú videó- vagy 
+hanganyag egy másik formátumba való átalakítása történik. Ezt jelenleg az rtpengine 
+csak hanggal tudja megvalósítani. 
+
+Alapvetően elérhető ez a funkció, de ki is kapcsolható teljesen. Ugyanakkor az, hogy 
+elérhető az rtpengine nem avatkozik bele a hívott felek közötti kódolás megegyezésbe, 
+így ha nincs közös kódolása a két félnek, akkor a hívás sikertelen lesz.
+
+A transzkódlást az ng vezérlőprotokoll \textit{transcoding} vagy \textit{ptime} beállításával
+lehet az rtpengine tudtára adni. Így, ha a két félnek nincs közös kodekje, de az rtpengine
+mind a kettő számára képes egy olyat nyújtani, amit elfogad, akkor a hívás sikeresen kiépül.
+
+Ha aktív transzkódolás van, akkor az SDP-ből kikerül minden olyan kódolási eljárás, amit nem támogatnak
+a kliensek. Emellett ezt nem lehet kernel szinten továbbítani, ezért mindenképpen a 
+felhasználói térben lesznek ezek a csomagok feldolgozva.
+
+Ezek a formátumok vannak támogatva: G.711 (a-Law és µ-Law), G.722, G.723.1, G.729, Speex, 
+GSM, iLBC, Opus, AMR (keskeny és széles sávú)
+
+\subsection{ng vezérlőprotokoll}
+
+Ahhoz, hogy bizonyos funkciók engedélyezve legyenek az rtpengine-ben kifejlesztettek 
+egy vezérlési protokollt, amibe a SIP proxy beágyazva áttudja adni az SDP törzset 
+az rtpengine-nek, ami ennek a SDP üzenetnek a módosított verzióját fogja visszaküldeni
+a klienseknek.
+
+Ez a vezérlőprotokoll bencode formátumban küldi ki el az üzeneteket. Ez nagyon hasonló
+felépítéssel rendelkezik, mint a JSON, viszont sokkal egyszerűbb és gyorsabb a kódolása 
+és dekódolása. Ami hátránya a JSON-l szemben, hogy kevésbé olvasható.
+
+Fontos megjegyezni, hogy ilyen üzenetek képes fogadni az rtpengine ezeken a protokollokon: 
+UDP, TCP, HTTP, HTTPS, WebSocket, WebSocket Secure. De a projekt során a HTTP, HTTPS és 
+WebSocket protokollokat nem lehet használni a használt rtpengine és kamailio 
+verzió miatt, ami az architektúra fejezetben kiderül, hogy miért nem.
+
+Minden ilyen üzenet két részből áll. Egy sütiből, ami ebben az esetben azonosítóként
+funkciónál és egy bencode szótárból, ami legalább egy parancsot tartalmaz az 
+alábbiak közül. A felsorolás nem teljes \cite{rtpengineng}, csak a téma szempontjából fontosokat 
+emeltem ki.
+
+\begin{itemize}
+	\item \textbf{ping}: Ellenőrizhető, hogy az rtpengine elérhető-e. Egyetlen helyes 
+	válasz van rá, az pedig a \textbf{pong}.
+	\item \textbf{offer}: A hívó fél adatait rögzíti.
+	\item \textbf{answer}: A hívott fél adatait rögzíti. 
+	\item \textbf{delete}: Egy adott azonosítóval rendelkező hívást lehet törölni.
+	\item \textbf{query}: Egy hívás részleteit lehet lekérdezni. 
+	\item \textbf{statistics}: Egy adott azonosítóval rendelkező hívásról lehet statisztikát
+	lekérdezni. 
+\end{itemize} 
+
+\subsection{Beállítás}
+
+\begin{lstlisting}[caption=rtpengine konfigurációja, label=lst:confRtpe]
+[rtpengine]
+interface=192.168.1.106
+foreground=true
+log-stderr=true
+listen-ng=192.168.1.106:22222
+port-min=23000
+port-max=32768
+log-level=7
+\end{lstlisting}
+
+Ezzel a következő dolgokat állítom be: 
+
+\begin{itemize}
+	\item \textbf{interface}: Megadja az RTP helyi hálózati interfészét. Legalább
+	egyet meg kell adni, de több is megadható. Ez ez interfész fogja kezelni a 
+	médiaforgalmat. 
+	\item \textbf{listen-ng}: A vezérlő üzeneteket ezen a címen várja. 
+	\item \textbf{port-min és port-max}: Az UDP média forgalom számára lefoglalható
+	portok tartománya. 
+	\item \textbf{Többi}: Naplózás szempontjából érdekesek csak. 
+\end{itemize}
+
+\section{Kamailio}
+
+A Kamailio egy SIP Signaling Server nyílt forráskódú megvalósítása. Amit nagy rendszerek
+skálázhatóságára terveztek, de használható cégek és egyének számára is.
+
+A használatához általában szükség van valamilyen Kamailio által támogatott adatbázishoz,
+de elméletileg lehet adatbázis nélkül is használni, de akkor elvesztünk bizonyos funkciókat. 
+Ezért az ajánlott adatbázist használtam hozzá, ami egy lokálisan futó mysql szerver. Ebbe 
+az adatbázisba olyan táblákat tárol, mint regisztrált felhasználók és aktív hívások, de 
+ezen felül még sok mást is. 
+
+Ezenkívül az általam használt beállításokat a \textit{kamailio.cfg} fájlban lehet megadni,
+ami három részből áll. A használt dokumentációból \cite{kamailio} jól látszik, hogy ennek
+fájlnak a szerkesztése nagyon sok szempontból emlékeztet egy programozási nyelvre 
+C szerű elemekkel.  
+
+Az első a \textbf{globális paraméterek}, ahol leginkább környezeti változókat lehet 
+definiálni, amikkel lehet kontrollálni, hogy a konfiguráció mely része fusson le illetve
+értékeket is lehet hozzájuk rendelni. 
+
+Aztán jönnek a \textbf{modul beállítások}, ahol az alapértelmezett modulokhoz tudunk plusz
+modulokat betölteni és beállítani. Ez azért egy fontos rész, mert a Kamailio alapvetően 
+nem rtpengine-re van beállítva, hanem annak az előző verziójához, ami az rtpproxy. Ami 
+nem kerül telepítésre az kamailio-val együtt. Így, ha se rtpengine se rtpproxy nincs,
+akkor az kamailio két SIP klienst közvetlen fogja összekötni.
+
+Végül van az \textbf{irányítási blokk}, ahol különböző SIP üzenetekre lehet megmondani, hogy mi
+történjen velük, ha beérkeznek a hálózati interfészre. Itt betudjuk állítani azt, hogy
+az \textbf{INVITE} üzenetek esetén az ng vezérlőprotokollon keresztül állítsa be a hívást
+az rtpengine szerveren.
+
+\section{Hívásfelépítés Kubernetes nélkül}
+
+Ahhoz, hogy a valóshoz hasonló infrastruktúrát lehessen létrehozni, több 
+számítógépet kellett valahogyan összekapcsolni és rajtuk a megfelelő szoftvereket
+elindítani. A környezet megvalósításához egy VirtualBox nevezetű virtuális gépeket
+létrehozó és kezelő alkalmazást választottam. Indoka a választásomnak azon
+alapult, hogy egyszerű használni és ingyenes.
+
+De csak a virtuális gépek jelenléte még nem jelenti azt, hogy ezek tudnak egymással
+kommunikálni. Ezért a telepítés során csak sima Brideged adapter használtam minden
+virtuális gép esetében, ami kiszolgáló számítógép hálózati kártyáján keresztül
+képes elérni az internetet. Ezzel hálózattal tökéletesen lehetett tesztelni
+akkor, ha az rtpengine nem Kubernetes környezetben működött. Később át kellett
+térnem kiszolgáló adapteres hálózat használatára különben a lokális Kubernetes 
+fürtöt nem látták a SIP kliensek. 
+
+A kliensek tekintetében is az ingyenességre és az egyszerű használatra törekedtem, 
+de fontos volt még az a szempont is, hogy lehessen parancssorosan hívást kezdeményezni
+és fogadni. Ezekkel az a funkciókkal rendelkezett a Linphone nevezetű kliens, ami
+rendkívül sok beállítást engedélyez ingyenesen a felhasználóinak. Számomra a következő
+funkciók voltak nagyon hasznosnak: wav fájl lejátszása hívás közben, használt kódolás
+kiválasztása és a hívás rögzítése. A wav fájl lejátszása, azért egy fontos funkció, mert
+így nem kell törődni azzal, hogy a mikrofon keresztül valamilyen hangot tudjon rögzíteni.
+
+Egy általános VoIP híváshoz szükség van legalább egy SIP szerverre, ami képes a felhasználókhoz
+kapcsolatos információkat kezelni. Erre a célra Kamailio-t használok, mivel ehhez készítették
+az rtpeninge-t. Így kézenfekvő volt a használata, de elméletileg lehet más SIP szervereket
+is használni az rtpengine-l. A másik fontos, de egyértelmű tényező az maga az rtpengine, 
+amiről a következő fejezetben lesz részletesen szó. 
+
+\subsection{Kommunikáció}
+
+Az normál architektúrához a már említett VirtualBox-l létrehoztam négy virtuális gépet,
+amik Ubuntu 20.04 operációs rendszer használnak. Ezek közül egyre telepítésre került 
+a Kamailio, egyre az rtpengine és kettőre egy-egy Linphone kliens. A klienseknek azért
+van szüksége két különböző virtuális gépre, mert Linphone-ból nem lehet kettőt
+párhuzamosan futtatni egy gépen.
+
+A Kamailio beállítása során egy a publikus Github tárolóban található konfigurációt
+használtam, mivel abban beállításra került az rtpengine használata. Így nekem 
+csak a modul inicializáció során kellett megadnom az rtpengine címét és annak portját. 
+Viszont az rtpengine beállítása teljes mértékben azonos a \ref{lst:confRtpe} megadott konfigurációval azzal a különbséggel, hogy más IP címek szerepelnek benne.
+
+Amit még a Kamailio-val kellett tenni, hogy két felhasználókat kellett regisztrálni
+különben nem lehetne a két kliens között hívást kezdeményezni. Az ehhez használt parancs
+az \ref{lst:addUserKamailio} látható, ahol az első paraméter a felhasználó neve majd az azutáni a felhasználó jelszava.
+
+\begin{lstlisting}[caption=Felhasználó hozzáadása Kamailio-hoz, label=lst:addUserKamailio]
+kamctl add A 123
+\end{lstlisting}
+
+Abban az esetben, ha a Kamailio-t futtató szerver IP címe 192.168.99.102, akkor az 
+így létrejött felhasználó azonosítója a következő lesz: sip:A@192.168.99.102. Ezzel a
+címmel lehet a Linphone kliensekben regisztrálni ezt a felhasználót. 
+
+De hogyan is kell beállítani a Linphone klienseket? Erre add választ a következő 
+pár sor. 
+
+\begin{lstlisting}[caption=Linphone beállítása, label=lst:setupLinphone]
+register sip:A@192.168.99.102 192.168.99.102 123
+soundcard use files
+play /home/user/input.wan
+\end{lstlisting}
+
+Az első sorral kerül regisztrálásra a felhasználó, ahol az első argumentum adja meg a 
+felhasználó azonosítóját, második a tartomány címét és a végül a jelszó kerül átadásra. 
+Ezután, ha újraindításra kerül a Linphone, akkor automatikusan megpróbálja a definiált
+felhasználót regisztrálni. 
+
+A következő sor azt adja meg, hogy ne használjon semmilyen hangkártyát és csak a 
+harmadik sorban specifikált fájlt játssza le a hívásban részvevő feleknek.  \\
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=0.9\textwidth, keepaspectratio]{figures/basic_call_flow.png}
+	\caption{Kubernetes nélküli hívásfelépítés}
+	\label{fig:callflow}
+\end{figure}
+
+Az \ref{fig:callflow} ábra segítségével a hívásfelépítés részeit.  Az ábrán látható 
+egy teljes hívás folyamata a regisztrációtól egészen a hívás bontásáig. Négy részre 
+bontottam a hívást annak érdekében, hogy könnyebb legyen a megértése.
+
+Az első rész a regisztráció amelynek során a felhasználók csatlakoznak a SIP szerverhez.
+Ilyenkor a kliens SIP REGISTER üzenetet küld a szervernek, amikkel hozzáadni, törölni és
+lekérdezni lehet a felhasználó adait szerverről. Ha létezik a felhasználónak fiókja 
+a szerveren, viszont még nem jelentkeztek be az adott eszközről akkor az első alkalommal 
+egy 401 Unauthorized üzenettel tér vissza, ami felszólítja a klienst, hogy adja meg a 
+hitelesítéshez szükséges felhasználói azonosítót és jelszót, amit egy újabb SIP REGISTER
+üzenetben fog újraküldeni titkosítva. Ha minden megfelelt, akkor 200 OK üzenetet kap 
+vissza a kliens, ami jelzi, hogy minden rendben és tud hívásokat kezdeményezni. Az ábrán
+szereplő folyamat nem tartalmazza a 401-s üzenetet, mert már többször használva volt a 
+kliens azon a virtuális gépen.
+
+A következő rész pedig már a konkrét hívás kezdeményezése és felépítése. A hívást az 
+\textbf{A} felhasználó kezdeményezi \textbf{B} irányába egy INVITE üzenettel, ami tartalmaz
+egy SDP üzenetet is. Ez az SDP egy olyan protokoll, amivel a híváshoz kapcsolódó információkat
+lehet továbbítani, mint például a támogatott média formátumok listája illetve a hívott fél
+elérhetőségei. Mivel ebben az esetben \textbf{B} felhasználó címe létezik a szerveren így
+a szerver 100 trying üzenettel jelzi \textbf{A}-nak, hogy elkezdte a hívást felépíteni. Erre
+azért van szükség, hogy a kliens ne próbálkozzon újra a hívás felépítésével.
+
+A szerver ilyenkor küld egy \textbf{offer} üzenetet az rtpengine felé, aminek legalább 
+tartalmaznia kell az \textbf{A} által küldött SDP üzenetet, hívásazonosítót és a SIP üzenet
+From mezőjét, ami az \textbf{A} azonosítója. Erre az rtpengine egy módosított SDP üzenetet küld
+vissza a szervernek, amiben módosítja a cél címet és portot a sajátjára. Így minden RTP
+üzenet elsőnek az rtpengine-hez fog elmenni és majd onnét megy tovább \textbf{B}-nek.
+
+Ha ez is sikeresen megtörtént, a szerver átveszi a hívás kezdeményező szerepét a \textbf{B}-vel
+szemben. Szóval küld egy INVITE üzenetet neki, amiben szerepel \textbf{A} azonosítója, de
+a csatlakozást leíró mező az rtpengine címe lesz. A trying üzenet ebben az esetben is 
+ugyan azt jelenti, mint mikor az \textbf{A} kezdeményezett. De itt már szerepel a 
+\textbf{180 ringing}, amivel lehet jelzi, hogy feldolgozásra került az INVITE. Majd ugyan ez 
+az üzenetet megkapja \textbf{A} is. 
+
+Ha \textbf{B} elfogadta a hívást, akkor \textbf{200 OK}-l jelez a szervernek, amiből a
+SIP szerver tudja, hogy \textbf{answer}-t kell küldenie az rtpengine felé, amivel a hívás teljesen
+ki fog épülni az rtpengine-ben is. Az answer igazából ugyanazt a funkciót valósítja meg,
+mint az offer. Mivel az rtpengine kapott offer-t és answer-t is, így a hívást kiépítheti
+és az előzőleg lefoglalt négy porton képes fogadni a forgalmat, amit feldolgozva 
+tovább küld. Azért foglal le négy port, mert felenként kell egy páros számú port az 
+RTP forgalomnak és egy páratlan számú az RTCP-nek. Végül pedig egy SIP ACK üzenettel van
+értesítve mind a két fél arról, hogy a hívás sikeresen kiépült és elkezdhetnek 
+beszélni. 
+
+Mivel már létezik a hívás így már lehet küldeni a forgalmat az rtpengine adott 
+portjaira. Ahol a legegyszerűbb esetben annyi történik, hogy az \textbf{A}-hoz rendelt
+RTP porton kapott csomagokat kiküldi a \textbf{B}-hez a hozzárendelt portról. Ugyanez
+történik RTCP esetében is. 
+
+Mikor vége a hívásnak, akkor megkezdődik a hívás lebontása egy BYE SIP üzenettel. Aminek
+hatására a SIP szerver egy delete üzenetet ad ki az rtpengine felé, ami tartalmazza a hívás
+azonosítóját. Ekkor törlődik minden a híváshoz kapcsolódó információ és a számukra kinyitott
+portok is lezárnak. De a rtpengine válaszában szerepelnek a hívásról információk, amik alapján
+könnyen lehet statisztikákat készíteni például a hívások átlagos hosszáról vagy minőségéről.

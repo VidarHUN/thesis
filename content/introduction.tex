@@ -14,10 +14,11 @@ proxy. Az alábbi ábrán látható egy ilyen rendszer egyszerűsített rajza.
 	\centering
 	\includegraphics[width=0.5\textwidth, keepaspectratio]{figures/traditional_voip.png}
 	\caption{Hagyományos VoIP hálózat}
-	\label{fig:HVSpaces}
+	\label{fig:tradVoIP}
 \end{figure}
 
-Az ábrán egy általános hívásfelépítés látszik, ahol \textbf{A} hívja \textbf{B}-t. 
+Az \ref{fig:tradVoIP} ábrán egy általános hívásfelépítés látszik, ahol \textbf{A} hívja 
+\textbf{B}-t. 
 Ehhez, viszont SIP üzenetekben közölniük kell a SIP szerverrel, hogy ki milyen 
 médiaformátumokat fogad el, melyik porton szeretnének kommunikálni a másikkal és 
 hasonló információkat. A későbbiekben az összes ilyen protokoll kifejtésre fog
@@ -25,18 +26,20 @@ kerülni, hogy könnyebben látható legyen melyikre miért van szükség. Ha a 
 az összes üzenetet megkapta ahhoz, hogy létre tudjon hozni egy hívást, akkor az 
 RTP proxynak megmondja, hogy hozzon létre egy hívást. Ha sikeresen létrejött a 
 hívás, akkor kinyit két-két portot a hívásban résztvevő feleknek, amikre érkezhet
-az adatfolyam. Azért nyit ki kettő portot kliensenként, mert az egyiken RTP 
-csomagokat fog kezelni, míg a másikon RTCP (Real-time Transport Control Protocol) 
-csomagokat. Mindezek mellett képes formátum konverziót is végrehajtani. Így ha 
-a hívásban lévő két fél nem rendelkezik közös kódolási technikával, akkor is tudnak 
-beszélgetni, mert az RTP proxy átfordítja mindkét félnek olyan kódolásra, amit 
-képesek használni.
+az adatfolyam. Azért nyit ki kettő portot kliensenként, mert az egyiken a
+beszédmintákat illetve videó-képkockákat tartalmazó RTP csomagokat fogja
+kezelni, míg a másikon a mádiaátvitel időzítését és statisztikázását szolgáló
+RTCP (Real-time Transport Control Protocol) csomagokat küldi és fogadja. Mindezek mellett 
+képes formátum konverziót is végrehajtani. Így ha a hívásban lévő két fél nem rendelkezik 
+közös kódolási technikával, akkor is tudnak beszélgetni, mert az RTP proxy átfordítja 
+mindkét félnek olyan kódolásra, amit képesek használni.
 
 Ezzel a felépítéssel az a probléma, hogy az RTP proxy nem tud végtelen mennyiségű
-hívást kezelni port hiányában vagy erőforrás hiány miatt. Így muszáj több példányt
-telepíteni a hálózatba, ami jelentősen megbonyolítja a rendszer 
-karbantarthatóságát és új problémákat idéz elő. Problémák, amiket ki szeretnék 
-küszöbölni a munkám során:
+hívást kezelni szabad port vagy erőforrás hiánya miatt. Emellett könnyen elérhetetlenné 
+is válhat különböző fizikai tényezők miatt, mint erőforráshiány vagy hálózati eszközök 
+meghibásodása végett. Így muszáj több példányt telepíteni a hálózatba, ami jelentősen 
+megbonyolítja a rendszer karbantarthatóságát és új problémákat idéz elő. Problémák, 
+amiket ki szeretnék küszöbölni a munkám során:
 
 \begin{itemize}
 	\item \textbf{Skálázhatóság}: A fő kérdés az, hogy mire történjen a skálázás. 
@@ -49,16 +52,18 @@ küszöbölni a munkám során:
 	\end{itemize}
 	\item \textbf{Rugalmasság}: Mi történik, akkor, ha az egyik RTP proxy szerver
 	valamilyen oknál fogva nem üzemel tovább? Ilyenkor is valahogyan kezelni 
-	kell a meglévő hívásokat és újakat is kell tudni létrehozni. Erre már van 
-	megoldás, ahol egy Redis adatbázissal összetudjuk kötni a példányainkat. 
-	Viszont ennek jelenleg van egy olyan hátránya, hogy csak manuálisan lehet 
-	új példányt hozzácsatolni ehhez az adatbázishoz, ami rengeteg plusz munkát 
-	jelent a nem elhanyagolható mértékű hibázási lehetőség mellett.
+	kell a meglévő hívásokat és újakat is kell tudni létrehozni. Erre már van megoldás, 
+	ahol több RTP proxyt tudunk egymás mellett párhuzamosan futtatni, amelyek egy Redis 
+	adatbázison keresztül megosztják a hívásleíró információkat. Ha az egyik RTP proxy 
+	kiesik, egy másik át tudja venni az ott kiszolgált hívásokat a Redis adatbázisból 
+	letöltött leírók alapján. Viszont ennek jelenleg van egy olyan hátránya, hogy csak 
+	manuálisan lehet új példányt hozzácsatolni ehhez az adatbázishoz, ami rengeteg plusz 
+	munkát jelent a nem elhanyagolható mértékű hibázási lehetőség mellett.
 	\item \textbf{Automatizálás}: Hogyan lehet a lehető legkevesebb 
 	karbantartással üzemeltetni egy ilyen rendszert? 
 \end{itemize}
 
-Amit szeretnék elérni, hogy az RTP proxy képes legyen Kubernetes rendszer alatt 
+Célom annak elérése, hogy az RTP proxy képes legyen Kubernetes rendszer alatt 
 működni. Így megoldható lenne a fentebb említett problémák nagy része. De 
 ehhez szükséges használni egy olyan szolgáltatáshálót, mint az L7mp. Ugyanis 
 valahogyan kezelni kell a folyamatos UDP (User Datagram Protocol) forgalmat, amire
@@ -69,6 +74,20 @@ proxy között. Erre azért van szükség, mert az L7mp nem képes automatikusan
 létrehozni a megfelelő forgalmi szabályokat. Ilyen szabályok szükségesek ahhoz, 
 hogy egy hívás alatt a forgalom mindig ugyanahhoz az RTP proxyhoz érkezzen és 
 ne összevissza a többi példány között.  
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.5\textwidth, keepaspectratio]{figures/extended_traditional_voip.png}
+	\caption{Módosított VoIP hálózat vázlatos felépítése}
+	\label{fig:extVoIP}
+\end{figure}
+
+Az \ref{fig:extVoIP} ábrán látszik, hogy az RTP proxyt az rtpengine fogja megvalósítani
+melyek Kubernetes kapszulákban kerülnek létrehozásra ezáltal biztosítja a skálázhatóságot
+és a magas szintű elérhetőséget. Ezenfelül megjelenik az ábrán az L7mp, ami beékező 
+csomagokat fogja továbbítani a kontroller és az rtpengine-t futtató kapszulákhoz. Ennek
+két komponensnek az összekötését valósítja meg a kontroller, ami a beérkező üzenetek 
+alapján képes az rtpengine-ben és az L7mp-ben is létrehozni a megfelelő erőforrásokat.  
 
 \section{Szakdolgozat felépítése}
 

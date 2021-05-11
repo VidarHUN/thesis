@@ -2,10 +2,6 @@
 \chapter{Mérések és kiértékelés}
 %---------------------------------------------------------------------------- 
 
-A VoIP hívás monitorozására vonatkozó mutatók a hívásfolyam médiaútvonalának bármely 
-csomópontján mérhetőek. Alapvetően számítással és összesítéssel történő elemzésre 
-használják, és néha valós idejű teljesítménykövetésre és javításra is. \\
-
 Ebben a fejezetben ismertetésre kerülnek a használt mutatók, tesztek menete és
 azok eredményeinek összehasonlítása.
 
@@ -16,18 +12,13 @@ biztosítja számunkra a hívás végeztével.
 
 \subsection{MOS és R-Faktor}
 
-VoIP hívások minőségének mérésre két elterjedt mértékegység van az R-Faktor (osztályozási faktor)
-és a MOS (Mean Opinion Score). MOS értéket gyakrabban lehet látni, viszont az R-Faktor szükséges
-ahhoz, hogy kilehessen számolni a MOS-t. Az R-Faktor egy olyan mutató, ami a késleltetés, Jitter és
-csomagvesztés mutatókból kerül kiszámításra. Az értéke egy 50-90 közötti szám, ahol 
-az 50 rossz minőséget, míg a 90 kiválót jelent. 
+VoIP hívások minőségének mérésre két elterjedt mértékegység van az R-Faktor (osztályozási faktor) és a MOS (Mean Opinion Score). MOS értéket gyakrabban lehet látni, viszont az R-Faktor szükséges ahhoz, hogy kilehessen számolni a MOS-t. Az R-Faktor egy olyan mutató, ami a késleltetés, Jitter és csomagvesztés mutatókból kerül kiszámításra. Az értéke egy 50-90 közötti szám, ahol az 50 rossz minőséget, míg a 90 kiválót jelent. 
 
 A MOS a hang, videó és audiovizuális minőséget kifejező mértékegység az 
 ITU-T P.800.1 szerint. A hallgatás, a beszéd vagy a párbeszéd minőségére utal, 
 függetlenül attól, hogy szubjektív vagy objektív modellekből származnak-e. Ez a
 mértékegység egy egytől ötig terjedő skálán mozog, ahol a legalacsonyabb a legrosszabb
-és legmagasabb a legjobb minőség. Aminek a skálája a \ref{tab:mosValues} táblázatban 
-lehet látni. 
+és legmagasabb a legjobb minőség. A \ref{tab:mosValues} táblázatban olvasható a skálája. 
 
 \begin{table}[ht]
 	\footnotesize
@@ -58,12 +49,12 @@ lehet látni.
 %\end{equation}
 
 A MOS rendelkezik alkategóriákkal is, ami a hívások különböző részeinek minőségét méri. A 
-mérések során ebből csak kettő lesz felhasználva, a MOS-CQ (MOS Conversational Quality) és 
-MOS-LQ (Listening quality). Az előbbi a társalgás minőségét míg az utóbbi a hallgatás minőségét
-mutatja meg. \\
+mérések során ebből csak kettő lesz felhasználva, a MOS-CQ (MOS Conversational Quality) 
+és MOS-LQ (Listening quality). Az előbbi a társalgás minőségét míg az utóbbi a hallgatás 
+minőségét mutatja meg.
 
-Azok a tényezők, amik befolyásolják a MOS és R-Faktor értéké a \ref{tab:values} táblázatban
-vannak összefoglalva. 
+Azok a tényezők, amik befolyásolják a MOS és R-Faktor értéké a \ref{tab:values} 
+táblázatban vannak összefoglalva. 
 
 \begin{table}[H]
 	\footnotesize
@@ -86,24 +77,26 @@ vannak összefoglalva.
 \subsection{Késleltetés}
 
 Ez azaz idő, ami alatt a csomag egyik klienstől eljut a másikig ezredmásodpercben (ms). 
+Ha ennek a mutatónak az értéke 50 ms alatti, akkor a rendszerünk megfelelően működik. 
+Egészen addig, amíg a mutató 200 ms alatt van, addig jónak tekinthető a rendszer 
+működése, viszont e felett már kellemetlen lehet a felhasználók számára a hívás. 
 
 \subsection{Körülfordulási idő}
 
-Az idő ami szükséges a csomagoknak, míg egyik klienstől eljut a másikig és vissza. SIP
+Az idő, ami szükséges a csomagoknak, míg egyik klienstől eljut a másikig és vissza. SIP
 hívások esetében ez azaz idő, amíg egy tranzakció tart, ami azt jelenti, hogy az elküldött
-csomagra mennyi idő múlva érkezik egy nyugta. A szakdolgozat további részeben RTT (Round Trip Time)
-fogja jelölni az angol neve után. 
+csomagra mennyi idő múlva érkezik egy nyugta. A szakdolgozat további részeben RTT (Round 
+Trip Time) fogja jelölni az angol neve után. 
 
-Mérése ennek is ezredmásodpercben történik, mivel időről beszélünk, ezért minél magasabb ez a
-szám annál rosszabb a hívás minősége. Az audiotartalom esetében a felső határ 150 ms, ami felett
-már nagyon gyenge minőségű a hívás. Befolyásolhatja ezt a számot többek között, a kliensek 
-közötti távolság, összeköttetés minősége és sávszélesség. A mérések során ezek mind nem fognak
-változtatni az RTT idején, mert a szerverek "egymás mellett" vannak nagy sebességű kábelekkel
-összekötve. Ami befolyásolni fogja, azaz a csomag útjában lévő proxyk mennyisége és azok feldolgozó
-képessége. 
+Mérése ennek is ezredmásodpercben történik, mivel időről beszélünk, ezért minél magasabb 
+ez a szám annál rosszabb a hívás minősége. Befolyásolhatja ezt a számot többek 
+között, a kliensek közötti távolság, összeköttetés minősége és sávszélesség. A mérések 
+során ezek mind nem fognak változtatni az RTT idején, mert a szerverek "egymás mellett" 
+vannak nagy sebességű kábelekkel összekötve. Befolyásoló tényezők az útban lévő L7mp 
+proxyk mennyisége és feldolgozó képessége lesz. 
 
-Fontos, hogy késleltetést nem lehet vele megbízhatóan mérni általános környezetben, mivel a hívó
-felek között más útvonalak jelenhetnek meg, ami aszimmetrikus RTT eredményez. 
+Fontos, hogy késleltetést nem lehet vele megbízhatóan mérni általános környezetben, mivel 
+a hívó felek között más útvonalak jelenhetnek meg, ami aszimmetrikus RTT eredményez. 
 
 %Viszont az rtpengine ezt a számot nem adja meg konkrétan, szóval egy egyszerű számítást
 %el kell rajta végezni, hogy a valós RTT-t megkapjuk.
@@ -115,8 +108,8 @@ felek között más útvonalak jelenhetnek meg, ami aszimmetrikus RTT eredménye
 
 \subsection{Csomagvesztés}
 
-Azon csomagok száma melyek nem jutottak el a céljukig. Szóval egyik klienstől a másikig. Ez különböző
-indokok miatt történhet. A következő felsorolás nem teljes \cite{measure}
+Azon csomagok száma melyek nem jutottak el a céljukig. Ez különböző indokok miatt 
+történhet. A következő felsorolás nem teljes \cite{measure}
 
 \begin{itemize}
 	\item Nem elegendő sávszélesség. 
@@ -126,49 +119,54 @@ indokok miatt történhet. A következő felsorolás nem teljes \cite{measure}
 
 \subsection{Jitter}
 
-A kapott csomagok késleltetésének változása a folyam során. Méréséhez a csomagok küldési intervallumát
-kell összehasonlítani a kapottak intervallumával. Szóval, ha két csomagot kiküldésre kerül 30 ms 
-különbséggel és a kapott csomag 50 ms különbséggel érkezik, akkor a Jitter 20 ms. Ennél a mutatónál is
-az előnyös, ha minél kisebb, mivel már egy kicsi Jitter és könnyen ronthat a hívás minőségén. 
-Amik okozhatják:
+A kapott csomagok késleltetésének változása a folyam során. Méréséhez a csomagok küldési 
+intervallumát kell összehasonlítani a kapottak intervallumával. Például abban az esetben, 
+ha két csomag 30 ms különbséggel kerül küldésre és a kapott csomag 50 ms különbséggel 
+érkezik, akkor a Jitter 20 ms. Ennél a mutatónál is az előnyös, ha minél kisebb, mivel 
+már egy kicsi Jitter is könnyen ronthat a hívás minőségén. Az alábbi felsorolásban 
+olvasható mik okozhatják ennek a mutatónak a romlását:
 
 \begin{itemize}
 	\item A keret nagyobb, mint a Jitter puffer mérete. 
-	\item Algoritmusok késleltethetik az interfészeken beérkező csomagokat. 
+	\item Az interfészeken történő csomagfeldolgozás késleltetheti a beérkező csomagokat.
 	\item A kommunikáció közben lévő hálózati eszközök, proxyk feldolgozó képessége. 
 \end{itemize}
 
-Javítani úgy lehet ezen a számon, ha az alkalmazások használnak Jitter puffert, ami elfogja a
-beérkező csomagokat és azokat egyenletesen adja tovább feldolgozásra. 
+Javítani úgy lehet ezen a számon, ha az alkalmazások használnak Jitter puffert, ami 
+elfogja a beérkező csomagokat és azokat egyenletesen adja tovább feldolgozásra. 
 
 \section{Tesztek menete és értékelése}
 
-A tesztek oly módon történtek, hogy az általam írt kliens generált egy adott számú háttérforgalmat, 
-majd a Linphone kliensekkel elindítottam egy rendest hívás, amivel könnyen lehetett a hívás minőségével
-kapcsolatos információkat kapni. Ahhoz, hogy ez a rendszer megfelelően tudjon működni VirtualBox
-segítségével egy hasonló környezetet teremtettem, mint a hagyományos hívásfelépítés részben.
+A tesztek oly módon történtek, hogy az általam írt kliens generált egy adott számú 
+háttérforgalmat, majd a Linphone kliensekkel elindítottam egy teljes értékű hívás, amivel 
+könnyen lehetett a hívás minőségével kapcsolatos információkat kapni. Ahhoz, hogy ez a 
+rendszer megfelelően tudjon működni VirtualBox segítségével egy hasonló környezetet 
+teremtettem, mint a hagyományos hívásfelépítés részben.
 
-Az így létrehozott Kamailio és két Linphone kliens egy-egy virtuális gépben futottak és ezek a gépek 
-bridged hálózatot használtak, amelyek a \ref{fig:servers} ábrán látható Tethys enp12s0 és enp17s0
-interfészekhez van hozzákötve. 
+Az így létrehozott Kamailio és két Linphone kliens egy-egy virtuális gépben futottak és 
+ezek a gépek bridged hálózatot használtak, amelyek a \ref{fig:servers} ábrán látható 
+Tethys \texttt{enp12s0} és \texttt{enp17s0} interfészekhez van hozzákötve. 
 
-A tesztelés során elsőnek próbáltam minél nagyobb háttérforgalom mellett egy normál hívást elindítani,
-viszont ez nem sikerült már 60-70 hívás esetén. Így ez lett a maximum szám kezelhető hívások száma. 
-A probléma nem feltétlen a Kubernetes fürt túlterhelésében történt, hanem az L7mp proxyk kapacitásának 
-elérése miatt. Így egy rendes Kamailio + Linphone által kezdeményezett hívást próbáltam indítani már 
-nem volt képes a Kamailio ellenőrizni az rtpengine elérhetőségét egy \textit{ping} üzenettel, ezért
-a klienseknek egymás elérhetőségét adta és szúrta be közéjük az rtpengine-t.
+A tesztelés során elsőnek próbáltam minél nagyobb háttérforgalom mellett egy normál 
+hívást elindítani, viszont ez nem sikerült már 60-70 hívás esetén. Tehát ez lett a 
+maximum kezelhető hívások száma. A probléma nem feltétlen a Kubernetes klaszter 
+túlterhelésében történt, hanem az L7mp proxyk kapacitásának elérése miatt. Mikor egy 
+teljes értékű Kamailio + Linphone által kezdeményezett hívást próbáltam indítani már nem 
+volt képes a Kamailio ellenőrizni az rtpengine elérhetőségét egy \texttt{ping} üzenettel, 
+ezért a klienseknek egymás elérhetőségét adta és szúrta be közéjük az rtpengine-t.
 
-A diagramokon, táblázatokban szereplő adatok hálózati mérésekből lettek kinyerve. Ezeket a méréseket 
-minden alkalommal az egyik Linphone kliensnél gyűjtöttem a \textit{tcpdump} nevezetű program. Ezzel 
-a programmal csomagokat lehet elkapni és analizálni. Az így kigyűjtött csomagokat végül \textit{WireShark}
-segítségével analizáltam. A WireShark lényegében ugyanazokat a funkciókat nyújtja, mint a tcpdump, azzal
-a különbséggel, hogy a WireShark rendelkezik grafikus felülettel, ami könnyebb használni. 
+A diagramokon, táblázatokban szereplő adatok hálózati mérésekből lettek kinyerve. Ezeket 
+a méréseket minden alkalommal az egyik Linphone kliensnél gyűjtöttem a \texttt{tcpdump} 
+nevezetű program segítségével. Ezzel a programmal csomagokat lehet elkapni és analizálni. 
+Az így kigyűjtött csomagokat végül \texttt{WireShark} segítségével analizáltam. A 
+\texttt{WireShark} lényegében ugyanazokat a funkciókat nyújtja, mint a \texttt{tcpdump}, 
+azzal a különbséggel, hogy a \texttt{WireShark} rendelkezik grafikus felülettel, ami 
+könnyebb használni. 
 
 \subsection{Mérések}
 
-A legreprezentatívabb mutató a MOS, aminek a társalgási és hallgatósági minőségét lehet látni a \ref{fig:moslq}
-ábrán.
+A legreprezentatívabb mutató a MOS, aminek a társalgási és hallgatósági minőségét lehet 
+látni a \ref{fig:moslq} ábrán.
 
 \begin{figure}[!ht]
 	\centering
@@ -177,12 +175,14 @@ A legreprezentatívabb mutató a MOS, aminek a társalgási és hallgatósági m
 	\label{fig:moslq}
 \end{figure}
 
-Csak a MOS-LQ alakulása került ábrázolásra, mert a MOS-CQ-val szemben csak nagyon kevés különbség
-van. Sajnos az ábrához nem tudtam jelmagyarázatot készíteni, így a vonalak színei jelképezik azt, hogy
-mekkora háttérforgalom mellett voltak mérve a MOS értékek. Az Y tengelyen jelöli a vett mintákat, 
-ami hívás kezdetétől számított és megvizsgált RTCP csomagokat jelöli. Mivel nem sikerült minden hívást 
-egyforma hosszúságúra hagyni és tekintettel arra, hogy nagyobb terhelés mellett az első pár ilyen 
-RTCP csomagban nem értelmezhető adatok voltak. Így az első 15 értelmezhető mintát vettem. \\
+Csak a \texttt{MOS-LQ} alakulása került ábrázolásra, mert a \texttt{MOS-CQ}-val szemben 
+csak nagyon kevés különbség van. Sajnos az ábrához nem tudtam jelmagyarázatot készíteni, 
+így a vonalak színei jelképezik azt, hogy mekkora háttérforgalom mellett voltak mérve a 
+MOS értékek. Az Y tengelyen jelöli a vett mintákat, ami hívás kezdetétől számított és 
+megvizsgált RTCP csomagokat jelöli. Mivel nem sikerült minden hívást egyforma 
+hosszúságúra hagyni és tekintettel arra, hogy nagyobb terhelés mellett az első pár ilyen 
+RTCP csomagban nem voltak értelmezhető adatok csak az első 15 értelmezhető mintát vettem 
+számításba.
 
 %\begin{figure}[!ht]
 %	\centering
@@ -191,16 +191,18 @@ RTCP csomagban nem értelmezhető adatok voltak. Így az első 15 értelmezhető
 %	\label{fig:moscq}
 %\end{figure}
 
-A \ref{fig:moslq} ábrán jól látható az folyamat, hogy a hívás kezdte után mennyire rossz a hívás minősége
-illetve, hogy egy idő után mennyire javul és vesz fel egy viszonylag kis kilengésekkel rendelkező értéket. 
-A hívás elején tapasztalható rossz minőséget az okozza, hogy az okozza, hogy az L7mp proxyk nem képesek
-elég gyorsan feldolgozni a csomagokat így a magas Jitter keletkezik a rendszerben, amikre nincs
-felkészülve egyik Linphone kliens sem. Később azért lesz jobb a MOS értéke, mert a kliensek adaptív
-Jitter pufferel rendelkezni így idővel megtanulják azt, hogy mekkora az átlagos Jitter és annak megfelelően 
-növelik a pufferük méretét. Így a magas Jitter értéket kitudja simítani.
+A \ref{fig:moslq} ábrán jól látható az folyamat, hogy a hívás kezdte után mennyire rossz 
+a hívás minősége illetve, hogy egy idő után mennyire javul és vesz fel egy viszonylag kis 
+kilengésekkel rendelkező értéket. A hívás elején tapasztalható rossz minőséget az okozza, 
+hogy az okozza, hogy az L7mp proxyk nem képesek elég gyorsan feldolgozni a csomagokat így 
+a magas Jitter keletkezik a rendszerben, amikre nincs felkészülve egyik Linphone kliens 
+sem. Később azért lesz jobb a MOS értéke, mert a kliensek adaptív Jitter pufferel 
+rendelkezni így idővel megtanulják azt, hogy mekkora az átlagos Jitter és annak 
+megfelelően növelik a pufferük méretét, ezzel kisimítva a csomagok érkezését. 
 
-De ez nem jelenti azt, hogy a hívás maradéktalanul jó lesz, amit mutat a következő \ref{fig:voiceComp}
-ábra is, amit a WireShark RTP folyam elemzőjéből mentettem ki. 
+De ez nem jelenti azt, hogy a hívás maradéktalanul jó lesz, amit mutat a
+\ref{fig:voiceComp} ábra is, amit a \texttt{WireShark} RTP folyam elemzőjéből mentettem 
+ki. 
 
 \begin{figure}[!ht]
 	\centering
@@ -210,12 +212,13 @@ De ez nem jelenti azt, hogy a hívás maradéktalanul jó lesz, amit mutat a kö
 	\label{fig:voiceComp}
 \end{figure}
 
-A \ref{fig:voiceComp} ábrán a felső hullám 60 hívás mellett készült, míg az alsó 20 hívás mellett keletkezett. 
-Ezek azok a RTP folyamok, amik az rtpengine felől érkeztek a kliensek felé. 
+A \ref{fig:voiceComp} ábrán a felső hullám 60 hívás mellett készült, míg az alsó 20 hívás 
+mellett keletkezett. Ezek azok a RTP folyamok, amik az rtpengine felől érkeztek a 
+kliensek felé. 
 
-Jól látszik, hogy a felsőnél rengeteg csend van beszúrva, ami nagyon recsegőssé teszi a hívást és élvezhetetlenné,
-míg az alsónál csak az elején található egyszer egy magas Jitter érték, ami nem befolyásolja annyira a hívás
-minőségét. \\
+Jól látszik, hogy a felsőnél rengeteg csend van beszúrva, ami nagyon recsegőssé teszi a 
+hívást és élvezhetetlenné, míg az alsónál csak az elején található egyszer egy magas 
+Jitter érték, ami nem befolyásolja annyira a hívás minőségét.
 
 \begin{table}[H]
 	\footnotesize
@@ -238,17 +241,21 @@ minőségét. \\
 	\label{tab:callValues}
 \end{table}
 
-A \ref{tab:callValues} táblázatban jól látszik, hogy a hívások minősége miként romlott annak függvényében, hogy
-hány háttérhívás volt egyszerre. Ami rögtön észrevehetőm, hogy a MOS értéke az folyamatosan rosszabb attól függetlenül,
-hogy a \ref{fig:moslq} ábrán az látható, hogy idővel javul ennek az értéke. Ez attól van, hogy itt már az összes 
-értelmezhető RTCP üzenet fel lett dolgozva és egy idő után beállt a MOS értéke egy adott szintre, ezért folyamatos 
-csökkenés látható. 
+A \ref{tab:callValues} táblázatban jól látszik, hogy a hívások minősége miként romlott 
+annak függvényében, hogy hány háttérhívás volt egyszerre. Rögtön észrevehető, hogy a 
+MOS értéke az folyamatosan rosszabb attól függetlenül, hogy a \ref{fig:moslq} ábrán az 
+látható, hogy idővel javul ennek az értéke. Ez attól van, hogy itt már az összes  
+értelmezhető RTCP üzenet fel lett dolgozva és egy idő után beállt a MOS értéke egy adott 
+szintre, ezért folyamatos csökkenés látható. 
 
-A másik ilyen könnyen jellemezhető érték azaz R-Faktor, ahol jól látszik, hogy nulla háttérhívás mellett átlagosan 
-sikerült elérni azt a minőséget, ami majdnem tökéletesnek számít. Ezt a viszonylag jó értéket tartja egészen 
-40 hívásig, ahol is már egy nagy esés látható. Ez már azt jelenti, hogy élvezhetetlen a hívás. Ennek kiváltó 
-oka lehet a magas Jitter, ami már ennyivel képes torzítani a hívást. A Jitter egész elviselhető értékeket adott 
-40 hívásig, viszont azután már túl nagyok voltak, mivel 60 ms alatt nagyjából három RTP csomagnak kellett volna érkeznie.
+A másik ilyen könnyen jellemezhető érték azaz R-Faktor, ahol jól látszik, hogy nulla 
+háttérhívás mellett átlagosan sikerült elérni azt a minőséget, ami majdnem tökéletesnek 
+számít. Ezt a viszonylag jó értéket tartja egészen 40 hívásig, ahol is már egy nagy esés 
+látható. Ez már azt jelenti, hogy élvezhetetlen a hívás. Ennek kiváltó oka lehet a magas 
+Jitter, ami már ennyivel képes torzítani a hívást. A Jitter egész tolerálható értékeket 
+adott 40 hívásig, viszont azután már túl nagyok voltak, mivel 60 ms alatt nagyjából három 
+RTP csomagnak kellett volna érkeznie.
 
-A Linphone 60 ms-s Jitter pufferrel rendelkezik alap esetben és, ha szükség van rá, akkor ezt képes módosítani. Ez
-látszik a táblázat utolsó sorában is, mivel adaptívan növeli puffer méretet. 
+A Linphone 60 ms-s Jitter pufferrel rendelkezik alap esetben és, ha szükség van rá, akkor 
+ezt képes módosítani. Ez látszik a táblázat utolsó sorában is, mivel adaptívan növeli 
+puffer méretet. 

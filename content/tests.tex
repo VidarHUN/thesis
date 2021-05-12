@@ -263,4 +263,32 @@ RTP csomagnak kellett volna érkeznie.
 
 A Linphone 60 ms-s Jitter pufferrel rendelkezik alap esetben és, ha szükség van rá, akkor 
 ezt képes módosítani. Ez látszik a táblázat utolsó sorában is, mivel adaptívan növeli 
-puffer méretet. 
+puffer méretet.
+
+\section{Rugalmasság mérése}
+
+A rugalmasság mérése során az fog kiderülni, hogy egy rtpeninge meghibásodása, milyen 
+módon befolyásolja a hívást. Ennek szimulálása érdekében a hívás indítása után 
+megvizsgálom a Kubernetes klaszterben szereplő rtpengine kapszulákat, hogy melyik kezdte 
+el feldolgozni a hívást és azt a kapszulát törlöm. Az elvárt működés során annak kell 
+történnie, hogy az L7mp operátor képes detektálni a kapszula törlését melynek során 
+értesíti az L7mp proxykat, hogy az az rtpengine kapszula már nem elérhető. Ennek hatására 
+az L7mp proxykban definiált terheléselosztó egy új végponthoz fogja továbbítani a 
+beérkező RTP és RTCP csomagokat. 
+
+A leírt eljárás során nem képesek az RTP és RTCP csomagok eljutni egyik rtpengine 
+kapszulához sem, ezért kiesést kell tapasztalni. De ennek a kiesésnek minél rövidebb 
+időnek kell lennie, különben a hívásban résztvevő felek nem hallanak bizonyos részeket. 
+Ezenfelül okozhat még kapcsolatvesztést is a klienseknél, ha egy adott ideig nem érkezik 
+semmilyen médiaforgalom. 
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=1\textwidth, keepaspectratio]{figures/res.png}
+	\caption{Elvesztett beszédrészlet meghibásodás esetén}
+	\label{fig:res}
+\end{figure}
+
+A \ref{fig:res} ábrán látható, hogy médiafolyam során hol keletkezett kiesés az rtpengine kapszula törlése után. Ez a kiesés összesen 1,1 másodperc kiesést okozott ami a beérkezett csomagok 1,4\% százalékának az elvesztését jelenti.
+
+Összességében elmondható, hogy ezt a feladatot jól ellátja az így létrehozott architektúra, mivel egy ekkora kiesés még nem biztos, hogy kellemetlen lehet a felhasználók számára. Emellett a hívás minősége is megmaradt a törlés után. 

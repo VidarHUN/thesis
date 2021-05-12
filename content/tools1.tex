@@ -321,8 +321,18 @@ fogja egy konténerben futtatni.
 \subsubsection{Felépítés}
 
 Mivel az L7mp proxy tervezése során az Envoy volt a minta, így főbb elemei között 
-szerepelnek ugyanolyan vagy hasonló elemek. A legfontosabb építőkockái az L7mp proxynak 
-felsorolásra és kifejtésre kerülnek alább: 
+szerepelnek ugyanolyan vagy hasonló elemek. 
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=1\textwidth, keepaspectratio]{figures/l7mp_struct.png}
+	\caption{L7mp felépítése}
+	\label{fig:l7mpStruct}
+\end{figure}
+
+A \ref{fig:l7mpStruct} ábrán látható, hogy az L7mp proxyn miképp vannak az elemek kapcsolatban egymással. A figyelők azok az erőforrások, amik elsőként kapják meg az L7mp proxyhoz beérkező csomagokat, majd ezeket a definiált szabályok alapján eljuttatja az L7mp klaszterekig, ahol a csomagok képesek eljutni a definiált végpontokig. 
+
+Az alábbi felsorolás tartalmazza az L7mp proxy által használt erőforrások ismertetését.
 
 \begin{itemize}
 	\item \textbf{Munkamenet (Session)}: Munkameneteket nem lehet manuálisan létrehozni,

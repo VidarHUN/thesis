@@ -9,7 +9,7 @@ A Kubernetes architektúra tervezése során a fő szempont az volt, hogy teljes
 mikroszolgáltatásokból álló alkalmazás legyen, mely képes az benne rejlő rtpengine-t 
 megfelelően konfigurálni.
 
-Ezt a Kubernetes klasztert a BME által szolgáltatott szervereken építettem ki, mi szám 
+Ezt a Kubernetes klasztert a BME által szolgáltatott szervereken építettem ki, ami szám 
 szerint 4 szervert tartalmaz melyek az \ref{fig:servers} elrendezésben vannak összekötve.
 
 \begin{figure}[!ht]
@@ -33,9 +33,9 @@ kellett szentelni annak, hogy ezek az interfészek helyesen legyenek felkonfigur
 
 De, mint látszik a hálózatban szerepel egy switch, amibe az \texttt{eno2} interfészek 
 vannak becsatlakoztatva. Ezek az interfészek 1 gigabites sebességgel rendelkeznek, amik
-a sok nagy sebességű forgalmat nem képes kiszolgálni, viszont még így is hasznosak
+a sok nagy sebességű forgalmat nem képesek kiszolgálni, viszont még így is hasznosak
 a hálózat szempontjából. Mivel a telepített Kubernetes klaszter vezérlő- és adatsíkja
-ezen a két összeköttetésen osztozik. Szóval a lassabb interfészeken kommunikál az
+ezen a két összeköttetésen osztozik. A lassabb interfészeken kommunikál az
 API szerver és a Kubelet, míg a Kube-Proxy a nagy sebességű hálózati kártyákat 
 használja. Ezáltal lehetett egy olyan magas határt szabni a lehetséges forgalom
 sebességének, amibe nehéz beleütközni. 
@@ -137,7 +137,7 @@ rtpengine-nek csak skálázásra működött így, ha kettő példány fut egym�
 őket \textbf{A}, \textbf{B}-nek. Akkor, ha \textbf{A}-hoz beérkezik egy hívás, erről 
 értesül \textbf{B}, viszont nem nyitja ki hozzá a megfelelő portokat. Tehát, ha bármi 
 történik \textbf{A}-val \textbf{B} nem tudja fogadni a hozzá beérkező forgalmat. Ennek a 
-kiküszöbölése gyanánt egy kicsit módosítanom kell az rtpengine kódján, hogy mikor 
+kiküszöbölése gyanánt egy kicsit módosítanom kellett az rtpengine kódján, hogy mikor 
 frissítés történik az adatbázisból, akkor portokat is nyisson ki. Ez egy elfogadható 
 megoldásnak lehet tartani átlag esetben, viszont a Kubernetes világában ez a megoldás nem 
 a legszebbek közé tartozik, mert nem követi a Kubernetes által diktált irányokat. A szép 
@@ -189,26 +189,27 @@ van minden olyan paraméter, ami szerint szeretnénk, ha működne. Ezek a param
 az alábbi felsorolásban olvashatóak.
 
 \begin{itemize}
-	\item \textbf{protocol}: Használt protokoll a vezérlőparancsok küldéséhez. Ez lehet
-	udp, tcp és ws azaz WebSocket is.
-	\item \textbf{rtpe\_address}: Az rtpengine szolgáltatás neve vagy IP címe. 
-	\item \textbf{rtpe\_port}: A port, amin az rtpengine várja a beérkező parancsokat. 
-	\item \textbf{envoy\_address}: Ha Envoy környezetben van használva akkor a menedzsment
-	szolgáltatás neve vagy IP címe. 
-	\item \textbf{envoy\_port}: Envoy menedzsment szolgáltatás portja. 
-	\item \textbf{local\_address}: Lehet állítani, hogy az üzenetek küldése során milyen
-	lokális címről küldje. Ez L7mp környezetben a \texttt{127.0.0.1} míg Envoy esetében 
-	\texttt{0.0.0.0}.
-	\item \textbf{local\_port}: Meghatározható, hogy a kimenő parancsok mely portról
-	induljanak el. 
-	\item \textbf{sidecar\_type}: Használt proxy típusa állítható be, ami lehet L7mp és 
-	envoy is.
-	\item \textbf{without\_jsonsocket}: A fejlesztés során több fajta architektúrát 
-	kipróbáltam és ennek paraméternek a beállításával lehet váltani a létrehozandó L7mp 
-	erőforrások között. 
-	\item \textbf{ingress\_address}: A Kubernetes dolgozó csomópontjának az IP címe 
-	adható meg. Azért van erre szükség, mert később ez a cím fog bekerülni a klienseknek 
-	válaszolt SDP üzenetekbe. 
+	\item \textbf{\texttt{protocol}}: Használt protokoll a vezérlőparancsok küldéséhez. 
+	Ez lehet udp, tcp és ws azaz WebSocket is.
+	\item \textbf{\texttt{rtpe\_address}}: Az rtpengine szolgáltatás neve vagy IP címe. 
+	\item \textbf{\texttt{rtpe\_port}}: A port, amin az rtpengine várja a beérkező 
+	parancsokat. 
+	\item \textbf{\texttt{envoy\_address}}: Ha Envoy környezetben van használva akkor a 
+	menedzsment szolgáltatás neve vagy IP címe. 
+	\item \textbf{\texttt{envoy\_port}}: Envoy menedzsment szolgáltatás portja. 
+	\item \textbf{\texttt{local\_address}}: Lehet állítani, hogy az üzenetek küldése 
+	során milyen lokális címről küldje. Ez L7mp környezetben a \texttt{127.0.0.1} míg 
+	Envoy esetében \texttt{0.0.0.0}.
+	\item \textbf{\texttt{local\_port}}: Meghatározható, hogy a kimenő parancsok mely 
+	portról induljanak el. 
+	\item \textbf{\texttt{sidecar\_type}}: Használt proxy típusa állítható be, ami lehet 
+	L7mp és envoy is.
+	\item \textbf{\texttt{without\_jsonsocket}}: A fejlesztés során több fajta 
+	architektúrát kipróbáltam és ennek paraméternek a beállításával lehet váltani a 
+	létrehozandó L7mp erőforrások között. 
+	\item \textbf{\texttt{ingress\_address}}: A Kubernetes dolgozó csomópontjának az IP 
+	címe adható meg. Azért van erre szükség, mert később ez a cím fog bekerülni a 
+	klienseknek válaszolt SDP üzenetekbe. 
 \end{itemize}
 
 Ezt a konfigurációs fájlt érdemes létrehozni úgynevezett ConfigMap segítségével, amit 
@@ -253,7 +254,7 @@ a beérkező üzenetek feldolgozása.
 
 \subsubsection{Kubernetes API}
 
-Ahogy a használt eszközök bemutatása fejezetben is lehet olvasni a Kubernetes
+Ahogy a \ref{sec:kubernetes} fejezetben is lehet olvasni a Kubernetes
 klaszternek parancsokat a Kube API-n keresztül lehet adni. Ezért kellett egy olyan
 módszert találni, amivel a kontroller képes kommunikálni a Kubernetes API-val 
 egy kapszulából. Ehhez használtam egy olyan könyvtárat \cite{pythonKubeAPI}, amivel
@@ -264,7 +265,7 @@ A könyvtár telepítése után inicializálni kell a kapcsolatot a Kubernetes
 API-val, amihez a \texttt{client} és \texttt{config} modult kell importálni
 a Kubernetes könyvtárból. Majd a \texttt{config.load\_incluster\_config()}
 hívással lehet inicializálni az API-val való kapcsolatot, így jelezve, hogy a
-szkript egy Kubernetes klaszteren belül egy kapszulában fog futni. De ahhoz ez 
+szkript egy Kubernetes klaszteren belül egy kapszulában fog futni. De ahhoz, hogy ez 
 ténylegesen jól működjön ahhoz konfigurálni kell az RBAC-t (Role-based access control), 
 amivel olyan jogokat lehet biztosítani, amikkel hozzálehet férni Kubernetes  
 erőforrásokhoz. Szabályozni lehet ezzel azt is, hogy egy adott erőforráshoz  csak 
@@ -323,19 +324,19 @@ ami az előzőleg létrehozott \texttt{api} objektum
 említett függvény az alább felsorolt paramétereket várja.
 
 \begin{itemize}
-	\item \textbf{group}: A létrehozni kívánt erőforrás API címe.  
-	\item \textbf{version}: A \textit{group}-ban definiált API verziója. 
-	\item \textbf{namespace}: Melyik névtérben legyen létrehozva az erőforrás.
-	\item \textbf{plural}: Az erőforrás típusának többesszáma. Ez az előzőleg definiált
-	ClusterRole resources listájából valamelyik elem. 
-	\item \textbf{body}: Egy YAML definíciót kell megadni python szótárként. 
+	\item \textbf{\texttt{group}}: A létrehozni kívánt erőforrás API címe.  
+	\item \textbf{\texttt{version}}: A \textit{group}-ban definiált API verziója. 
+	\item \textbf{\texttt{namespace}}: Melyik névtérben legyen létrehozva az erőforrás.
+	\item \textbf{\texttt{plural}}: Az erőforrás típusának többesszáma. Ez az előzőleg 
+	definiált ClusterRole resources listájából valamelyik elem. 
+	\item \textbf{\texttt{body}}: Egy YAML definíciót kell megadni python szótárként. 
 \end{itemize}
 
-Ezek közül a legfontosabb body, azaz a törzs, ahova mindig a híváshoz szükséges 
-definíciókat kell megadni. Ahhoz, hogy kódban ne legyenek ezek a definíciók annyira 
-beégetve, ahhoz ezeket a YAML fájlokat kiszerveztem egy mappába és, mikor használni vagy 
-módosítani kell, akkor csak a szükséges fájlt beolvassa a kontroller és módosítja a 
-szükséges mezőket.
+Ezek közül a legfontosabb a \texttt{body}, azaz a törzs, ahova mindig a híváshoz 
+szükséges definíciókat kell megadni. Ahhoz, hogy kódban ne legyenek ezek a definíciók 
+annyira beégetve, ahhoz ezeket a YAML fájlokat kiszerveztem egy mappába és, mikor 
+használni vagy módosítani kell, akkor csak a szükséges fájlt beolvassa a kontroller és 
+módosítja a szükséges mezőket.
 
 Ha egy hívás beérkezik a kontrollerhez, akkor kettő virtuális szolgáltatás és kettő
 szabály fog létrejönni. A szolgáltatások mindig az \texttt{l7mp-ingress}-n fognak 
@@ -350,7 +351,7 @@ neve.
 \subsubsection{Konfigurálás és naplózás}
 
 A kontroller indítása után az első feladata az a kódnak, hogy beolvassa az indítás
-során megadott argumentumokat és feldolgozza az konfigurációs fájlban megadott 
+során megadott argumentumokat és feldolgozza a konfigurációs fájlban megadott 
 paramétereket. Az argumentumok beolvasását a \texttt{argparse} \cite{argparse} könyvár 
 használatával oldottam meg, mivel könnyen használható és bővíthető. Lehetővé téve, hogy a
 későbbiekben, ha több argumentum átadására van szükség nem lesz nagy feladat a 
@@ -380,7 +381,7 @@ időből, a naplózás szintjéből illetve magából az üzenetből áll.
 \subsubsection{Foglalatok létrehozása}
 
 Mivel a kontroller három protokollt képes jelenleg támogatni ezért háromféle foglalatot 
-kell tudnia használni. Név szerint az UDP, TCP, WebSocket protokollokat támogatják. 
+kell tudnia használni. Név szerint az UDP, TCP és WebSocket protokollokat támogatja. 
 Ezeknek a létrehozására mind van egy-egy függvény, ami képes a hozzájuk tartozó 
 beállításokat beállítani és a megfelelő foglattal visszatérni, hogy azt több helyen 
 lehessen használni.
@@ -449,8 +450,8 @@ pont azt.
 
 \subsubsection{Erőforrások létrehozása és törlése}
 
-Arról, hogy az erőforrások létrehozása illetve törlése mikor történik a feldolgozás
-fejezetben lesz szó. Ebben arról lesz, hogy hogyan működnek.
+Arról, hogy az erőforrások létrehozása illetve törlése mikor történik a 
+\ref{sec:feldolgozas} fejezetben lesz szó. Ebben arról lesz, hogy hogyan működnek.
 
 Mikor elindul a kontroller, akkor már a kezdetekkor van egy \texttt{kubernetes\_apis}
 lista, ami tartalmazza az összes Kubernetes API kliens objektumot. Ezáltal mindig van egy
@@ -504,20 +505,19 @@ A törlés ezzel szemben nagyon egyszerűen úgy történik, hogy a hívásazono
 \texttt{kubernetes\_apis} listából meghívjuk az objektum \texttt{delete\_resources()}
 függvényét, ami az adott híváshoz kapcsolódó összes erőforrást törölni fogja.
 
-\subsubsection{Parancsok feldolgozása}
+\subsubsection{Parancsok feldolgozása}\label{sec:feldolgozas}
 
 A parancsok feldolgozása kétféle módon történhet, lehet az átlagos foglalatokkal, ami 
 a TCP és UDP csomagok kezelését jelenti illetve lehet a WebSocket protokoll segítéségével 
-is. Az előzőleg említett feldolgozás lehetővé teszi, hogy mind TCP és UDP
+is. Az előzőleg említett feldolgozás lehetővé teszi, hogy mind a TCP és UDP
 foglalatok használatával működjön, mert ezek a foglalatok küldés és fogadás szempontjából
 teljesen ugyanazokat a függvényeket valósítják meg.
 
 Az említett eljáráshoz tartozó függvény két foglalatot vár el argumentumként, amik közül 
 a \texttt{sock} az a foglalat lesz, amelyik a kliensektől várja a bejövő forgalmat és az 
 \texttt{rtpe\_sock} lesz, amelyen keresztül kommunikálni fog a kontroller az 
-rtpnengine-el. Szóval a \texttt{sock}-n beérkező adat tárolásra kerül abban a formában, 
-amelyben érkezik szóval egy egyszerű karakterláncként és a feldolgozott verziója is, 
-amikor karakterlánc bencode által kódolt része feloldásra és szótárba írásra kerül. Ez a 
+rtpnengine-el. A \texttt{sock}-n beérkező adat tárolásra kerül abban a formában, 
+amelyben érkezik, egy egyszerű karakterláncként és a feldolgozott verziója is, mikor a karakterlánc bencode által kódolt része feloldásra és szótárba írásra kerül. Ez a 
 feldolgozott változat hasznos akkor, amikor az erőforrásokat kell létrehozni, míg a nyers 
 beérkezett üzenet továbbküldésre kerül az rtpengine felé, hiszen azon nem kell 
 változtatni semmilyen paramétert.
@@ -531,16 +531,16 @@ olyan SIP klienseknek, mint a Linphone. A szóban forgó címet kell lecserélni
 csomópont IP címére. De az rtpengine válasza után még vizsgálni kell azt is, hogy milyen 
 parancs érkezett be a kontrollerhez. Ha egy \texttt{delete} üzenet érkezett, akkor a 
 benne szereplő hívásazonosítóhoz tartozó Kubernetes erőforrásokat mindenképpen törölni 
-kell, hogy véletlenül sem maradjon nyitva olyan port a Kubernetes klaszteren, ami nincs 
+kell, hogy véletlenül se maradjon nyitva olyan port a Kubernetes klaszteren, ami nincs 
 használatban. A másik ilyen fontos üzenet az \texttt{answer}. Azért kell az ilyen 
 paranccsal rendelkező üzenetekre jobban figyelni, mint az \texttt{offer}-re, mert csak 
-ennek a megékezése után lehet a megfelelő erőforrások
+ennek a megérkezése után lehet a megfelelő erőforrások létrehozni.
 
 \section{Kliens}
 
 Ahhoz, hogy az előzőleg tárgyalt rendszert érdemben lehessen tesztelni írnom kellett egy 
 saját alkalmazást, ami képes volt adott számú médiaforgalmat generálni, de tud 
-kommunikálni az rtpengine-l is. Szóval egyben a SIP klienst és szervert is megvalósítja.
+kommunikálni az rtpengine-l is.
 
 A kliens felépítése nagyon hasonlóan néz ki, mint a kontrolleré, ami azt eredményezi, 
 hogy képesnek kell lennie  TCP, UDP és WebSocket protokollokon keresztül kommunikálni az 
@@ -599,37 +599,37 @@ portjára küldeni a 2000-s portról \texttt{PCMU} kódolással. A következő f
 tartalmazza részletesen, hogy a paraméterei mit csinálnak.
 
 \begin{itemize}
-	\item \textbf{-re -i}: Natív képkockasebességgel való beolvasást tesz lehetővé, 
-	így lehet szimulálni egy élő forrást, például egy mikrofont. Emellett lelassítja
-	a fájl olvasásának sebességet annyira, hogy hasonlítson az a valós idejű
-	adatbeolvasáshoz, ugyanis alapértelmezetten olyan gyorsan olvassa az FFmpeg a
-	fájlokat amilyen gyorsan csak tudja és így gyorsabban lesz beolvasva a fájl,
-	mint a fájl időtartama. 
-	\item \textbf{-ar}: Beállítja a mintavételezési periódust, ami itt \texttt{8000 Hz}, 
-	ami azt jelenti, hogy másodpercenként 8000 mintát vesz a forrásból. 
-	\item \textbf{ac}: Beállítja a használt hangcsatornák számát.
-	\item \textbf{-acodec}: Megadja, hogy milyen hangkódolást használjon. Ebben az 
-	esetben PCM u-law alapú kódolás történik.
-	\item \textbf{-f}: A kimenti fájl formátumát lehet megadni, de ebben az esetben
-	nem egy fájl, hanem egy cím van megadva így a hálózaton RTP csomagokban fogja 
+	\item \textbf{\texttt{-re -i}}: Natív képkockasebességgel való beolvasást tesz 
+	lehetővé, így lehet szimulálni egy élő forrást, például egy mikrofont. Emellett 
+	lelassítja a fájl olvasásának sebességet annyira, hogy hasonlítson az a valós idejű 
+	adatbeolvasáshoz, ugyanis alapértelmezetten olyan gyorsan olvassa az FFmpeg a 
+	fájlokat amilyen gyorsan csak tudja és így gyorsabban lesz beolvasva a fájl, mint a 
+	fájl időtartama. 
+	\item \textbf{\texttt{-ar}}: Beállítja a mintavételezési periódust, ami itt 
+	\texttt{8000 Hz}, ami azt jelenti, hogy másodpercenként 8000 mintát vesz a forrásból. 
+	\item \textbf{\texttt{ac}}: Beállítja a használt hangcsatornák számát.
+	\item \textbf{\texttt{-acodec}}: Megadja, hogy milyen hangkódolást használjon. Ebben 
+	az esetben PCM u-law alapú kódolás történik.
+	\item \textbf{\texttt{-f}}: A kimenti fájl formátumát lehet megadni, de ebben az 
+	esetben nem egy fájl, hanem egy cím van megadva így a hálózaton RTP csomagokban fogja 
 	küldeni a kódolt hanganyagot. Ha jobban megnézzük, akkor ez a cím két részből áll,
 	ahol az első határozza meg azt, hogy hova küldje a csomagokat. Ez a 
 	\texttt{127.0.0.1:23000} az rtpengine címe és a híváshoz meghatározott egyik RTP
-	port. Míg a második rész a \texttt{localrtpport}, amivel meghatározható, hogy
-	mely portról küldje ezeket a csomagokat.
+	port. Míg a második rész a \texttt{localrtpport}, amivel meghatározható, hogy mely 
+	portról küldje ezeket a csomagokat.
 \end{itemize}
 
 \subsubsection{rtpsend}
 
 Az rtpsend \cite{rtpsend} teljesen eltér az FFmpeg-től, hiszen itt nincs semmilyen hang 
 vagy videó feldolgozás, átalakítás vagy bármi más. Itt egyszerűen csak egy RTP folyam 
-visszajátszása történik, amit az \texttt{rtpdump} eszközzel lehet felvenni. Ez a két 
-szoftver egy eszköztárba tartozik, aminek a neve \texttt{rtptools}, amit Henning 
+visszajátszása történik, amit az rtpdump eszközzel lehet felvenni. Ez a két 
+szoftver egy eszköztárba tartozik, aminek a neve rtptools, amit Henning 
 Schulzrinne alkotott meg, aki a Columbia Egyetem oktatója.
 
 Az rtpsend használatához elsőnek rögzíteni kell egy a híváshoz tartozó RTP folyamot az 
 rtpdump paranccsal, ami úgy működik, hogy meg kell adni egy címet, amin az RTP csomagokat 
-elkapja és ezeket alakítja át egy olyan formátumba, amit később az \texttt{rtpsend}-l újra
+elkapja és ezeket alakítja át egy olyan formátumba, amit később az rtpsend-del újra
 lehet alkotni. Abból a szempontból előnyös, hogy az rtpengine-nek a médiaformátum
 átalakítását jól lehet vele tesztelni, mert fel lehet venni két különböző kódolású
 hívást és azokat lejátszani egy szimulált híváson belül.
@@ -663,26 +663,28 @@ hangkártyájára miképp juttassak bármiféle hangot.
 A kliens felépítése nagyon hasonló, mint a kontrolleré és ez látszik abban is, hogy
 ugyan azokat a könyvtárakat használja naplózáshoz, konfiguráció beolvasásához és
 argumentumok átadására. Viszont a konfigurációs fájlban más paramétereket lehet 
-beállítani. A következő felsorolásban fejtem, hogy mely paraméter milyen értékeket 
+beállítani. A következő felsorolásban fejtem ki, hogy mely paraméter milyen értékeket 
 vehet fel és mi történik ezek használata során. 
 
 \begin{itemize}
-	\item \textbf{local\_address}: Meglehet adni, hogy milyen címről küldje
+	\item \textbf{\texttt{local\_address}}: Meglehet adni, hogy milyen címről küldje
 	ki a vezérlőparancsokat.
-	\item \textbf{protocol}: Megadja, hogy milyen protokollt használjon a kliens az
-	vezérlőparancsok küldésére. Ez lehet udp, tcp, ws azaz WebSocket.
-	\item \textbf{rtpe\_address}: Az rtpengine címe. 
-	\item \textbf{rtpe\_port}:Az rtpengine portja.
-	\item \textbf{ping}: Ha csak azt akarjuk a klienssel ellenőrizni, hogy az rtpengine
-	elérhető, akkor lehet küldeni egy szimpla \texttt{ping} üzenet. Ha visszajön egy
-	\textit{pong} az rtpengine elérhető. Ha ennek a mezőnek az értéke yes, akkor 
-	az előzőleg leírt megtörténik és vége a kliens futásának. 
-	\item \textbf{number\_of\_calls}: A generálni kívánt hívások számát lehet megadni. 
-	\item \textbf{send\_method}: Megadhatjuk, hogy FFmpeg vagy rtpsend segítségével
-	generáljon médiaforgalmat a kliens.
-	\item \textbf{wav\_location}: Ha FFmpeg lett beállítva a \texttt{send\_method} 
-	paraméternél, akkor az ehhez szükséges wav hangfájl elérési útvonala adható meg.
-	\item \textbf{rtp\_dump\_location}: Ha rtpsend lett beállítva a 
+	\item \textbf{\texttt{protocol}}: Megadja, hogy milyen protokollt használjon a kliens 
+	az vezérlőparancsok küldésére. Ez lehet udp, tcp, ws azaz WebSocket.
+	\item \textbf{\texttt{rtpe\_address}}: Az rtpengine címe. 
+	\item \textbf{\texttt{rtpe\_port}}:Az rtpengine portja.
+	\item \textbf{\texttt{ping}}: Ha csak azt akarjuk a klienssel ellenőrizni, hogy az 
+	rtpengine elérhető, akkor lehet küldeni egy szimpla \texttt{ping} üzenet. Ha 
+	visszajön egy \texttt{pong} az rtpengine elérhető. Ha ennek a mezőnek az értéke yes, 
+	akkor az előzőleg leírt megtörténik és vége a kliens futásának. 
+	\item \textbf{\texttt{number\_of\_calls}}: A generálni kívánt hívások számát lehet 
+	megadni. 
+	\item \textbf{\texttt{send\_method}}: Megadhatjuk, hogy FFmpeg vagy rtpsend 
+	segítségével generáljon médiaforgalmat a kliens.
+	\item \textbf{\texttt{wav\_location}}: Ha FFmpeg lett beállítva a 
+	\texttt{send\_method} paraméternél, akkor az ehhez szükséges wav hangfájl elérési 
+	útvonala adható meg.
+	\item \textbf{\texttt{rtp\_dump\_location}}: Ha rtpsend lett beállítva a 
 	\texttt{send\_method} paraméternél, akkor az ehhez szükséges rtp fájl elérési 
 	útvonala adható meg.
 \end{itemize}
@@ -701,7 +703,7 @@ használ a kontroller az rtpsend-t és az FFmpeg-t. Viszont ezekből tetszőlege
 számút kell tudni elindítani attól függően, hogy hány párhuzamos hívást kell 
 a kliensnek indítania.
 
-Első próbálkozásnál a szálkezeléssel próbálkoztam, de hamar rá kellett jönnöm,
+Első próbálkozásnál szálkezeléssel próbálkoztam, de hamar rá kellett jönnöm,
 hogy az csak abban az esetben hasznos, ha python kódot kell konkurensen 
 használni. Ezért átváltottam a \texttt{subprocess} \cite{subprocess} modulra, amivel külső alkalmazásokat lehet párhuzamosan használni.
 
@@ -721,7 +723,7 @@ port volt a hozzárendelt érték.
 \subsubsection{Hívások generálása}
 
 A hívás generálás során biztosítani kell azt, hogy legyen megfelelő mennyiségű port
-nyitva médiaforgalomhoz és mielőtt a médiaforgalom elindul meg kell teremteni a hívást
+nyitva a médiaforgalomhoz és mielőtt a médiaforgalom elindul meg kell teremteni a hívást
 magán az rtpengine szerveren. Az rtpengine-n híváskiépítéshez szükség van egy 
 \texttt{offer} és \texttt{answer} üzenetpárosra.
 
@@ -731,7 +733,7 @@ a kliens, amiben módosítás során csak a munkamenet azonosító helyére ker�
 mindig egy véletlenszerű szám és a kapcsolódást leíró paraméter kapja meg a lokális 
 címet azaz a hívó félét. Ha ez megtörtént azután már ellehet küldeni elsőnek az 
 \texttt{offer}-t majd az \texttt{answer}-t. Mind a két üzenet ugyanazzal a 
-hívásazonosítóval és \texttt{from-tag}-l rendelkeznek, viszont az \texttt{answer} 
+hívásazonosítóval és \texttt{from-tag}-l rendelkezik, viszont az \texttt{answer} 
 esetében meg kell adni egy \texttt{to-tag}-t is.
 
 Az így megalkotott hívásról információk kerülnek tárolásra egy listában, ami szükséges

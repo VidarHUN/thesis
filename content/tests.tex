@@ -12,10 +12,15 @@ biztosítja számunkra a hívás végeztével.
 
 \subsection{MOS és R-Faktor}
 
-VoIP hívások minőségének mérésre két elterjedt mértékegység van az R-Faktor (osztályozási faktor) és a MOS (Mean Opinion Score). MOS értéket gyakrabban lehet látni, viszont az R-Faktor szükséges ahhoz, hogy kilehessen számolni a MOS-t. Az R-Faktor egy olyan mutató, ami a késleltetés, Jitter és csomagvesztés mutatókból kerül kiszámításra. Az értéke egy 50-90 közötti szám, ahol az 50 rossz minőséget, míg a 90 kiválót jelent. 
+VoIP hívások minőségének mérésre két elterjedt mértékegység van az R-Faktor (osztályozási 
+faktor) és a MOS (Mean Opinion Score). MOS értéket gyakrabban lehet látni, viszont az 
+R-Faktor szükséges ahhoz, hogy ki lehessen számolni a MOS-t. Az R-Faktor egy olyan 
+mutató, ami a késleltetés, Jitter és csomagvesztés mutatókból kerül kiszámításra. Az 
+értéke egy 50-100 közötti szám, ahol az 50 rossz minőséget, míg a 90 és afeletti szám 
+kiválót jelent. 
 
 A MOS a hang, videó és audiovizuális minőséget kifejező mértékegység az 
-ITU-T P.800.1 szerint. A hallgatás, a beszéd vagy a párbeszéd minőségére utal, 
+\texttt{ITU-T P.800.1} szerint. A hallgatás, a beszéd vagy a párbeszéd minőségére utal, 
 függetlenül attól, hogy szubjektív vagy objektív modellekből származnak-e. Ez a
 mértékegység egy egytől ötig terjedő skálán mozog, ahol a legalacsonyabb a legrosszabb
 és legmagasabb a legjobb minőség. A \ref{tab:mosValues} táblázatban olvasható a skálája. 
@@ -76,9 +81,9 @@ táblázatban vannak összefoglalva.
 
 \subsection{Késleltetés}
 
-Ez azaz idő, ami alatt a csomag egyik klienstől eljut a másikig ezredmásodpercben (ms). 
+Azaz idő, ami alatt a csomag egyik klienstől eljut a másikig ezredmásodpercben (ms). 
 Ha ennek a mutatónak az értéke 50 ms alatti, akkor a rendszerünk megfelelően működik. 
-Egészen addig, amíg a mutató 200 ms alatt van, addig jónak tekinthető a rendszer 
+Addig, amíg ez a mutató 200 ms alatt van, addig jónak tekinthető a rendszer 
 működése, viszont e felett már kellemetlen lehet a felhasználók számára a hívás. 
 
 \subsection{Körülfordulási idő}
@@ -140,7 +145,7 @@ elfogja a beérkező csomagokat és azokat egyenletesen adja tovább feldolgozá
 A tesztek oly módon történtek, hogy az általam írt kliens generált egy adott számú 
 háttérforgalmat, majd a Linphone kliensekkel elindítottam egy teljes értékű hívás, amivel 
 könnyen lehetett a hívás minőségével kapcsolatos információkat kapni. Ahhoz, hogy ez a 
-rendszer megfelelően tudjon működni VirtualBox segítségével egy hasonló környezetet 
+rendszer megfelelően tudjon működni a VirtualBox segítségével egy hasonló környezetet 
 teremtettem, mint a hagyományos hívásfelépítés részben.
 
 Az így létrehozott Kamailio és két Linphone kliens egy-egy virtuális gépben futottak és 
@@ -153,7 +158,7 @@ maximum kezelhető hívások száma. A probléma nem feltétlen a Kubernetes kla
 túlterhelésében történt, hanem az L7mp proxyk kapacitásának elérése miatt. Mikor egy 
 teljes értékű Kamailio + Linphone által kezdeményezett hívást próbáltam indítani már nem 
 volt képes a Kamailio ellenőrizni az rtpengine elérhetőségét egy \texttt{ping} üzenettel, 
-ezért a klienseknek egymás elérhetőségét adta és szúrta be közéjük az rtpengine-t.
+ezért a klienseknek egymás elérhetőségét adta és nem szúrta be közéjük az rtpengine-t.
 
 A diagramokon, táblázatokban szereplő adatok hálózati mérésekből lettek kinyerve. Ezeket 
 a méréseket minden alkalommal az egyik Linphone kliensnél gyűjtöttem a \texttt{tcpdump} 
@@ -161,7 +166,7 @@ nevezetű program segítségével. Ezzel a programmal csomagokat lehet elkapni �
 Az így kigyűjtött csomagokat végül \texttt{WireShark} segítségével analizáltam. A 
 \texttt{WireShark} lényegében ugyanazokat a funkciókat nyújtja, mint a \texttt{tcpdump}, 
 azzal a különbséggel, hogy a \texttt{WireShark} rendelkezik grafikus felülettel, ami 
-könnyebb használni. 
+könnyebben használható. 
 
 \subsection{Mérések}
 

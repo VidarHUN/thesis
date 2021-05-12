@@ -37,12 +37,12 @@ szolgáltatáshálót használó architektúrát és alkalmazást, amely képes 
 a szükséges komponenseket ahhoz, hogy a jövőben lehessen felhőben VoIP 
 alkalmazásokat használni. Ehhez fejlesztettem egy kontrollert, ami az rtpengine
 RTP proxyt képes irányítani az rtpengine vezérlőprotokollján keresztül egy
-Kubernetes fürtben. Ez a kontroller képes a beérkező vezérlőüzenetek alapján 
+Kubernetes klaszterben. Ez a kontroller képes a beérkező vezérlőüzenetek alapján 
 L7mp szolgáltatáshálóban létrehozni a megfelelő erőforrásokat illetve az üzenetekben
 szereplő információt is képes módosítani. 
 
 A teszteléshez fejlesztésre került egy kezdetleges VoIP kliens, ami képes az 
-rtpengine vezérlőprotokollján kommunikálni a Kubernetes fürtben lévő kontrollerrel, 
+rtpengine vezérlőprotokollján kommunikálni a Kubernetes klaszterben lévő kontrollerrel, 
 majd az így kiépült kapcsolaton médiaforgalmat generálni. Ezzel a klienssel 
 erőforrástól függően tetszőleges számú teszt hívást lehet létrehozni. 
 

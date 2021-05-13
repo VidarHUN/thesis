@@ -9,7 +9,7 @@ A Kubernetes architektúra tervezése során a fő szempont az volt, hogy teljes
 mikroszolgáltatásokból álló alkalmazás legyen, mely képes az benne rejlő rtpengine-t 
 megfelelően konfigurálni.
 
-Ezt a Kubernetes klasztert a BME által szolgáltatott szervereken építettem ki, ami szám 
+Ezt a Kubernetes fürtöt a BME által szolgáltatott szervereken építettem ki, ami szám 
 szerint 4 szervert tartalmaz melyek az \ref{fig:servers} elrendezésben vannak összekötve.
 
 \begin{figure}[!ht]
@@ -20,7 +20,7 @@ szerint 4 szervert tartalmaz melyek az \ref{fig:servers} elrendezésben vannak �
 \end{figure}
 
 Az ábrán szereplő szervereket kettő részre lehet szétbontani, ahol az egyik
-konkrétan a Kubernetes klaszter a másik pedig a forgalom generálására használatos.
+konkrétan a Kubernetes fürt a másik pedig a forgalom generálására használatos.
 Az előbbibe tartozik a \texttt{Rhea}, mint mester csomópont és dolgozó csomópontok közé 
 a \texttt{Dione} és a \texttt{Titan}. Majd értelemszerűen az utóbbiba tartozik a 
 \texttt{Tethys}. 
@@ -28,13 +28,13 @@ a \texttt{Dione} és a \texttt{Titan}. Majd értelemszerűen az utóbbiba tartoz
 A szerverek között a kapcsolatot a vonalakkal jeleztem, melyek, mint látszik
 sok esetben direkt összeköttetésben vannak egymással. Ez azért van, mert ezek
 az interfészek 40 gigabitesek és az egyetemen nem állt rendelkezésre ilyen 
-sebességű switch. Ezáltal a Kubernetes klaszter telepítése során különös figyelmet
+sebességű switch. Ezáltal a Kubernetes fürt telepítése során különös figyelmet
 kellett szentelni annak, hogy ezek az interfészek helyesen legyenek felkonfigurálva.
 
 De, mint látszik a hálózatban szerepel egy switch, amibe az \texttt{eno2} interfészek 
 vannak becsatlakoztatva. Ezek az interfészek 1 gigabites sebességgel rendelkeznek, amik
 a sok nagy sebességű forgalmat nem képesek kiszolgálni, viszont még így is hasznosak
-a hálózat szempontjából. Mivel a telepített Kubernetes klaszter vezérlő- és adatsíkja
+a hálózat szempontjából. Mivel a telepített Kubernetes fürt vezérlő- és adatsíkja
 ezen a két összeköttetésen osztozik. A lassabb interfészeken kommunikál az
 API szerver és a Kubelet, míg a Kube-Proxy a nagy sebességű hálózati kártyákat 
 használja. Ezáltal lehetett egy olyan magas határt szabni a lehetséges forgalom
@@ -42,7 +42,7 @@ sebességének, amibe nehéz beleütközni.
 
 Ahhoz, hogy az előzőleg leírt hálózat elkülönítés működjön a Kuberspray programot 
 használtam, mert ennél könnyedén lehetett a telepítés során kettő különböző interfészt
-beállítani. A Kuberspray \cite{kubespray} programmal Kubernetes klasztereket lehet 
+beállítani. A Kuberspray \cite{kubespray} programmal Kubernetes fürtöket lehet 
 telepíteni szimplán szerverekre. A különlegessége az, hogy Ansible-t használ erre a 
 célra. Szóval elég a mester szerver számára lehetővé tenni, hogy működjön az \texttt{ssh} 
 a többi szerverrel és egyetlen konfigurációs fájl indításával képes minden szükséges 
@@ -51,7 +51,7 @@ bármilyen folyamatot tud automatizálni a szerverek között.
 
 \section{Kubernetes architektúra}
 
-A címben említett architektúra írja le, hogy a Kubernetes klasztereken belül milyen 
+A címben említett architektúra írja le, hogy a Kubernetes fürtökön belül milyen 
 Kubernetes erőforrások találhatóak meg és azok, hogyan vannak egymással összekötve. A 
 \ref{fig:clusterSetup} ábrát kifejtve lehet ezt legjobban elmagyarázni. Fontos 
 megjegyezni, hogy erre a rengeteg átalakításra azért van szükség, mert a Kamailio 
@@ -63,7 +63,7 @@ kerül.
 \begin{figure}[!ht]
 	\centering
 	\includegraphics[width=1\textwidth, keepaspectratio]{figures/cluster.png}
-	\caption{Kubernetes klaszter felépítése}
+	\caption{Kubernetes fürt felépítése}
 	\label{fig:clusterSetup}
 \end{figure}
 
@@ -255,7 +255,7 @@ a beérkező üzenetek feldolgozása.
 \subsubsection{Kubernetes API}
 
 Ahogy a \ref{sec:kubernetes} fejezetben is lehet olvasni a Kubernetes
-klaszternek parancsokat a Kube API-n keresztül lehet adni. Ezért kellett egy olyan
+fürtnek parancsokat a Kube API-n keresztül lehet adni. Ezért kellett egy olyan
 módszert találni, amivel a kontroller képes kommunikálni a Kubernetes API-val 
 egy kapszulából. Ehhez használtam egy olyan könyvtárat \cite{pythonKubeAPI}, amivel
 könnyen megvalósítható az API-val való kommunikáció. Mindemellett nagyon jól
@@ -265,7 +265,7 @@ A könyvtár telepítése után inicializálni kell a kapcsolatot a Kubernetes
 API-val, amihez a \texttt{client} és \texttt{config} modult kell importálni
 a Kubernetes könyvtárból. Majd a \texttt{config.load\_incluster\_config()}
 hívással lehet inicializálni az API-val való kapcsolatot, így jelezve, hogy a
-szkript egy Kubernetes klaszteren belül egy kapszulában fog futni. De ahhoz, hogy ez 
+szkript egy Kubernetes fürtön belül egy kapszulában fog futni. De ahhoz, hogy ez 
 ténylegesen jól működjön ahhoz konfigurálni kell az RBAC-t (Role-based access control), 
 amivel olyan jogokat lehet biztosítani, amikkel hozzálehet férni Kubernetes  
 erőforrásokhoz. Szabályozni lehet ezzel azt is, hogy egy adott erőforráshoz  csak 
@@ -308,13 +308,13 @@ erőforrásokat létrehozni, frissíteni, kiegészíteni és törölni.
 
 Majd ezt követően a \texttt{ClusterRoleBidning} erőforrással lehet egy adott
 felhasználóhoz hozzárendelni a létrehozott jogokat. Ebben az esetben az alapértelmezett
-felhasználó kapja meg ezeket a jogokat tekintve, hogy a Kubernetesben csak ez az egy
+felhasználó kapja meg ezeket a jogokat tekintve, hogy a Kubernetes-ben csak ez az egy
 felhasználó van definiálva. Végül a \texttt{roleRef}-ben lehet megadni, hogy mely
 jogokat kapja meg a definiált felhasználó. 
 
 Most, hogy már inicializálva van a Kubernetes API, létre kell hozni egy olyan 
 API objektumot a kontrollerben, amivel egyéni erőforrás definíciókat lehet létrehozni
-és törölni a Kubernetes klaszterben. Ezt a következő sor használatával lehet létrehozni: 
+és törölni a Kubernetes fürtben. Ezt a következő sor használatával lehet létrehozni: 
 \texttt{api = client.CustomObjectsApi()}.
 
 Most már szabadon lehet az L7mp objektumait létrehozni és törölni a kontrollerből is, 
@@ -341,7 +341,7 @@ módosítja a szükséges mezőket.
 Ha egy hívás beérkezik a kontrollerhez, akkor kettő virtuális szolgáltatás és kettő
 szabály fog létrejönni. A szolgáltatások mindig az \texttt{l7mp-ingress}-n fognak 
 beállítódni, ugyanis ezek nyitják ki a rtpengine által meghatározott portokat a kliensek 
-számára a Kubernetes klaszteren. A két szabály pedig az rtpengine kapszulák melletti L7mp 
+számára a Kubernetes fürtön. A két szabály pedig az rtpengine kapszulák melletti L7mp 
 proxyban fog létrejönni, ahol a már előre definiált szabálylistához adódnak hozzá. 
 
 Az így létrehozott erőforrásoknak a neveit tárolni kell, mivel a hívás vége után ezeket
@@ -498,7 +498,7 @@ RTP és RTCP port, végül pedig a \texttt{without\_jsonsocket} és \texttt{ws}
 argumentumokkal lehet még erőforrásokra vonatkozó paramétereket megadni.
 
 Ha ez a konstruktor sikeresen lefutott, akkor az azt jelenti, hogy a Kubernetes 
-klaszterben létrejött minden szükséges erőforrás és adott minden a média forgalom 
+fürtben létrejött minden szükséges erőforrás és adott minden a média forgalom 
 kezeléséhez.
 
 A törlés ezzel szemben nagyon egyszerűen úgy történik, hogy a hívásazonosító alapján
@@ -531,7 +531,7 @@ olyan SIP klienseknek, mint a Linphone. A szóban forgó címet kell lecserélni
 csomópont IP címére. De az rtpengine válasza után még vizsgálni kell azt is, hogy milyen 
 parancs érkezett be a kontrollerhez. Ha egy \texttt{delete} üzenet érkezett, akkor a 
 benne szereplő hívásazonosítóhoz tartozó Kubernetes erőforrásokat mindenképpen törölni 
-kell, hogy véletlenül se maradjon nyitva olyan port a Kubernetes klaszteren, ami nincs 
+kell, hogy véletlenül se maradjon nyitva olyan port a Kubernetes fürtön, ami nincs 
 használatban. A másik ilyen fontos üzenet az \texttt{answer}. Azért kell az ilyen 
 paranccsal rendelkező üzenetekre jobban figyelni, mint az \texttt{offer}-re, mert csak 
 ennek a megérkezése után lehet a megfelelő erőforrások létrehozni.
@@ -552,111 +552,7 @@ hogy ezt a forgalmat legenerálja, viszont mind a kettőnek megvan az előnye é
 is. 
 
 Ebben a fejezetben kifejtésre kerül a kliensben használt külső alkalmazások működése és 
-célja, a kliens használata és annak felépítése. 
-
-\subsection{FFmpeg \& rtpsend}
-
-\subsubsection{FFmpeg}
-
-Elsőnek az FFmpeg-t szeretném bemutatni, mert ezt az eszközt többen ismerhetik,
-mint az rtpsend-t. 
-
-Az FFmpeg \cite{ffmpeg} egy nyílt forráskódú szoftver, amely különböző könyvtárak 
-felhasználásával képes videó, hang és egyéb multimédiás adatfolyamok kezelésére. Lehetővé 
-téve olyan feladatok ellátását, mint kódolás, dekódolás, transzformálás és adatfolyam 
-sugárázása. Viszont rendelkezik különböző hátrányokkal, amik nem elhanyagolhatóak a teszt 
-szempontjából.
-
-Az első ilyen probléma vele, hogy az erőforrás igénye nagyon magas tud lenni 
-annak függvényében, hogy mennyire komplex feladatot lát el. Ez alapesetben nem lenne
-probléma, viszont ebben a környezetben sok egymás mellett futó FFmpeg végez majd
-komplex feladatot, amihez így sok erőforrás szükséges.
-
-A második probléma, hogy a sugárzott RTP folyamot nem lehet eléggé testre szabni, 
-amennyire szükséges lenne. Például a csomagokban lévő adat nem mindig lesz 
-ugyanakkora méretű, ami a mérési eredményeket könnyen torzítani fogja, hiszen 
-minden médiafolyam rendelkezik egy bizonyos kódolással, amihez megvan határozva, hogy
-milyen méretű csomagok szükségesek.
-
-Végül a legnagyobb probléma, ami előjön az FFmpeg és rtpsend esetében is, hogy nem
-tudnak RTCP fogadó jelentést gyártani, ami miatt a hívás minősége nem monitorozható 
-megfelelően. Ez a probléma úgy lett kiküszöbölve, hogy rtpsend vagy FFmpeg gyárt
-egy adott mennyiségű háttérforgalmat és két Linphone kliens segítségével elindításra 
-kerül mellettük egy teljes értékű hívás.  Lehetővé téve a rendszer által nyújtott minőség 
-mérését adott háttérforgalom mellett. 
-
-Az \ref{lst:FFmpeg} parancs szükséges ahhoz, hogy egy \texttt{wav} fájlt sikeresen 
-lehessen sugározni RTP segítségével az rtpengine számára, így a híváshoz szükséges 
-adatfolyamot lehet szimulálni. 
-
-\begin{lstlisting}[caption=FFmpeg RTP folyam indtása, label=lst:FFmpeg]
-ffmpeg -re -i audio.wav -ar 8000 -ac 1 -acodec pcm_mulaw \\
--f rtp 'rtp://127.0.0.1:23000?localrtpport=2000'
-\end{lstlisting}
-
-Ez a sor az \texttt{audio.wav} fájlt fogja a lokális hálózaton lévő rtpengine 23000-s
-portjára küldeni a 2000-s portról \texttt{PCMU} kódolással. A következő felsorolás 
-tartalmazza részletesen, hogy a paraméterei mit csinálnak.
-
-\begin{itemize}
-	\item \textbf{\texttt{-re -i}}: Natív képkockasebességgel való beolvasást tesz 
-	lehetővé, így lehet szimulálni egy élő forrást, például egy mikrofont. Emellett 
-	lelassítja a fájl olvasásának sebességet annyira, hogy hasonlítson az a valós idejű 
-	adatbeolvasáshoz, ugyanis alapértelmezetten olyan gyorsan olvassa az FFmpeg a 
-	fájlokat amilyen gyorsan csak tudja és így gyorsabban lesz beolvasva a fájl, mint a 
-	fájl időtartama. 
-	\item \textbf{\texttt{-ar}}: Beállítja a mintavételezési periódust, ami itt 
-	\texttt{8000 Hz}, ami azt jelenti, hogy másodpercenként 8000 mintát vesz a forrásból. 
-	\item \textbf{\texttt{ac}}: Beállítja a használt hangcsatornák számát.
-	\item \textbf{\texttt{-acodec}}: Megadja, hogy milyen hangkódolást használjon. Ebben 
-	az esetben PCM u-law alapú kódolás történik.
-	\item \textbf{\texttt{-f}}: A kimenti fájl formátumát lehet megadni, de ebben az 
-	esetben nem egy fájl, hanem egy cím van megadva így a hálózaton RTP csomagokban fogja 
-	küldeni a kódolt hanganyagot. Ha jobban megnézzük, akkor ez a cím két részből áll,
-	ahol az első határozza meg azt, hogy hova küldje a csomagokat. Ez a 
-	\texttt{127.0.0.1:23000} az rtpengine címe és a híváshoz meghatározott egyik RTP
-	port. Míg a második rész a \texttt{localrtpport}, amivel meghatározható, hogy mely 
-	portról küldje ezeket a csomagokat.
-\end{itemize}
-
-\subsubsection{rtpsend}
-
-Az rtpsend \cite{rtpsend} teljesen eltér az FFmpeg-től, hiszen itt nincs semmilyen hang 
-vagy videó feldolgozás, átalakítás vagy bármi más. Itt egyszerűen csak egy RTP folyam 
-visszajátszása történik, amit az rtpdump eszközzel lehet felvenni. Ez a két 
-szoftver egy eszköztárba tartozik, aminek a neve rtptools, amit Henning 
-Schulzrinne alkotott meg, aki a Columbia Egyetem oktatója.
-
-Az rtpsend használatához elsőnek rögzíteni kell egy a híváshoz tartozó RTP folyamot az 
-rtpdump paranccsal, ami úgy működik, hogy meg kell adni egy címet, amin az RTP csomagokat 
-elkapja és ezeket alakítja át egy olyan formátumba, amit később az rtpsend-del újra
-lehet alkotni. Abból a szempontból előnyös, hogy az rtpengine-nek a médiaformátum
-átalakítását jól lehet vele tesztelni, mert fel lehet venni két különböző kódolású
-hívást és azokat lejátszani egy szimulált híváson belül.
-
-A lejátszáshoz ez a parancs lesz használva: 
-
-\begin{lstlisting}[caption=RTP folyam generálásda rtpsend segítségével, label=lst:rtpsend]
-rtpsend -l -s 3002 -f dump.rtp 127.0.0.1/23000
-\end{lstlisting}
-
-Ezzel azt az utasítást adjuk ki, hogy folyamatos ismétléssel küldje el a 
-\texttt{dump.rtp} fájlt a \texttt{127.0.0.1:3002} címről a \texttt{127.0.0.1:23000}
-címre, amin az rtpengine várja az egyik oldaltól a médiafolyamot.
-
-\subsubsection{Linphone}
-
-A Linphone egy ingyenes és nyílt forráskódú VoIP kliens alkalmazás, amivel hang- és 
-videóhívásokat lehet lebonyolítani. Teljes mértékben SIP alapú kommunikációt használ és 
-megadható egyéni SIP szerver is, amihez kommunikálhat, de igény és regisztráció esetén
-használható az általuk nyújtott SIP szerver is. 
-
-Hasznos funkciói közé tartozik a hang és videó kódolásának változtatási lehetősége, ami
-lehetővé teszi, hogy mely kódolásokat szeretné a felhasználó használni hívás során.
-Ezenfelül a parancssoros verziója képes előre rögzített \texttt{wav} fájlt lejátszani
-a hívásban résztvevő feleknek. Az utóbbi funkciója a mérések folyamán rendkívül 
-hasznosnak bizonyult, hiszen nem kellett megoldást találni arra, hogy virtuális gépek 
-hangkártyájára miképp juttassak bármiféle hangot. 
+célja, a kliens használata és annak felépítése.  
 
 \subsection{Felépítés}
 

@@ -2,8 +2,8 @@
 \chapter{Mérések és kiértékelés}
 %---------------------------------------------------------------------------- 
 
-Ebben a fejezetben ismertetésre kerülnek a használt mutatók, tesztek menete és
-azok eredményeinek összehasonlítása.
+%Ebben a fejezetben ismertetésre kerülnek a használt mutatók, tesztek menete és
+%azok eredményeinek összehasonlítása.
 
 \section{Mutatók}
 
@@ -154,7 +154,7 @@ Tethys \texttt{enp12s0} és \texttt{enp17s0} interfészekhez van hozzákötve.
 
 A tesztelés során elsőnek próbáltam minél nagyobb háttérforgalom mellett egy normál 
 hívást elindítani, viszont ez nem sikerült már 60-70 hívás esetén. Tehát ez lett a 
-maximum kezelhető hívások száma. A probléma nem feltétlen a Kubernetes klaszter 
+maximum kezelhető hívások száma. A probléma nem feltétlen a Kubernetes fürt 
 túlterhelésében történt, hanem az L7mp proxyk kapacitásának elérése miatt. Mikor egy 
 teljes értékű Kamailio + Linphone által kezdeményezett hívást próbáltam indítani már nem 
 volt képes a Kamailio ellenőrizni az rtpengine elérhetőségét egy \texttt{ping} üzenettel, 
@@ -175,19 +175,13 @@ látni a \ref{fig:moslq} ábrán.
 
 \begin{figure}[!ht]
 	\centering
-	\includegraphics[width=1\textwidth, keepaspectratio]{figures/moslq.png}
+	\includegraphics[width=1\textwidth, keepaspectratio]{figures/mos.png}
 	\caption{MOS-LQ változása az hívás során adott változó háttérforgalmak mellett.}
 	\label{fig:moslq}
 \end{figure}
 
 Csak a \texttt{MOS-LQ} alakulása került ábrázolásra, mert a \texttt{MOS-CQ}-val szemben 
-csak nagyon kevés különbség van. Sajnos az ábrához nem tudtam jelmagyarázatot készíteni, 
-így a vonalak színei jelképezik azt, hogy mekkora háttérforgalom mellett voltak mérve a 
-MOS értékek. Az Y tengelyen jelöli a vett mintákat, ami hívás kezdetétől számított és 
-megvizsgált RTCP csomagokat jelöli. Mivel nem sikerült minden hívást egyforma 
-hosszúságúra hagyni és tekintettel arra, hogy nagyobb terhelés mellett az első pár ilyen 
-RTCP csomagban nem voltak értelmezhető adatok csak az első 15 értelmezhető mintát vettem 
-számításba.
+csak nagyon kevés különbség van. Látható, hogy adott mennyiségű háttérhívás esetén mennyire romlik a teljes értékű Linphone hívásnak a minősége.
 
 %\begin{figure}[!ht]
 %	\centering
@@ -196,14 +190,22 @@ számításba.
 %	\label{fig:moscq}
 %\end{figure}
 
-A \ref{fig:moslq} ábrán jól látható az folyamat, hogy a hívás kezdte után mennyire rossz 
-a hívás minősége illetve, hogy egy idő után mennyire javul és vesz fel egy viszonylag kis 
-kilengésekkel rendelkező értéket. A hívás elején tapasztalható rossz minőséget az okozza, 
-hogy az okozza, hogy az L7mp proxyk nem képesek elég gyorsan feldolgozni a csomagokat így 
-a magas Jitter keletkezik a rendszerben, amikre nincs felkészülve egyik Linphone kliens 
-sem. Később azért lesz jobb a MOS értéke, mert a kliensek adaptív Jitter pufferel 
-rendelkezni így idővel megtanulják azt, hogy mekkora az átlagos Jitter és annak 
-megfelelően növelik a pufferük méretét, ezzel kisimítva a csomagok érkezését. 
+A \ref{fig:moslq} ábrán látható, hogy a MOS minimális értéke az jóval kisebb minden 
+esetben, mint az átlaga. Ez annak köszönhető, hogy a hívás kezdetekor az L7mp proxyk nem 
+képesek elég gyorsan feldolgozni a csomagokat így a magas Jitter keletkezik, ami rossz 
+irányba befolyásolja a MOS értéket. Ezzel szemben a sokkal jobb átlagos és maximális MOS 
+érték annak köszönhető, hogy a Linphone kliens alkalmaz egy adaptív Jitter puffert, 
+aminek a méretét annak megfelelően állítja, hogy mekkora Jitter keletkezik a hívás során. 
+
+%Ennek a Jitter puffernek az alakulása látható a 
+%A \ref{fig:moslq} ábrán jól látható az folyamat, hogy a hívás kezdte után mennyire rossz 
+%a hívás minősége illetve, hogy egy idő után mennyire javul és vesz fel egy viszonylag kis 
+%kilengésekkel rendelkező értéket. A hívás elején tapasztalható rossz minőséget az okozza, 
+%hogy az okozza, hogy az L7mp proxyk nem képesek elég gyorsan feldolgozni a csomagokat így 
+%a magas Jitter keletkezik a rendszerben, amikre nincs felkészülve egyik Linphone kliens 
+%sem. Később azért lesz jobb a MOS értéke, mert a kliensek adaptív Jitter pufferel 
+%rendelkezni így idővel megtanulják azt, hogy mekkora az átlagos Jitter és annak 
+%megfelelően növelik a pufferük méretét, ezzel kisimítva a csomagok érkezését. 
 
 De ez nem jelenti azt, hogy a hívás maradéktalanul jó lesz, amit mutat a
 \ref{fig:voiceComp} ábra is, amit a \texttt{WireShark} RTP folyam elemzőjéből mentettem 
@@ -211,8 +213,8 @@ ki.
 
 \begin{figure}[!ht]
 	\centering
-	\includegraphics[width=1\textwidth, keepaspectratio]{figures/calls60.png}
-	\includegraphics[width=1\textwidth, keepaspectratio]{figures/calls20.png}
+	\includegraphics[width=0.7\textwidth, keepaspectratio]{figures/calls60.png}
+	\includegraphics[width=0.7\textwidth, keepaspectratio]{figures/calls20.png}
 	\caption{MOS-LQ változása az hívás során adott változó háttérforgalmak mellett.}
 	\label{fig:voiceComp}
 \end{figure}
@@ -225,7 +227,7 @@ Jól látszik, hogy a felsőnél rengeteg csend van beszúrva, ami nagyon recseg
 hívást és élvezhetetlenné, míg az alsónál csak az elején található egyszer egy magas 
 Jitter érték, ami nem befolyásolja annyira a hívás minőségét.
 
-\begin{table}[H]
+\begin{table}[ht]
 	\footnotesize
 	\centering
 	\begin{tabular}{l c c c c c c c}
@@ -269,7 +271,7 @@ puffer méretet.
 
 A rugalmasság mérése során az fog kiderülni, hogy egy rtpeninge meghibásodása, milyen 
 módon befolyásolja a hívást. Ennek szimulálása érdekében a hívás indítása után 
-megvizsgálom a Kubernetes klaszterben szereplő rtpengine kapszulákat, hogy melyik kezdte 
+megvizsgálom a Kubernetes fürtben szereplő rtpengine kapszulákat, hogy melyik kezdte 
 el feldolgozni a hívást és azt a kapszulát törlöm. Az elvárt működés során annak kell 
 történnie, hogy az L7mp operátor képes detektálni a kapszula törlését melynek során 
 értesíti az L7mp proxykat, hogy az az rtpengine kapszula már nem elérhető. Ennek hatására 

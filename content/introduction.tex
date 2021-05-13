@@ -3,7 +3,14 @@
 %----------------------------------------------------------------------------
 
 Napjainkban nagyon fontossá váltak a VoIP hívások megléte ugyanis a COVID-19 által okozott
-pandémia alatt nem lehetett különböző korlátozások miatt fizikailag találkozni ismerőseinkkel, illetve dolgozni vagy tanulni. Erre egy jó megoldást nyújtottak a VoIP alkalmazások melyek segítségével valós időben lehet megbeszéléseket, órákat vagy találkozókat tartani. Viszont ez a megnövekedett használat megnövelte a alkalmazások által használt szerverek számát, amik még nem felhős környezetben futnak. A szakdolgozat hátralévő részében egy olyan megoldás kerül kifejtésre, ami lehetővé teszi, hogy az ezen rendszerekben használt RTP proxy szerver egy Kubernetes környezetben kerüljön felhasználásra. 
+pandémia alatt nem lehetett különböző korlátozások miatt fizikailag találkozni 
+ismerőseinkkel, illetve dolgozni vagy tanulni. Erre egy jó megoldást nyújtottak a VoIP 
+alkalmazások melyek segítségével valós időben lehet megbeszéléseket, órákat vagy 
+találkozókat tartani. Viszont ez a megnövekedett használat megnövelte a alkalmazások 
+által használt szerverek számát, amik még nem felhős környezetben futnak. A szakdolgozat 
+hátralévő részében egy olyan megoldás kerül kifejtésre, ami lehetővé teszi, hogy az ezen 
+rendszerekben használt RTP proxy szerver egy Kubernetes környezetben kerüljön 
+felhasználásra. 
 
 A hagyományos VoIP (Voice Over IP) hálózatok általában három részből állnak.
 Az első rész, ami egyértelmű a kliensek, akik a hívásokat kezdeményezik és 
@@ -43,7 +50,7 @@ is válhat különböző fizikai tényezők miatt, mint erőforráshiány vagy h
 meghibásodása végett. Így muszáj több példányt telepíteni a hálózatba, ami jelentősen 
 megbonyolítja a rendszer karbantarthatóságát és új problémákat idéz elő. A munkám során
 nem kerül megoldásra minden probléma, ami felmerülhet. A fókuszban ennek rendszernek az
-olyan megvalósítása lesz melynek során úgy tud viselkedni a Kubernetes klaszterben lévő
+olyan megvalósítása lesz melynek során úgy tud viselkedni a Kubernetes fürtben lévő
 RTP proxy, mint egy erre a célra dedikált szerver.
 
 A rugalmasság problémája fog megoldódni ebben a szakdolgozatban, ami az egy-egy RTP proxy
@@ -66,7 +73,7 @@ között.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth, keepaspectratio]{figures/extended_traditional_voip.png}
+	\includegraphics[width=0.55\textwidth,keepaspectratio]{figures/extended_traditional_voip.png}
 	\caption{Módosított VoIP hálózat vázlatos felépítése}
 	\label{fig:extVoIP}
 \end{figure}
@@ -91,11 +98,24 @@ alapján képes az rtpengine-ben és az L7mp-ben is létrehozni a megfelelő er�
 %és tetszőleges számú hívás indítható el párhuzamosan. Végezetül pedig 
 %a tesztek értékelése lesz és összehasonlítása az új és a régi rendszer között.
 
-A szakdolgozat első részében bemutatásra kerülnek a híváshoz elengedhetetlen komponensek. Ebben részben látható lesz egy teljes értékű hagyományos hívás lebonyolítása is. Ebben a hagyományos hívásban még nem Kubernetes klaszterben fog megjelenni az rtpengine. 
+A szakdolgozat első részében bemutatásra kerülnek a híváshoz elengedhetetlen komponensek. 
+Ebben részben látható lesz egy teljes értékű hagyományos hívás lebonyolítása is. Ebben a 
+hagyományos hívásban még nem Kubernetes fürtben fog megjelenni az rtpengine. 
 
-Bemutatásra kerül a létrehozott architektúra, melynek ismertetve lesz a fizikai háttere, ami a használt szerverek összeköttetését illetve azok telepítését írja le. Ismertetésre 
-kerül, hogy az rtpengine, L7mp szolgáltatásháló és a kontroller miképp kerül összeköttetésbe egy Kubernetes klaszterben. 
+Bemutatásra kerül a létrehozott architektúra, melynek ismertetve lesz a fizikai háttere, 
+ami a használt szerverek összeköttetését illetve azok telepítését írja le. Ismertetésre 
+kerül, hogy az rtpengine, L7mp szolgáltatásháló és a kontroller miképp kerül 
+összeköttetésbe egy Kubernetes fürtben. 
 
-A tesztelésekhez tervezett kliensről is szó fog kerülni, ami közvetlen képes kommunikálni az rtpengine vezérlőprotokollján, így a SIP szervert megkerülve lehet hívásokat kezdeményezni. Ez a kliens nem egy teljes értékű VoIP kliens, mert csak a vezérlőprotokollt tudja használni híváskezdeményezésre. Illetve nem képes a hívások monitorozásához szükséges RTCP jelentéseket gyártani. 
+A tesztelésekhez tervezett kliensről is szó fog kerülni, ami közvetlen képes kommunikálni 
+az rtpengine vezérlőprotokollján, így a SIP szervert megkerülve lehet hívásokat 
+kezdeményezni. Ez a kliens nem egy teljes értékű VoIP kliens, mert csak a 
+vezérlőprotokollt tudja használni híváskezdeményezésre. Illetve nem képes a hívások 
+monitorozásához szükséges RTCP jelentéseket gyártani. 
 
-Végezetül a mérések eredményei lesznek közölve és értékelve. Értékelve lesz a rendszer által nyújtott hívásminőség adott hívásmennyiség mellett és értékelésre kerül a rendszer rugalmassága is, melynek során vizsgálatra kerül, hogy mi történik akkor, amikor egy a hívást kezelő rtpengine kapszula kerül törlésre ezzel szimulálva a meghibásodást.   
+Végezetül a mérések eredményei lesznek közölve és értékelve. Értékelve lesz a rendszer 
+által nyújtott hívásminőség adott hívásmennyiség mellett és értékelésre kerül a rendszer 
+rugalmassága is, melynek során vizsgálatra kerül, hogy mi történik akkor, amikor egy a 
+hívást kezelő rtpengine kapszula kerül törlésre ezzel szimulálva a meghibásodást.
+
+A megvalósított kontroller és kliens a \cite{repo} Github táróban elérhető a használt Kubernetes erőforrásokkal együtt. 

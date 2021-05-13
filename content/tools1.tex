@@ -106,9 +106,9 @@ lehet a legtöbb feladatot, ami a fejlesztés, karbantartás vagy skálázással
 kapcsolatos. A Google fejlesztette eredetileg, de jelenleg a Cloud Native
 Computing Foundation - CNCF vette át a karbantartását. 
 
-Kubernetes klasztert létrehozhatunk lokálisan saját szerveren is vagy felhőben,
+Kubernetes fürtöt létrehozhatunk lokálisan saját szerveren is vagy felhőben,
 ami lehet publikus, privát vagy hibrid hozzáférésű. Viszont azt figyelembe 
-kell venni, hogy egy Kubernetes klasztert nem egyszerű kiépíteni lokálisan, 
+kell venni, hogy egy Kubernetes fürtöt nem egyszerű kiépíteni lokálisan, 
 szóval ha nem szükséges, akkor lehet használni a felhőszolgáltatók Kubernetes 
 motorjait, mint az Amazon AKS, Linode LKE vagy a Google GKE szolgáltatása.
 Ilyenkor az általunk beállított paraméterekkel létrejön egy teljes klaszter, amit
@@ -123,7 +123,7 @@ tudunk menedzselni.
 	\label{fig:achitecture}
 \end{figure}
 
-Egy Kubernetes klaszter kettő részből áll egy vezérlő- és egy adatsíkból, ahol a 
+Egy Kubernetes fürt kettő részből áll egy vezérlő- és egy adatsíkból, ahol a 
 vezérlősíkban szereplő mester csomópontok tudják vezérleni az adatsíkban 
 lévő dolgozó csomópontokat és a fejlesztők vagy üzemeltetők a mester által
 hirdetett API-n (Application Programming Interface) keresztül képesek parancsokat
@@ -279,7 +279,9 @@ akinek van valamilyen tapasztalata az Istio-val az könnyen kiismeri magát az L
 
 Szeretném megemlíteni, hogy Dr. Rétvári Gábor vezetésével a nyári gyakorlati időm alatt 
 és jelenlegi munkámként ennek a szoftvernek a tesztelésével  illetve fejlesztésével 
-foglalkozom. 
+foglalkozom. Az L7mp már szerepelt a ServiceMeshCon 2020-s konferenciáján 
+\cite{servicemeshcon_2020}, ahol Gábor bemutatta az L7mp szolgáltatásháló által nyújtott 
+lehetőségeket. 
 
 \subsection{L7mp, mint proxy}
 
@@ -452,7 +454,7 @@ A szolgáltatásháló egy olyan keretrendszert foglal magában, amivel a külö
 mikroszolgáltatások közötti kommunikációt lehet meghatározni. Ezek a szolgáltatások 
 konténerek, amik rendelkeznek egy olyan API interfésszel, amin keresztül lehet 
 őket programozni. Emellett olyan szolgáltatásokat lehet igénybe venni a Kubernetes 
-klaszteren belül, mint a szolgáltatás felderítés, terhelés elosztás és felügyelhetőség. 
+fürtön belül, mint a szolgáltatás felderítés, terhelés elosztás és felügyelhetőség. 
 Ezeken kívül még rengeteg más funkcióval szokott rendelkezni egy szolgáltatásháló, de 
 ezeket lehet mondani a legnépszerűbbeknek.
 
@@ -724,6 +726,112 @@ hogy mi történjen velük, ha beérkeznek a hálózati interfészre. Itt be tud
 azt, hogy az \texttt{INVITE} üzenetek esetén az ng vezérlőprotokollon keresztül állítsa 
 be a hívást az rtpengine szerveren.
 
+\section{Multimédia kliensek}
+
+Az alábbiakban bemutatásra kerülnek az általam használt VoIP kliensek rövid leírása. A kontroller ezek közül az FFmpeg és rtpsend eszközöket képes úgy használni, mint egy VoIP kliens a hívások generálása során. A Linphone pedig a teljes értékű hívások indítása miatt szükséges, ugyanis a Linphone képes olyan RTCP csomagokat generálni, amik segítségével monitorozható lesz a médiaforgalom. 
+
+\subsection{FFmpeg}
+
+Elsőnek az FFmpeg-t szeretném bemutatni, mert ezt az eszközt többen ismerhetik,
+mint az rtpsend-t. 
+
+Az FFmpeg \cite{ffmpeg} egy nyílt forráskódú szoftver, amely különböző könyvtárak 
+felhasználásával képes videó, hang és egyéb multimédiás adatfolyamok kezelésére. Lehetővé 
+téve olyan feladatok ellátását, mint kódolás, dekódolás, transzformálás és adatfolyam 
+sugárázása. Viszont rendelkezik különböző hátrányokkal, amik nem elhanyagolhatóak a teszt 
+szempontjából.
+
+Az első ilyen probléma vele, hogy az erőforrás igénye nagyon magas tud lenni 
+annak függvényében, hogy mennyire komplex feladatot lát el. Ez alapesetben nem lenne
+probléma, viszont ebben a környezetben sok egymás mellett futó FFmpeg végez majd
+komplex feladatot, amihez így sok erőforrás szükséges.
+
+A második probléma, hogy a sugárzott RTP folyamot nem lehet eléggé testre szabni, 
+amennyire szükséges lenne. Például a csomagokban lévő adat nem mindig lesz 
+ugyanakkora méretű, ami a mérési eredményeket könnyen torzítani fogja, hiszen 
+minden médiafolyam rendelkezik egy bizonyos kódolással, amihez megvan határozva, hogy
+milyen méretű csomagok szükségesek.
+
+Végül a legnagyobb probléma, ami előjön az FFmpeg és rtpsend esetében is, hogy nem
+tudnak RTCP fogadó jelentést gyártani, ami miatt a hívás minősége nem monitorozható 
+megfelelően. Ez a probléma úgy lett kiküszöbölve, hogy rtpsend vagy FFmpeg gyárt
+egy adott mennyiségű háttérforgalmat és két Linphone kliens segítségével elindításra 
+kerül mellettük egy teljes értékű hívás.  Lehetővé téve a rendszer által nyújtott minőség 
+mérését adott háttérforgalom mellett. 
+
+Az \ref{lst:FFmpeg} parancs szükséges ahhoz, hogy egy \texttt{wav} fájlt sikeresen 
+lehessen sugározni RTP segítségével az rtpengine számára, így a híváshoz szükséges 
+adatfolyamot lehet szimulálni. 
+
+\begin{lstlisting}[caption=FFmpeg RTP folyam indtása, label=lst:FFmpeg]
+ffmpeg -re -i audio.wav -ar 8000 -ac 1 -acodec pcm_mulaw \\
+-f rtp 'rtp://127.0.0.1:23000?localrtpport=2000'
+\end{lstlisting}
+
+Ez a sor az \texttt{audio.wav} fájlt fogja a lokális hálózaton lévő rtpengine 23000-s
+portjára küldeni a 2000-s portról \texttt{PCMU} kódolással. A következő felsorolás 
+tartalmazza részletesen, hogy a paraméterei mit csinálnak.
+
+\begin{itemize}
+	\item \textbf{\texttt{-re -i}}: Natív képkockasebességgel való beolvasást tesz 
+	lehetővé, így lehet szimulálni egy élő forrást, például egy mikrofont. Emellett 
+	lelassítja a fájl olvasásának sebességet annyira, hogy hasonlítson az a valós idejű 
+	adatbeolvasáshoz, ugyanis alapértelmezetten olyan gyorsan olvassa az FFmpeg a 
+	fájlokat amilyen gyorsan csak tudja és így gyorsabban lesz beolvasva a fájl, mint a 
+	fájl időtartama. 
+	\item \textbf{\texttt{-ar}}: Beállítja a mintavételezési periódust, ami itt 
+	\texttt{8000 Hz}, ami azt jelenti, hogy másodpercenként 8000 mintát vesz a forrásból. 
+	\item \textbf{\texttt{ac}}: Beállítja a használt hangcsatornák számát.
+	\item \textbf{\texttt{-acodec}}: Megadja, hogy milyen hangkódolást használjon. Ebben 
+	az esetben PCM u-law alapú kódolás történik.
+	\item \textbf{\texttt{-f}}: A kimenti fájl formátumát lehet megadni, de ebben az 
+	esetben nem egy fájl, hanem egy cím van megadva így a hálózaton RTP csomagokban fogja 
+	küldeni a kódolt hanganyagot. Ha jobban megnézzük, akkor ez a cím két részből áll,
+	ahol az első határozza meg azt, hogy hova küldje a csomagokat. Ez a 
+	\texttt{127.0.0.1:23000} az rtpengine címe és a híváshoz meghatározott egyik RTP
+	port. Míg a második rész a \texttt{localrtpport}, amivel meghatározható, hogy mely 
+	portról küldje ezeket a csomagokat.
+\end{itemize}
+
+\subsection{rtpsend}
+
+Az rtpsend \cite{rtpsend} teljesen eltér az FFmpeg-től, hiszen itt nincs semmilyen hang 
+vagy videó feldolgozás, átalakítás vagy bármi más. Itt egyszerűen csak egy RTP folyam 
+visszajátszása történik, amit az rtpdump eszközzel lehet felvenni. Ez a két 
+szoftver egy eszköztárba tartozik, aminek a neve rtptools, amit Henning 
+Schulzrinne alkotott meg, aki a Columbia Egyetem oktatója.
+
+Az rtpsend használatához elsőnek rögzíteni kell egy a híváshoz tartozó RTP folyamot az 
+rtpdump paranccsal, ami úgy működik, hogy meg kell adni egy címet, amin az RTP csomagokat 
+elkapja és ezeket alakítja át egy olyan formátumba, amit később az rtpsend-del újra
+lehet alkotni. Abból a szempontból előnyös, hogy az rtpengine-nek a médiaformátum
+átalakítását jól lehet vele tesztelni, mert fel lehet venni két különböző kódolású
+hívást és azokat lejátszani egy szimulált híváson belül.
+
+A lejátszáshoz ez a parancs lesz használva: 
+
+\begin{lstlisting}[caption=RTP folyam generálásda rtpsend segítségével, label=lst:rtpsend]
+rtpsend -l -s 3002 -f dump.rtp 127.0.0.1/23000
+\end{lstlisting}
+
+Ezzel azt az utasítást adjuk ki, hogy folyamatos ismétléssel küldje el a 
+\texttt{dump.rtp} fájlt a \texttt{127.0.0.1:3002} címről a \texttt{127.0.0.1:23000}
+címre, amin az rtpengine várja az egyik oldaltól a médiafolyamot.
+
+\subsection{Linphone}
+
+A Linphone egy ingyenes és nyílt forráskódú VoIP kliens alkalmazás, amivel hang- és 
+videóhívásokat lehet lebonyolítani. Teljes mértékben SIP alapú kommunikációt használ és 
+megadható egyéni SIP szerver is, amihez kommunikálhat, de igény és regisztráció esetén
+használható az általuk nyújtott SIP szerver is. 
+
+Hasznos funkciói közé tartozik a hang és videó kódolásának változtatási lehetősége, ami
+lehetővé teszi, hogy mely kódolásokat szeretné a felhasználó használni hívás során.
+Ezenfelül a parancssoros verziója képes előre rögzített \texttt{wav} fájlt lejátszani
+a hívásban résztvevő feleknek. Az utóbbi funkciója a mérések folyamán rendkívül 
+hasznosnak bizonyult, hiszen nem kellett megoldást találni arra, hogy virtuális gépek 
+hangkártyájára miképp juttassak bármiféle hangot.
+
 \section{Hívásfelépítés Kubernetes nélkül}
 
 Ahhoz, hogy a valóshoz hasonló infrastruktúrát lehessen létrehozni, több 
@@ -737,7 +845,7 @@ kommunikálni. Ezért a telepítés során Brideged adapter használtam minden v
 esetében, ami kiszolgáló számítógép hálózati kártyáján keresztül képes elérni az 
 internetet. Ezzel hálózattal tökéletesen lehetett abban az esetben, ha az rtpengine nem 
 Kubernetes környezetben működött. Később át kellett térnem kiszolgáló adapteres hálózat 
-használatára különben a lokális Kubernetes klasztert nem látták a SIP kliensek. 
+használatára különben a lokális Kubernetes fürtöt nem látták a SIP kliensek. 
 
 A kliensek tekintetében is az ingyenességre és az egyszerű használatra törekedtem, 
 de fontos volt még az a szempont is, hogy lehessen parancssorosan hívást kezdeményezni
